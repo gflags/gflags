@@ -1,1 +1,16 @@
-TODO
+This repository contains both a C++ and a python implementation of the
+Google commandline flags module.  Documentation for the C++
+implementation is in doc/.  Documentation for the python
+implementation is at the top of gflags/flags.py.
+
+See INSTALL for (generic) installation instructions for C++: basically
+   ./configure && make && make install
+
+To install the python module, run
+   cd python; python ./setup.py install
+
+When you install the python library, you also get a helper
+application, gflags2man.py, installed into /usr/local/bin.  You can
+run gflags2man.py to create an instant man page, with all the
+commandline flags and their docs, for any C++ or python program you've
+written using the gflags library.

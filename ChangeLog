@@ -6,3 +6,9 @@ Wed Dec 13 12:37:19 2006  Google Inc. <opensource@google.com>
 	has increased flexibility, including built-in support for C++
 	types like string, and the ability to define flags in the source
 	file in which they're used.
+
+Mon Jan 22 15:33:06 2007  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.2
+	* added support for python commandlineflags, as well as c++
+	* gflags2man, a script to turn flags into a man page (dchristian)

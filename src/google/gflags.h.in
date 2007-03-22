@@ -55,6 +55,7 @@
 #define BASE_COMMANDLINEFLAGS_H__
 
 #include <string>
+#include <vector>
 
 // We care a lot about number of bits things take up.  Unfortunately,
 // systems define their bit-specific ints in a lot of different ways.

@@ -8,11 +8,11 @@ Summary: A commandline flags library that allows for distributed flags
 Version: %ver
 Release: %rel
 Group: Development/Libraries
-URL: http://goog-gflags.sourceforge.net
+URL: http://code.google.com/p/google-gflags
 License: BSD
 Vendor: Google
 Packager: Google Inc. <opensource@google.com>
-Source: http://goog-gflags.sourceforge.net/%{NAME}-%{PACKAGE_VERSION}.tar.gz
+Source: http://google-gflags.googlecode.com/files/%{NAME}-%{PACKAGE_VERSION}.tar.gz
 Distribution: Redhat 7 and above.
 Buildroot: %{_tmppath}/%{name}-root
 Prefix: %prefix
@@ -61,7 +61,6 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %{prefix}/include/google
-%{prefix}/lib/debug
 %{prefix}/lib/libgflags.a
 %{prefix}/lib/libgflags.la
 %{prefix}/lib/libgflags.so
