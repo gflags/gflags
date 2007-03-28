@@ -316,7 +316,7 @@ class CommandLineFlag {
   string default_value() const { return defvalue_->ToString(); }
   const char* type_name() const { return defvalue_->TypeName(); }
 
-  void FillCommandLineFlagInfo(struct CommandLineFlagInfo* result) const;
+  void FillCommandLineFlagInfo(struct CommandLineFlagInfo* result);
 
  private:
   friend class FlagRegistry;   // for SetFlagLocked()
@@ -386,13 +386,15 @@ const char* CommandLineFlag::CleanFileName() const {
 }
 
 void CommandLineFlag::FillCommandLineFlagInfo(
-    CommandLineFlagInfo* result) const {
+    CommandLineFlagInfo* result) {
   result->name = name();
   result->type = type_name();
   result->description = help();
   result->current_value = current_value();
   result->default_value = default_value();
   result->filename = CleanFileName();
+  UpdateModifiedBit();
+  result->is_default = !modified_;
 }
 
 void CommandLineFlag::UpdateModifiedBit() {
@@ -1141,6 +1143,7 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 // --------------------------------------------------------------------
 // GetCommandLineOption()
 // GetCommandLineFlagInfo()
+// GetCommandLineFlagInfoOrDie()
 // SetCommandLineOption()
 // SetCommandLineOptionWithMode()
 //    The programmatic way to set a flag's value, using a string
@@ -1194,6 +1197,15 @@ bool GetCommandLineFlagInfo(const char* name, CommandLineFlagInfo* OUTPUT) {
     registry->Unlock();
     return true;
   }
+}
+
+CommandLineFlagInfo GetCommandLineFlagInfoOrDie(const char* name) {
+  CommandLineFlagInfo info;
+  if (!GetCommandLineFlagInfo(name, &info)) {
+    fprintf(stderr, "FATAL ERROR: flag name '%s' doesn't exit", name);
+    commandlineflags_exitfunc(1);    // almost certainly exit()
+  }
+  return info;
 }
 
 string SetCommandLineOptionWithMode(const char* name, const char* value,

@@ -260,8 +260,15 @@ gflags_unittest_SOURCES = $(googleinclude_HEADERS) src/config.h \
 gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDADD = libgflags.la $(PTHREAD_LIBS)
+
+# These aren't part of the c++ source, but we want them to be distributed
+PYTHON = python/setup.py \
+         python/gflags.py \
+         python/gflags2man.py \
+         python/gflags_unittest.py
+
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
-	libtool $(SCRIPTS)
+	libtool $(SCRIPTS) $(PYTHON)
 
 all: all-am
 
@@ -586,7 +593,7 @@ check-TESTS: $(TESTS)
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/packages $(distdir)/packages/rpm $(distdir)/src $(distdir)/src/google
+	$(mkdir_p) $(distdir)/doc $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/google
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

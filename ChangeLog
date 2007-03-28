@@ -12,3 +12,11 @@ Mon Jan 22 15:33:06 2007  Google Inc. <opensource@google.com>
 	* google-gflags: version 0.2
 	* added support for python commandlineflags, as well as c++
 	* gflags2man, a script to turn flags into a man page (dchristian)
+
+Wed Mar 28 12:15:56 2007  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.3
+	* python portability fix: use popen instead of subprocess (csilvers)
+	* Add is_default to CommandLineFlagInfo (pchien)
+	* Make docs a bit prettier (csilvers)
+	* Actually include the python files in the distribution! :-/ (csilvers)

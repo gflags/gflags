@@ -860,6 +860,45 @@ TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
   EXPECT_EQ(false, r);
 }
 
+TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
+  CommandLineFlagInfo info;
+  info = GetCommandLineFlagInfoOrDie("test_int32");
+  EXPECT_EQ("test_int32", info.name);
+  EXPECT_EQ("int32", info.type);
+  EXPECT_EQ("", info.description);
+  EXPECT_EQ("-1", info.default_value);
+  EXPECT_EQ(true, info.is_default);
+  info = GetCommandLineFlagInfoOrDie("test_bool");
+  EXPECT_EQ("test_bool", info.name);
+  EXPECT_EQ("bool", info.type);
+  EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("false", info.default_value);
+  EXPECT_EQ(true, info.is_default);
+}
+
+TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
+  FLAGS_test_int32 = 400;
+  CommandLineFlagInfo info;
+  info = GetCommandLineFlagInfoOrDie("test_int32");
+  EXPECT_EQ("test_int32", info.name);
+  EXPECT_EQ("int32", info.type);
+  EXPECT_EQ("", info.description);
+  EXPECT_EQ("-1", info.default_value);
+  EXPECT_EQ(false, info.is_default);
+  FLAGS_test_bool = true;
+  info = GetCommandLineFlagInfoOrDie("test_bool");
+  EXPECT_EQ("test_bool", info.name);
+  EXPECT_EQ("bool", info.type);
+  EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("false", info.default_value);
+  EXPECT_EQ(false, info.is_default);
+}
+
+TEST(GetCommandLineFlagInfoOrDieTest, FlagDoesNotExist) {
+  EXPECT_DEATH(GetCommandLineFlagInfoOrDie("test_int3210"),
+               ".*: flag test_int3210 does not exist");
+}
+
 
 // These are lightly tested because they're deprecated.  Basically,
 // the tests are meant to cover how existing users use these functions,

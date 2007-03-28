@@ -112,6 +112,7 @@ struct CommandLineFlagInfo {
   std::string current_value;  // the current value, as a string
   std::string default_value;  // the default value, as a string
   std::string filename;       // 'cleaned' version of filename holding the flag
+  bool is_default;            // true if the flag has default value
 };
 
 extern void GetAllFlags(std::vector<CommandLineFlagInfo>* OUTPUT);
@@ -140,10 +141,18 @@ extern const char* ProgramUsage();          // string set by SetUsageMessage()
 // OUTPUT is set to the flag's value, or unchanged if we return false.
 extern bool GetCommandLineOption(const char* name, std::string* OUTPUT,
                                  bool *is_default_value = NULL);
+
 // Return true iff the flagname was found. OUTPUT is set to the flag's
 // CommandLineFlagInfo or unchanged if we return false.
 extern bool GetCommandLineFlagInfo(const char* name,
                                    CommandLineFlagInfo* OUTPUT);
+
+// Return the CommandLineFlagInfo of the flagname.
+// assertion failure if the flagname was not found.
+//
+// Example to check if a flag has default value:
+//   if (GetCommandLineFlagInfoOrDie("foo").is_default)
+extern CommandLineFlagInfo GetCommandLineFlagInfoOrDie(const char* name);
 
 enum FlagSettingMode {
   // update the flag's value (can call this multiple times).

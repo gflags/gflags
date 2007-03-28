@@ -52,7 +52,6 @@ import re
 import sys
 import stat
 import time
-import subprocess
 
 import gflags
 
@@ -189,29 +188,18 @@ class ProgramInfo(object):
 
     logging.info('Running: %s %s </dev/null 2>&1'
                  % (self.executable, FLAGS.help_flag))
-    # --help output is often routed to stderr, so we re-direct that to
-    # stdout.  Re-direct stdin to /dev/null to encourage programs that
+    # --help output is often routed to stderr, so we combine with stdout.
+    # Re-direct stdin to /dev/null to encourage programs that
     # don't understand --help to exit.
-    try:
-      runstate = subprocess.Popen(
-        [self.executable, FLAGS.help_flag],
-        stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
-        stdin=open('/dev/null', 'r'))
-    except OSError, msg:
-      logging.error('Error executing "%s": %s' % (self.name, msg))
-      return 0
-
-    # read output progressively so the pipe doesn't fill up (fileutil).
-    self.output = runstate.stdout.readlines()
-    status = runstate.wait()
-    logging.debug('Program exited with %s' % status)
-    output = runstate.communicate()[0]
-    if output:
-      self.output = output.splitlines()
+    (child_stdin, child_stdout_and_stderr) = os.popen4(
+      [self.executable, FLAGS.help_flag])
+    child_stdin.close()       # '</dev/null'
+    self.output = child_stdout_and_stderr.readlines()
+    child_stdout_and_stderr.close()
     if len(self.output) < _MIN_VALID_USAGE_MSG:
-      logging.error(
-        'Error: "%s %s" returned %d and only %d lines: %s'
-        % (self.name, FLAGS.help_flag, status, len(self.output), output))
+      logging.error('Error: "%s %s" returned only %d lines: %s'
+                    % (self.name, FLAGS.help_flag,
+                       len(self.output), self.output))
       return 0
     return 1
 
