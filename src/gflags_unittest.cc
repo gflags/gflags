@@ -763,36 +763,29 @@ TEST(ProgramUsageTest, BaseTest) { // Depends on 1st arg to InitGoogle in main()
 
 TEST(GetCommandLineOptionTest, NameExistsAndIsDefault) {
   string value("will be changed");
-  bool is_default;
-  bool r = GetCommandLineOption("test_bool", &value, &is_default);
+  bool r = GetCommandLineOption("test_bool", &value);
   EXPECT_EQ(true, r);
   EXPECT_EQ("false", value);
-  EXPECT_EQ(true, is_default);
 
-  r = GetCommandLineOption("test_int32", &value, &is_default);
+  r = GetCommandLineOption("test_int32", &value);
   EXPECT_EQ(true, r);
   EXPECT_EQ("-1", value);
-  EXPECT_EQ(true, is_default);
 }
 
 TEST(GetCommandLineOptionTest, NameExistsAndWasAssigned) {
   FLAGS_test_int32 = 400;
   string value("will be changed");
-  bool is_default;
-  const bool r = GetCommandLineOption("test_int32", &value, &is_default);
+  const bool r = GetCommandLineOption("test_int32", &value);
   EXPECT_EQ(true, r);
   EXPECT_EQ("400", value);
-  EXPECT_EQ(false, is_default);
 }
 
 TEST(GetCommandLineOptionTest, NameExistsAndWasSet) {
   SetCommandLineOption("test_int32", "700");
   string value("will be changed");
-  bool is_default;
-  const bool r = GetCommandLineOption("test_int32", &value, &is_default);
+  const bool r = GetCommandLineOption("test_int32", &value);
   EXPECT_EQ(true, r);
   EXPECT_EQ("700", value);
-  EXPECT_EQ(false, is_default);
 }
 
 TEST(GetCommandLineOptionTest, NameExistsAndWasNotSet) {
@@ -800,42 +793,26 @@ TEST(GetCommandLineOptionTest, NameExistsAndWasNotSet) {
   // is_default is still true, but the 'default' value returned has changed!
   SetCommandLineOptionWithMode("test_int32", "800", SET_FLAGS_DEFAULT);
   string value("will be changed");
-  bool is_default;
-  const bool r = GetCommandLineOption("test_int32", &value, &is_default);
+  const bool r = GetCommandLineOption("test_int32", &value);
   EXPECT_EQ(true, r);
   EXPECT_EQ("800", value);
-  EXPECT_EQ(true, is_default);
+  EXPECT_EQ(true, GetCommandLineFlagInfoOrDie("test_int32").is_default);
+
 }
 
 TEST(GetCommandLineOptionTest, NameExistsAndWasConditionallySet) {
   SetCommandLineOptionWithMode("test_int32", "900", SET_FLAG_IF_DEFAULT);
   string value("will be changed");
-  bool is_default;
-  const bool r = GetCommandLineOption("test_int32", &value, &is_default);
+  const bool r = GetCommandLineOption("test_int32", &value);
   EXPECT_EQ(true, r);
   EXPECT_EQ("900", value);
-  EXPECT_EQ(false, is_default);
 }
 
 TEST(GetCommandLineOptionTest, NameDoesNotExist) {
   string value("will not be changed");
-  bool is_default = false;
-  const bool r = GetCommandLineOption("test_int3210", &value, &is_default);
+  const bool r = GetCommandLineOption("test_int3210", &value);
   EXPECT_EQ(false, r);
   EXPECT_EQ("will not be changed", value);
-  EXPECT_EQ(false, is_default);
-}
-
-TEST(GetCommandLineOptionTest, NoLastArg) {
-  // Mostly, makes sure passing in NULL as last arg doesn't cause a crash
-  string value("will not be changed, at first");
-  bool r = GetCommandLineOption("test_int3210", &value, NULL);
-  EXPECT_EQ(false, r);
-  EXPECT_EQ("will not be changed, at first", value);
-
-  r = GetCommandLineOption("test_int32", &value, NULL);
-  EXPECT_EQ(true, r);
-  EXPECT_EQ("-1", value);
 }
 
 TEST(GetCommandLineFlagInfoTest, FlagExists) {
@@ -845,19 +822,49 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("test_int32", info.name);
   EXPECT_EQ("int32", info.type);
   EXPECT_EQ("", info.description);
+  EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
+  EXPECT_EQ(true, info.is_default);
+
+  FLAGS_test_bool = true;
   r = GetCommandLineFlagInfo("test_bool", &info);
   EXPECT_EQ(true, r);
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("true", info.current_value);
   EXPECT_EQ("false", info.default_value);
+  EXPECT_EQ(false, info.is_default);
+
+  FLAGS_test_bool = false;
+  r = GetCommandLineFlagInfo("test_bool", &info);
+  EXPECT_EQ(true, r);
+  EXPECT_EQ("test_bool", info.name);
+  EXPECT_EQ("bool", info.type);
+  EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("false", info.current_value);
+  EXPECT_EQ("false", info.default_value);
+  EXPECT_EQ(false, info.is_default);  // value is same, but flag *was* modified
 }
 
 TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
   CommandLineFlagInfo info;
+  // Set to some random values that GetCommandLineFlagInfo should not change
+  info.name = "name";
+  info.type = "type";
+  info.current_value = "curr";
+  info.default_value = "def";
+  info.filename = "/";
+  info.is_default = false;
   bool r = GetCommandLineFlagInfo("test_int3210", &info);
   EXPECT_EQ(false, r);
+  EXPECT_EQ("name", info.name);
+  EXPECT_EQ("type", info.type);
+  EXPECT_EQ("", info.description);
+  EXPECT_EQ("curr", info.current_value);
+  EXPECT_EQ("def", info.default_value);
+  EXPECT_EQ("/", info.filename);
+  EXPECT_EQ(false, info.is_default);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
@@ -866,12 +873,14 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
   EXPECT_EQ("test_int32", info.name);
   EXPECT_EQ("int32", info.type);
   EXPECT_EQ("", info.description);
+  EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
   EXPECT_EQ(true, info.is_default);
   info = GetCommandLineFlagInfoOrDie("test_bool");
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("false", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_EQ(true, info.is_default);
 }
@@ -883,6 +892,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ("test_int32", info.name);
   EXPECT_EQ("int32", info.type);
   EXPECT_EQ("", info.description);
+  EXPECT_EQ("400", info.current_value);
   EXPECT_EQ("-1", info.default_value);
   EXPECT_EQ(false, info.is_default);
   FLAGS_test_bool = true;
@@ -890,6 +900,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
+  EXPECT_EQ("true", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_EQ(false, info.is_default);
 }

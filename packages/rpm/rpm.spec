@@ -52,7 +52,7 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 
-%doc AUTHORS COPYING ChangeLog INSTALL NEWS README doc/gflags.html
+%doc AUTHORS COPYING ChangeLog INSTALL NEWS README doc/designstyle.css doc/gflags.html
 
 %{prefix}/lib/libgflags.so.0
 %{prefix}/lib/libgflags.so.0.0.0

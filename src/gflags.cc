@@ -35,6 +35,7 @@
 // stuff.
 
 #include "config.h"
+#include <stdio.h>     // for snprintf
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
@@ -51,6 +52,19 @@
 
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR  '/'
+#endif
+
+// Work properly if either strtoll or strtoq is on this system
+#ifdef HAVE_STRTOLL
+# define strtoint64  strtoll
+# define strtouint64  strtoull
+#elif HAVE_STRTOQ
+# define strtoint64  strtoq
+# define strtouint64  strtouq
+#else
+// Neither strtoll nor strtoq are defined.  I hope strtol works!
+# define strtoint64 strtol
+# define strtouint64 strtoul
 #endif
 
 using std::string;
@@ -138,7 +152,7 @@ FlagValue::FlagValue(void* valbuf, const char* type) : value_buffer_(valbuf) {
   else if (strcmp(type, "uint64") == 0)  type_ = FV_UINT64;
   else if (strcmp(type, "double") == 0)  type_ = FV_DOUBLE;
   else if (strcmp(type, "string") == 0)  type_ = FV_STRING;
-  else assert("" == "Unknown typename");
+  else assert(false); // Unknown typename
 }
 
 FlagValue::~FlagValue() {
@@ -185,7 +199,7 @@ bool FlagValue::ParseFrom(const char* value) {
 
   switch (type_) {
     case FV_INT32: {
-      const int64 r = strtoq(value, &end, base);
+      const int64 r = strtoint64(value, &end, base);
       if (errno || end != value + strlen(value))  return false;  // bad parse
       if (static_cast<int32>(r) != r)  // worked, but number out of range
         return false;
@@ -193,7 +207,7 @@ bool FlagValue::ParseFrom(const char* value) {
       return true;
     }
     case FV_INT64: {
-      const int64 r = strtoq(value, &end, base);
+      const int64 r = strtoint64(value, &end, base);
       if (errno || end != value + strlen(value))  return false;  // bad parse
       SET_VALUE_AS(int64, r);
       return true;
@@ -201,7 +215,7 @@ bool FlagValue::ParseFrom(const char* value) {
     case FV_UINT64: {
       while (*value == ' ') value++;
       if (*value == '-') return false;  // negative number
-      const uint64 r = strtouq(value, &end, base);
+      const uint64 r = strtouint64(value, &end, base);
       if (errno || end != value + strlen(value))  return false;  // bad parse
       SET_VALUE_AS(uint64, r);
       return true;
@@ -213,7 +227,7 @@ bool FlagValue::ParseFrom(const char* value) {
       return true;
     }
     default: {
-      assert("" == "unknown type");
+      assert(false); // unknown type
       return false;
     }
   }
@@ -239,7 +253,7 @@ string FlagValue::ToString() const {
     case FV_STRING:
       return VALUE_AS(string);
     default:
-      assert("" == "unknown type"); return "";
+      assert(false); return ""; // unknown type
   }
 }
 
@@ -251,7 +265,7 @@ const char* FlagValue::TypeName() const {
     case FV_UINT64: return "uint64";
     case FV_DOUBLE: return "double";
     case FV_STRING: return "string";
-    default: assert("" == "unknown type"); return "";
+    default: assert(false); return ""; // unknown type
   }
 }
 
@@ -265,7 +279,7 @@ bool FlagValue::Equal(const FlagValue& x) const {
     case FV_UINT64: return VALUE_AS(uint64) == OTHER_VALUE_AS(x, uint64);
     case FV_DOUBLE: return VALUE_AS(double) == OTHER_VALUE_AS(x, double);
     case FV_STRING: return VALUE_AS(string) == OTHER_VALUE_AS(x, string);
-    default: assert("" == "unknown type"); return false;
+    default: assert(false); return false; // unknown type
   }
 }
 
@@ -277,7 +291,7 @@ FlagValue* FlagValue::New() const {
     case FV_UINT64: return new FlagValue(new uint64, "uint64");
     case FV_DOUBLE: return new FlagValue(new double, "double");
     case FV_STRING: return new FlagValue(new string, "string");
-    default: assert("" == "unknown type"); return NULL;
+    default: assert(false); return NULL; // assert false
   }
 }
 
@@ -290,7 +304,7 @@ void FlagValue::CopyFrom(const FlagValue& x) {
     case FV_UINT64: SET_VALUE_AS(uint64, OTHER_VALUE_AS(x, uint64));  break;
     case FV_DOUBLE: SET_VALUE_AS(double, OTHER_VALUE_AS(x, double));  break;
     case FV_STRING: SET_VALUE_AS(string, OTHER_VALUE_AS(x, string));  break;
-    default: assert("" == "unknown type");
+    default: assert(false); // unknown type
   }
 }
 
@@ -611,7 +625,8 @@ bool FlagRegistry::SetFlagLocked(CommandLineFlag* flag,
       break;
     }
     default: {
-      assert("" == "unknown set_mode"); return false;
+      // unknown set_mode
+      assert(false); return false;
     }
   }
 
@@ -1155,13 +1170,11 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 //    All of these work on the default, global registry.
 //       For GetCommandLineOption, return false if no such flag
 //    is known, true otherwise.  We clear "value" if a suitable
-//    flag is found.  If is_default_value is non-NULL, we set it to
-//    contain whether the value is a default or was explicitly set.
+//    flag is found.
 // --------------------------------------------------------------------
 
 
-bool GetCommandLineOption(const char* name, string* value,
-                          bool *is_default_value) {
+bool GetCommandLineOption(const char* name, string* value) {
   if (NULL == name)
     return false;
   assert(value);
@@ -1174,10 +1187,6 @@ bool GetCommandLineOption(const char* name, string* value,
     return false;
   } else {
     *value = flag->current_value();
-    if (is_default_value) {
-      flag->UpdateModifiedBit();
-      *is_default_value = !flag->modified_;
-    }
     registry->Unlock();
     return true;
   }

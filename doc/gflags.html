@@ -159,7 +159,7 @@ use a flag that's defined in another file.  For instance, if I were
 writing <code>bar.cc</code> but wanted to access the big_menu, flag, I
 would put this near the top of <code>bar.cc</code>:</p>
 <pre>
-   DEFINE_bool(big_menu);
+   DECLARE_bool(big_menu);
 </pre>
 
 <p>This is functionally equivalent to saying <code>extern
@@ -280,7 +280,7 @@ processing.  So in <code>foo -f1 1 -- -f2 2</code>, <code>f1</code> is
 considered a flag, but <code>-f2</code> is not.</p>
 
 <p>Note that flags do not have single-letter synonyms, like they do in
-the getopt library, nor do we allowing "combining" flags behind a
+the getopt library, nor do we allow "combining" flags behind a
 single dash, as in <code>ls -la</code>.</p>
 
 

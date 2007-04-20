@@ -136,22 +136,18 @@ extern const char* ProgramUsage();          // string set by SetUsageMessage()
 // commonly, via the DEFINE_foo macro).  But if you need a bit more
 // control, we have programmatic ways to get/set the flags as well.
 
-// Return true iff the flagname was found.  If is_default_value is not
-// NULL, set to true iff the flag's value had never been set explicitly.
+// Return true iff the flagname was found.
 // OUTPUT is set to the flag's value, or unchanged if we return false.
-extern bool GetCommandLineOption(const char* name, std::string* OUTPUT,
-                                 bool *is_default_value = NULL);
+extern bool GetCommandLineOption(const char* name, std::string* OUTPUT);
 
 // Return true iff the flagname was found. OUTPUT is set to the flag's
 // CommandLineFlagInfo or unchanged if we return false.
 extern bool GetCommandLineFlagInfo(const char* name,
                                    CommandLineFlagInfo* OUTPUT);
 
-// Return the CommandLineFlagInfo of the flagname.
-// assertion failure if the flagname was not found.
-//
-// Example to check if a flag has default value:
-//   if (GetCommandLineFlagInfoOrDie("foo").is_default)
+// Return the CommandLineFlagInfo of the flagname.  exit() if name not found.
+// Example usage, to check if a flag's value is currently the default value:
+//   if (GetCommandLineFlagInfoOrDie("foo").is_default) ...
 extern CommandLineFlagInfo GetCommandLineFlagInfoOrDie(const char* name);
 
 enum FlagSettingMode {

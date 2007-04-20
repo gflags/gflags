@@ -240,7 +240,7 @@ googleincludedir = $(includedir)/google
 googleinclude_HEADERS = src/google/gflags.h
 docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
 dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
-	doc/gflags.html
+	doc/designstyle.css doc/gflags.html
 
 lib_LTLIBRARIES = libgflags.la
 TESTS = gflags_unittest

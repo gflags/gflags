@@ -20,3 +20,10 @@ Wed Mar 28 12:15:56 2007  Google Inc. <opensource@google.com>
 	* Add is_default to CommandLineFlagInfo (pchien)
 	* Make docs a bit prettier (csilvers)
 	* Actually include the python files in the distribution! :-/ (csilvers)
+
+Thu Apr 19 15:15:07 2007  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.4
+	* Remove is_default from GetCommandLineFlagInfo (csilvers)
+	* Portability fixes: includes, strtoll, gcc4.3 errors (csilvers)
+	* A few doc typo cleanups (csilvers)
