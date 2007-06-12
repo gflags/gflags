@@ -1228,9 +1228,9 @@ string SetCommandLineOptionWithMode(const char* name, const char* value,
     result = parser.ProcessSingleOptionLocked(flag, value, set_mode);
     if (!result.empty()) {   // in the error case, we've already logged
       // You could consider logging this change, if you wanted to know it:
-      //fprintf(stderr, "%sFLAGS_%s set to '%s'\n",
+      //fprintf(stderr, "%sFLAGS_%s\n",
       //        (set_mode == SET_FLAGS_DEFAULT ? "default value of " : ""),
-      //        name, value);
+      //        result);
     }
   }
   registry->Unlock();
@@ -1429,7 +1429,7 @@ bool ReadFromFlagsFile(const string& filename, const char* prog_name,
 //    Reads the value from the environment and returns it.
 //    We use an FlagValue to make the parsing easy.
 //    Example usage:
-//       DEFINE_bool(myflag, BoolFromEnv("MYFLAG_DEFAULT"), "whatever");
+//       DEFINE_bool(myflag, BoolFromEnv("MYFLAG_DEFAULT", false), "whatever");
 // --------------------------------------------------------------------
 
 template<typename T>

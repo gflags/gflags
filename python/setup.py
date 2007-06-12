@@ -32,11 +32,11 @@
 from distutils.core import setup
 
 setup(name='gflags',
-      version='0.4',
+      version='0.5',
       description='Google Commandline Flags Module',
       license='BSD',
       author='Google Inc.',
       author_email='opensource@google.com',
       url='http://code.google.com/p/google-gflags',
       py_modules=["gflags"],
-      data_files=["/usr/local/bin", "gflags2man.py"])
+      data_files=[("/usr/local/bin", ["gflags2man.py"])])

@@ -1,16 +1,10 @@
-## This is a boilerplate file for Google opensource projects.
-## To make it useful, replace <<TEXT>> with actual text for your project.
-## Also, look at comments with "## double hashes" to see if any are worth
-## uncommenting or modifying.
-
 ## Process this file with autoconf to produce configure.
-## In general, the safest way to proceed is to run the following:
-##    % aclocal -I . -I `pwd`/../autoconf && autoheader && autoconf && automake
+## In general, the safest way to proceed is to run ./autogen.sh
 
 # make sure we're interpreted by some minimal autoconf
 AC_PREREQ(2.57)
 
-AC_INIT(gflags, 0.4, opensource@google.com)
+AC_INIT(gflags, 0.5, opensource@google.com)
 # The argument here is just something that should be in the current directory
 # (for sanity checking)
 AC_CONFIG_SRCDIR(README)

@@ -820,13 +820,15 @@ class Flag:
     self.default_as_str = self.__GetParsedValueAsString(self.value)
 
   def __GetParsedValueAsString(self, value):
+    if value is None:
+      return None
+    if self.serializer:
+      return repr(self.serializer.Serialize(value))
     if self.boolean:
       if value:
         return repr('true')
       else:
         return repr('false')
-    if value is None:
-      return None
     return repr(str(value))
 
   def Parse(self, argument):
@@ -837,7 +839,9 @@ class Flag:
     self.present += 1
 
   def Unparse(self):
-    if self.default != None:
+    if self.default is None:
+      self.value = None
+    else:
       self.Parse(self.default)
     self.present = 0
 
@@ -858,7 +862,7 @@ class Flag:
     """
     Change the default value, and current value, of this flag object
     """
-    if value:     # See __init__ for logic details
+    if value is not None:     # See __init__ for logic details
       self.Parse(value)
       self.present -= 1 # reset .present after parsing new default value
     else:
@@ -995,8 +999,7 @@ class BooleanFlag(Flag):
   """
   def __init__(self, name, default, help, short_name=None, **args):
     p = BooleanParser()
-    g = ArgumentSerializer()
-    Flag.__init__(self, p, g, name, default, help, short_name, 1, **args)
+    Flag.__init__(self, p, None, name, default, help, short_name, 1, **args)
     if not self.help: self.help = "a boolean value"
 
 def DEFINE_boolean(name, default, help, flag_values=FLAGS, **args):

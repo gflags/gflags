@@ -48,7 +48,7 @@ class FlagsUnitTest(unittest.TestCase):
   "Flags Unit Test"
 
   def test_flags(self):
-    
+
     ##############################################
     # Test normal usage with no (expected) errors.
 
@@ -64,13 +64,28 @@ class FlagsUnitTest(unittest.TestCase):
     flags.DEFINE_boolean("noexec", 1, "boolean flag with no as prefix")
     flags.DEFINE_integer("x", 3, "how eXtreme to be")
     flags.DEFINE_integer("l", 0x7fffffff00000000L, "how long to be")
+    flags.DEFINE_list('letters', 'a,b,c', "a list of letters")
+    flags.DEFINE_enum("kwery", None, ['who', 'what', 'why', 'where', 'when'],
+                      "?")
+
+    # Specify number of flags defined above.  The short_name defined
+    # for 'repeat' counts as an extra flag.
+    number_defined_flags = 10 + 1
+    self.assertEqual(len(FLAGS.RegisteredFlags()),
+                         number_defined_flags + number_test_framework_flags)
+
     assert FLAGS.repeat == 4, "integer default values not set:" + FLAGS.repeat
     assert FLAGS.name == 'Bob', "default values not set:" + FLAGS.name
     assert FLAGS.debug == 0, "boolean default values not set:" + FLAGS.debug
     assert FLAGS.q == 1, "boolean default values not set:" + FLAGS.q
     assert FLAGS.x == 3, "integer default values not set:" + FLAGS.x
-    assert FLAGS.l == 0x7fffffff00000000L, "integer default values not set:" + FLAGS.l
-    
+    assert FLAGS.l == 0x7fffffff00000000L, ("integer default values not set:"
+                                            + FLAGS.l)
+    assert FLAGS.letters == ['a', 'b', 'c'], "list default values not set:" \
+      + FLAGS.letters
+    assert FLAGS.kwery is None, ("enum default None value not set:"
+                                  + FLAGS.kwery)
+
     flag_values = FLAGS.FlagValuesDict()
     assert flag_values['repeat'] == 4
     assert flag_values['name'] == 'Bob'
@@ -80,6 +95,8 @@ class FlagsUnitTest(unittest.TestCase):
     assert flag_values['quack'] == 0
     assert flag_values['x'] == 3
     assert flag_values['l'] == 0x7fffffff00000000L
+    assert flag_values['letters'] == ['a', 'b', 'c']
+    assert flag_values['kwery'] is None
 
     # Verify string form of defaults
     assert FLAGS['repeat'].default_as_str == "'4'"
@@ -90,6 +107,7 @@ class FlagsUnitTest(unittest.TestCase):
     assert FLAGS['noexec'].default_as_str == "'true'"
     assert FLAGS['x'].default_as_str == "'3'"
     assert FLAGS['l'].default_as_str == "'9223372032559808512'"
+    assert FLAGS['letters'].default_as_str == "'a,b,c'"
 
     # Verify that the iterator for flags yields all the keys
     keys = list(FLAGS)
@@ -97,7 +115,7 @@ class FlagsUnitTest(unittest.TestCase):
     reg_flags = FLAGS.RegisteredFlags()
     reg_flags.sort()
     self.assertEqual(keys, reg_flags)
-    
+
     # Parse flags
     # .. empty command line
     argv = ('./program',)
@@ -120,8 +138,8 @@ class FlagsUnitTest(unittest.TestCase):
     FLAGS['x'].present = 0 # Reset
 
     # Flags list
-    
-    assert len(FLAGS.RegisteredFlags()) == 9 + number_test_framework_flags
+    self.assertEqual(len(FLAGS.RegisteredFlags()),
+                     number_defined_flags + number_test_framework_flags)
     assert 'name' in FLAGS.RegisteredFlags()
     assert 'debug' in FLAGS.RegisteredFlags()
     assert 'repeat' in FLAGS.RegisteredFlags()
@@ -130,6 +148,7 @@ class FlagsUnitTest(unittest.TestCase):
     assert 'quack' in FLAGS.RegisteredFlags()
     assert 'x' in FLAGS.RegisteredFlags()
     assert 'l' in FLAGS.RegisteredFlags()
+    assert 'letters' in FLAGS.RegisteredFlags()
 
     # has_key
     assert FLAGS.has_key('name')
@@ -139,7 +158,8 @@ class FlagsUnitTest(unittest.TestCase):
 
     # try deleting a flag
     del FLAGS.r
-    assert len(FLAGS.RegisteredFlags()) == 8 + number_test_framework_flags
+    self.assertEqual(len(FLAGS.RegisteredFlags()),
+                     number_defined_flags - 1 + number_test_framework_flags)
     assert not 'r' in FLAGS.RegisteredFlags()
 
     # .. command line with extra stuff
@@ -163,6 +183,17 @@ class FlagsUnitTest(unittest.TestCase):
     FLAGS.Reset()
     assert FLAGS['debug'].present == 0
     assert FLAGS['debug'].value == False
+
+    # Test that reset restores default value when default value is None.
+    argv = ('./program', '--kwery=who')
+    argv = FLAGS(argv)
+    assert len(argv) == 1, "wrong number of arguments pulled"
+    assert argv[0] == './program', "program name not preserved"
+    assert FLAGS['kwery'].present == 1
+    assert FLAGS['kwery'].value == 'who'
+    FLAGS.Reset()
+    assert FLAGS['kwery'].present == 0
+    assert FLAGS['kwery'].value == None
 
     # Test integer argument passing
     argv = ('./program', '--x', '0x12345')
@@ -265,17 +296,17 @@ class FlagsUnitTest(unittest.TestCase):
     # test list code
     lists = [['hello','moo','boo','1'],
              [],]
-            
+
     flags.DEFINE_list('testlist', '', 'test lists parsing')
     flags.DEFINE_spaceseplist('testspacelist', '', 'tests space lists parsing')
 
-    for name, sep in (('testlist', ','), ('testspacelist', ' '), 
+    for name, sep in (('testlist', ','), ('testspacelist', ' '),
                       ('testspacelist', '\n')):
       for lst in lists:
         argv = ('./program', '--%s=%s' % (name, sep.join(lst)))
         argv = FLAGS(argv)
         self.assertEquals(getattr(FLAGS, name), lst)
-   
+
     # Test help text
     flagsHelp = str(FLAGS)
     assert flagsHelp.find("repeat") != -1, "cannot find flag in help"
@@ -292,19 +323,19 @@ class FlagsUnitTest(unittest.TestCase):
                              'string option that can occur multiple times',
                              short_name='s')
     self.assertEqual(FLAGS.get('s_str', None), [ 'sing1', ])
-    
+
     # Test MultiFlag with list of default values
     multi_string_defs = [ 'def1', 'def2', ]
     flags.DEFINE_multistring('m_str', multi_string_defs,
                              'string option that can occur multiple times',
                              short_name='m')
     self.assertEqual(FLAGS.get('m_str', None), multi_string_defs)
-    
+
     # Test flag specified multiple times with a MultiFlag
     argv = ('./program', '--m_str=str1', '-m', 'str2')
     argv = FLAGS(argv)
     self.assertEqual(FLAGS.get('m_str', None), [ 'str1', 'str2', ])
-    
+
     # Test single-letter flags; should support both single and double dash
     argv = ('./program', '-q', '-x8')
     argv = FLAGS(argv)
@@ -329,7 +360,7 @@ class FlagsUnitTest(unittest.TestCase):
 
     oldtestlist = FLAGS.testlist
     oldtestspacelist = FLAGS.testspacelist
-    
+
     argv = ('./program',
             FLAGS['test0'].Serialize(),
             FLAGS['test1'].Serialize(),
@@ -347,7 +378,7 @@ class FlagsUnitTest(unittest.TestCase):
     FLAGS.testspacelist = list(testspacelist1)
     argv = ('./program',
             FLAGS['testlist'].Serialize(),
-            FLAGS['testspacelist'].Serialize())    
+            FLAGS['testspacelist'].Serialize())
     argv = FLAGS(argv)
     self.assertEqual(FLAGS.testlist, testlist1)
     self.assertEqual(FLAGS.testspacelist, testspacelist1)
@@ -371,6 +402,7 @@ class FlagsUnitTest(unittest.TestCase):
 
     def ArgsString():
       flagnames = FLAGS.RegisteredFlags()
+
       flagnames.sort()
       nonbool_flags = ['--%s %s' % (name, FLAGS.get(name, None))
                       for name in flagnames
@@ -392,7 +424,9 @@ class FlagsUnitTest(unittest.TestCase):
     self.assertEqual(FLAGS.get('name', None), 'giants')
     self.assertEqual(FLAGS.get('debug', None), 0)
     self.assertEqual(ArgsString(),
+      "--kwery None "
       "--l 9223372032559808512 "
+      "--letters ['a', 'b', 'c'] "
       "--m ['str1', 'str2'] --m_str ['str1', 'str2'] " 
       "--name giants " 
       "--repeat 3 " 
@@ -414,11 +448,13 @@ class FlagsUnitTest(unittest.TestCase):
     # items appended to existing non-default value lists for --m/--m_str
     # new value overwrites default value (not appended to it) for --s/--s_str
     self.assertEqual(ArgsString(),
+      "--kwery None "
       "--l 9223372032559808512 "
+      "--letters ['a', 'b', 'c'] "
       "--m ['str1', 'str2', 'upd1'] "
       "--m_str ['str1', 'str2', 'upd1'] "
-      "--name giants " 
-      "--repeat 3 " 
+      "--name giants "
+      "--repeat 3 "
       "--s ['upd2'] --s_str ['upd2'] "
       "--testget4 None --testlist [] "
       "--testspacelist [] --x 10 "
@@ -431,7 +467,7 @@ class FlagsUnitTest(unittest.TestCase):
 
     ####################################
     # Test all kind of error conditions.
-    
+
     # Duplicate flag detection
     try:
       flags.DEFINE_boolean("run", 0, "runhelp", short_name='q')
@@ -543,13 +579,13 @@ class FlagsUnitTest(unittest.TestCase):
       raise AssertionError("Illegal flag value exception not thrown")
     except flags.IllegalFlagValue:
       pass
-      
+
   ################################################
   # Code to test the flagfile=<> loading behavior
   ################################################
-  def _SetupTestFiles(self):  
+  def _SetupTestFiles(self):
     """ Creates and sets up some dummy flagfile files with bogus flags"""
-    
+
     # Figure out where to create temporary files
     tmp_path = '/tmp/flags_unittest'
     if os.path.exists(tmp_path):
@@ -557,14 +593,14 @@ class FlagsUnitTest(unittest.TestCase):
     os.makedirs(tmp_path)
 
     try:
-      tmp_flag_file_1 = open((tmp_path + '/UnitTestFile1.tst'), 'w') 
+      tmp_flag_file_1 = open((tmp_path + '/UnitTestFile1.tst'), 'w')
       tmp_flag_file_2 = open((tmp_path + '/UnitTestFile2.tst'), 'w')
       tmp_flag_file_3 = open((tmp_path + '/UnitTestFile3.tst'), 'w')
     except IOError, e_msg:
       print e_msg
-      print 'FAIL\n File Creation problem in Unit Test' 
+      print 'FAIL\n File Creation problem in Unit Test'
       sys.exit(1)
-    
+
     # put some dummy flags in our test files
     tmp_flag_file_1.write('#A Fake Comment\n')
     tmp_flag_file_1.write('--UnitTestMessage1=tempFile1!\n')
@@ -585,37 +621,37 @@ class FlagsUnitTest(unittest.TestCase):
     tmp_flag_file_3.write('#YAFC\n')
     tmp_flag_file_3.write('--UnitTestBoolFlag\n')
     file_list.append(tmp_flag_file_3.name)
-    
-    tmp_flag_file_1.close() 
+
+    tmp_flag_file_1.close()
     tmp_flag_file_2.close()
     tmp_flag_file_3.close()
 
     return file_list # these are just the file names
   # end SetupFiles def
-  
+
   def _RemoveTestFiles(self, tmp_file_list):
     """Closes the files we just created.  tempfile deletes them for us """
-    for file_name in tmp_file_list: 
+    for file_name in tmp_file_list:
       try:
-        os.remove(file_name) 
+        os.remove(file_name)
       except OSError, e_msg:
         print '%s\n, Problem deleting test file' % e_msg
   #end RemoveTestFiles def
-  
+
   def __DeclareSomeFlags(self):
     flags.DEFINE_string('UnitTestMessage1', 'Foo!', 'You Add Here.')
     flags.DEFINE_string('UnitTestMessage2', 'Bar!', 'Hello, Sailor!')
     flags.DEFINE_boolean('UnitTestBoolFlag', 0, 'Some Boolean thing')
     flags.DEFINE_integer('UnitTestNumber', 12345, 'Some integer',
                          lower_bound=0)
-  
-  def _UndeclareSomeFlags(self): 
+
+  def _UndeclareSomeFlags(self):
     FLAGS.__delattr__('UnitTestMessage1')
     FLAGS.__delattr__('UnitTestMessage2')
     FLAGS.__delattr__('UnitTestBoolFlag')
     FLAGS.__delattr__('UnitTestNumber')
-    
-  #### Flagfile Unit Tests ####  
+
+  #### Flagfile Unit Tests ####
   def testMethod_flagfiles_1(self):
     """ Test trivial case with no flagfile based options. """
     self.__DeclareSomeFlags()
@@ -626,7 +662,7 @@ class FlagsUnitTest(unittest.TestCase):
     self.assertEqual( fake_argv, FLAGS.ReadFlagsFromFiles(fake_argv))
     self._UndeclareSomeFlags()
   # end testMethodOne
-  
+
   def testMethod_flagfiles_2(self):
     """Tests parsing one file + arguments off simulated argv"""
     self.__DeclareSomeFlags()
@@ -634,8 +670,8 @@ class FlagsUnitTest(unittest.TestCase):
     # specify our temp file on the fake cmd line
     fake_cmd_line = 'fooScript --q --flagfile=%s' % tmp_files[0]
     fake_argv = fake_cmd_line.split(' ')
-    
-    # We should see the original cmd line with the file's contents spliced in. 
+
+    # We should see the original cmd line with the file's contents spliced in.
     # Note that these will be in REVERSE order from order encountered in file
     # This is done so arguements we encounter sooner will have priority.
     expected_results = ['fooScript',
@@ -644,8 +680,8 @@ class FlagsUnitTest(unittest.TestCase):
                           '--noUnitTestBoolFlag',
                           '--q']
     test_results = FLAGS.ReadFlagsFromFiles(fake_argv)
-    self.assertEqual(expected_results, test_results) 
-    self._RemoveTestFiles(tmp_files)  
+    self.assertEqual(expected_results, test_results)
+    self._RemoveTestFiles(tmp_files)
     self._UndeclareSomeFlags()
   # end testTwo def
 
@@ -657,7 +693,7 @@ class FlagsUnitTest(unittest.TestCase):
     fake_cmd_line = ('fooScript --UnitTestNumber=77 --flagfile=%s'
                      % tmp_files[1])
     fake_argv = fake_cmd_line.split(' ')
-    
+
     expected_results = ['fooScript',
                           '--UnitTestMessage1=tempFile1!',
                           '--UnitTestNumber=54321',
@@ -666,11 +702,11 @@ class FlagsUnitTest(unittest.TestCase):
                           '--UnitTestNumber=6789a',
                           '--UnitTestNumber=77']
     test_results = FLAGS.ReadFlagsFromFiles(fake_argv)
-    self.assertEqual(expected_results, test_results) 
+    self.assertEqual(expected_results, test_results)
     self._RemoveTestFiles(tmp_files)
     self._UndeclareSomeFlags()
   # end testThree def
-    
+
   def testMethod_flagfiles_4(self):
     """Tests parsing self referetial files + arguments of simulated argv.
       This test should print a warning to stderr of some sort.
@@ -687,20 +723,20 @@ class FlagsUnitTest(unittest.TestCase):
                           '--noUnitTestBoolFlag' ]
 
     test_results = FLAGS.ReadFlagsFromFiles(fake_argv)
-    self.assertEqual(expected_results, test_results) 
-    self._RemoveTestFiles(tmp_files)  
+    self.assertEqual(expected_results, test_results)
+    self._RemoveTestFiles(tmp_files)
     self._UndeclareSomeFlags()
 
   def test_flagfiles_user_path_expansion(self):
-    """Test that user directory referenced paths (ie. ~/foo) are correctly 
-      expanded.  This test depends on whatever account's running the unit test 
-      to have read/write access to their own home directory, otherwise it'll 
+    """Test that user directory referenced paths (ie. ~/foo) are correctly
+      expanded.  This test depends on whatever account's running the unit test
+      to have read/write access to their own home directory, otherwise it'll
       FAIL.
     """
     self.__DeclareSomeFlags()
     fake_flagfile_item_style_1 = '--flagfile=~/foo.file'
     fake_flagfile_item_style_2 = '-flagfile=~/foo.file'
-    
+
     expected_results = os.path.expanduser('~/foo.file')
 
     test_results = FLAGS.ExtractFilename(fake_flagfile_item_style_1)
@@ -737,12 +773,35 @@ class FlagsUnitTest(unittest.TestCase):
     self.assertEqual(FLAGS['UnitTestMessage1'].default_as_str,"'New value'")
     FLAGS([ 'dummyscript', '--UnitTestMessage1=Newer value' ])
     self.assertEqual(FLAGS.UnitTestMessage1, 'Newer value')
+
     # Test that setting the default to None works correctly.
     FLAGS['UnitTestNumber'].SetDefault(None)
     self.assertEqual(FLAGS.UnitTestNumber, None)
     self.assertEqual(FLAGS['UnitTestNumber'].default_as_str, None)
     FLAGS([ 'dummyscript', '--UnitTestNumber=56' ])
     self.assertEqual(FLAGS.UnitTestNumber, 56)
+
+    # Test that setting the default to zero works correctly.
+    FLAGS['UnitTestNumber'].SetDefault(0)
+    self.assertEqual(FLAGS.UnitTestNumber, 0)
+    self.assertEqual(FLAGS['UnitTestNumber'].default_as_str, "'0'")
+    FLAGS([ 'dummyscript', '--UnitTestNumber=56' ])
+    self.assertEqual(FLAGS.UnitTestNumber, 56)
+
+    # Test that setting the default to "" works correctly.
+    FLAGS['UnitTestMessage1'].SetDefault("")
+    self.assertEqual(FLAGS.UnitTestMessage1, "")
+    self.assertEqual(FLAGS['UnitTestMessage1'].default_as_str, "''")
+    FLAGS([ 'dummyscript', '--UnitTestMessage1=fifty-six' ])
+    self.assertEqual(FLAGS.UnitTestMessage1, "fifty-six")
+
+    # Test that setting the default to false works correctly.
+    FLAGS['UnitTestBoolFlag'].SetDefault(False)
+    self.assertEqual(FLAGS.UnitTestBoolFlag, False)
+    self.assertEqual(FLAGS['UnitTestBoolFlag'].default_as_str, "'false'")
+    FLAGS([ 'dummyscript', '--UnitTestBoolFlag=true' ])
+    self.assertEqual(FLAGS.UnitTestBoolFlag, True)
+
     # Test that setting invalid defaults raises exceptions
     self.assertRaises(flags.IllegalFlagValue,
                       FLAGS['UnitTestNumber'].SetDefault, 'oops')
@@ -750,7 +809,7 @@ class FlagsUnitTest(unittest.TestCase):
                       FLAGS['UnitTestNumber'].SetDefault, -1)
     self.assertRaises(flags.IllegalFlagValue,
                       FLAGS['UnitTestBoolFlag'].SetDefault, 'oops')
-    
+
     self._UndeclareSomeFlags()
 
   def testMethod_ShortestUniquePrefixes(self):

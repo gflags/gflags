@@ -50,7 +50,11 @@ DIST_COMMON = README $(am__configure_deps) $(dist_doc_DATA) \
 	install-sh ltmain.sh missing mkinstalldirs
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/configure.ac
+am__aclocal_m4_deps = $(top_srcdir)/m4/ac_have_attribute.m4 \
+	$(top_srcdir)/m4/acx_pthread.m4 \
+	$(top_srcdir)/m4/google_namespace.m4 \
+	$(top_srcdir)/m4/namespaces.m4 \
+	$(top_srcdir)/m4/stl_namespace.m4 $(top_srcdir)/configure.ac
 am__configure_deps = $(am__aclocal_m4_deps) $(CONFIGURE_DEPENDENCIES) \
 	$(ACLOCAL_M4)
 am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
@@ -232,7 +236,7 @@ sysconfdir = @sysconfdir@
 target_alias = @target_alias@
 
 # Make sure that when we re-make ./configure, we get the macros we need
-ACLOCAL_AMFLAGS = -I `pwd`/../autoconf
+ACLOCAL_AMFLAGS = -I m4
 
 # This is so we can #include <google/foo>
 AM_CPPFLAGS = -I$(top_srcdir)/src
@@ -593,7 +597,7 @@ check-TESTS: $(TESTS)
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/google
+	$(mkdir_p) $(distdir)/doc $(distdir)/m4 $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/google
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

@@ -110,10 +110,18 @@ _START_GOOGLE_NAMESPACE_
 #define EXPECT_GT(val1, val2)  EXPECT_OP(>, val1, val2)
 #define EXPECT_LT(val1, val2)  EXPECT_OP(<, val1, val2)
 
-#define EXPECT_PRED1(pred, arg)                                 \
+#define EXPECT_NAN(arg)                                         \
   do {                                                          \
-    if (!((pred)(arg))) {                                       \
-      fprintf(stderr, "Check failed: %s(%s)\n", #pred, #arg);   \
+    if (!isnan(arg)) {                                          \
+      fprintf(stderr, "Check failed: isnan(%s)\n", #arg);       \
+      exit(1);                                                  \
+    }                                                           \
+  } while (0)
+
+#define EXPECT_INF(arg)                                         \
+  do {                                                          \
+    if (!isinf(arg)) {                                          \
+      fprintf(stderr, "Check failed: isinf(%s)\n", #arg);       \
       exit(1);                                                  \
     }                                                           \
   } while (0)
@@ -425,11 +433,11 @@ TEST(SetFlagValueTest, OrdinaryValues) {
 TEST(SetFlagValueTest, ExceptionalValues) {
   EXPECT_EQ("test_double set to inf\n",
             SetCommandLineOption("test_double", "inf"));
-  EXPECT_PRED1(isinf, FLAGS_test_double);
+  EXPECT_INF(FLAGS_test_double);
 
   EXPECT_EQ("test_double set to inf\n",
             SetCommandLineOption("test_double", "INF"));
-  EXPECT_PRED1(isinf, FLAGS_test_double);
+  EXPECT_INF(FLAGS_test_double);
 
   // set some bad values
   EXPECT_EQ("",
@@ -440,12 +448,12 @@ TEST(SetFlagValueTest, ExceptionalValues) {
             SetCommandLineOption("test_double", ""));
   EXPECT_EQ("test_double set to -inf\n",
             SetCommandLineOption("test_double", "-inf"));
-  EXPECT_PRED1(isinf, FLAGS_test_double);
+  EXPECT_INF(FLAGS_test_double);
   EXPECT_GT(0, FLAGS_test_double);
 
   EXPECT_EQ("test_double set to nan\n",
             SetCommandLineOption("test_double", "NaN"));
-  EXPECT_PRED1(isnan, FLAGS_test_double);
+  EXPECT_NAN(FLAGS_test_double);
 }
 
 // Tests that integer flags can be specified in many ways

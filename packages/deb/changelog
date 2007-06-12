@@ -1,27 +1,24 @@
+google-gflags (0.5-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Google Inc. <opensource@google.com>  Tue, 12 Jun 2007 15:23:42 -0700
+
 google-gflags (0.4-1) unstable; urgency=low
 
-  * google-gflags: version 0.4
-  * Remove is_default from GetCommandLineFlagInfo (csilvers)
-  * Portability fixes: includes, strtoll, gcc4.3 errors (csilvers)
-  * A few doc typo cleanups (csilvers)
+  * New upstream release.
 
  -- Google Inc. <opensource@google.com>  Thu, 19 Apr 2007 15:18:43 -0700
 
 google-gflags (0.3-1) unstable; urgency=low
 
-  * google-gflags: version 0.2
-  * added support for python commandlineflags, as well as c++
-  * gflags2man, a script to turn flags into a man page (dchristian)
+  * New upstream release.
 
  -- Google Inc. <opensource@google.com>  Mon, 22 Jan 2007 15:33:06 -0800
 
 google-gflags (0.2-1) unstable; urgency=low
 
-  * google-gflags: version 0.3
-  * python portability fix: use popen instead of subprocess (csilvers)
-  * Add is_default to CommandLineFlagInfo (pchien)
-  * Make docs a bit prettier (csilvers)
-  * Actually include the python files in the distribution! :-/ (csilvers)
+  * New upstream release.
 
  -- Google Inc. <opensource@google.com>  Wed, 28 Mar 2007 12:15:56 -0700
 

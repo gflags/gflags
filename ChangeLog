@@ -27,3 +27,11 @@ Thu Apr 19 15:15:07 2007  Google Inc. <opensource@google.com>
 	* Remove is_default from GetCommandLineFlagInfo (csilvers)
 	* Portability fixes: includes, strtoll, gcc4.3 errors (csilvers)
 	* A few doc typo cleanups (csilvers)
+
+Tue Jun 12 15:23:42 2007  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.5
+	* Include all m4 macros in the distribution (csilvers)
+	* Python: Fix broken data_files field in setup.py (sidlon)
+	* Python: better string serliaizing and unparsing (abo, csimmons)
+	* Fix checks for NaN and inf to work with Mac OS X (csilvers)
