@@ -46,9 +46,16 @@
 using std::vector;
 using std::string;
 
+// Returns the number of elements in an array.  We don't use the safer
+// version in base/basictypes.h as commandlineflags is open-sourced.
+#define GET_ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*(arr)))
+
 DECLARE_string(tryfromenv);   // in commandlineflags.cc
 
 DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
+DEFINE_string(srcdir, google::StringFromEnv("SRCDIR", "."),
+              "Source-dir root, needed to find gflags_unittest_flagfile");
+
 
 DEFINE_bool(test_bool, false, "tests bool-ness");
 DEFINE_int32(test_int32, -1, "");
@@ -964,7 +971,7 @@ TEST(DeprecatedFunctionsTest, ReadFromFlagsFile) {
   r = ReadFromFlagsFile(filename, GetArgv0(), true);
   EXPECT_EQ(true, r);
   EXPECT_EQ(-10, FLAGS_test_int32);
-} // unnamed namespace
+}
 
 TEST(DeprecatedFunctionsTest, ReadFromFlagsFileFailure) {
   FLAGS_test_int32 = -20;
@@ -985,13 +992,114 @@ TEST(FlagsSetBeforeInitGoogleTest, TryFromEnv) {
   EXPECT_EQ("pre-set", FLAGS_test_tryfromenv);
 }
 
+// The following test case verifies that ParseCommandLineFlags() and
+// ParseCommandLineNonHelpFlags() uses the last definition of a flag
+// in case it's defined more than once.
+
+DEFINE_int32(test_flag, -1, "used for testing commandlineflags.cc");
+
+// Returns the definition of the --flagfile flag to be used in the tests.
+const char* GetFlagFileFlag() {
+  static const string flagfile_flag = string("--flagfile=")
+      + FLAGS_srcdir + "/src/gflags_unittest_flagfile";
+
+  return flagfile_flag.c_str();
+}
+
+// Parses and returns the --test_flag flag.
+// If with_help is true, calls ParseCommandLineFlags; otherwise calls
+// ParseCommandLineNonHelpFlags.
+int32 ParseTestFlag(bool with_help, int argc, const char** const_argv) {
+  FlagSaver fs;  // Restores the flags before returning.
+
+  // Makes a copy of the input array s.t. it can be reused
+  // (ParseCommandLineFlags() will alter the array).
+  char** const argv_save = new char*[argc + 1];
+  char** argv = argv_save;
+  memcpy(argv, const_argv, sizeof(*argv)*(argc + 1));
+
+  if (with_help) {
+    ParseCommandLineFlags(&argc, &argv, true);
+  } else {
+    ParseCommandLineNonHelpFlags(&argc, &argv, true);
+  }
+
+  delete[] argv_save;
+  return FLAGS_test_flag;
+}
+
+TEST(ParseCommandLineFlagsUsesLastDefinitionTest,
+     WhenFlagIsDefinedTwiceOnCommandLine) {
+  const char* argv[] = {
+    "my_test",
+    "--test_flag=1",
+    "--test_flag=2",
+    NULL,
+  };
+
+  EXPECT_EQ(2, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(2, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
+TEST(ParseCommandLineFlagsUsesLastDefinitionTest,
+     WhenFlagIsDefinedTwiceInFlagFile) {
+  const char* argv[] = {
+    "my_test",
+    GetFlagFileFlag(),
+    NULL,
+  };
+
+  EXPECT_EQ(2, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(2, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
+TEST(ParseCommandLineFlagsUsesLastDefinitionTest,
+     WhenFlagIsDefinedInCommandLineAndThenFlagFile) {
+  const char* argv[] = {
+    "my_test",
+    "--test_flag=0",
+    GetFlagFileFlag(),
+    NULL,
+  };
+
+  EXPECT_EQ(2, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(2, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
+TEST(ParseCommandLineFlagsUsesLastDefinitionTest,
+     WhenFlagIsDefinedInFlagFileAndThenCommandLine) {
+  const char* argv[] = {
+    "my_test",
+    GetFlagFileFlag(),
+    "--test_flag=3",
+    NULL,
+  };
+
+  EXPECT_EQ(3, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(3, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
+TEST(ParseCommandLineFlagsUsesLastDefinitionTest,
+     WhenFlagIsDefinedInCommandLineAndFlagFileAndThenCommandLine) {
+  const char* argv[] = {
+    "my_test",
+    "--test_flag=0",
+    GetFlagFileFlag(),
+    "--test_flag=3",
+    NULL,
+  };
+
+  EXPECT_EQ(3, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(3, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
 static int Main(int argc, char **argv) {
   // We need to call SetArgv before InitGoogle, so our "test" argv will
   // win out over this executable's real argv.  That makes running this
   // test with a real --help flag kinda annoying, unfortunately.
   const char* test_argv[] = { "/test/argv/for/gflags_unittest",
                               "argv 2", "3rd argv", "argv #4" };
-  SetArgv(sizeof(test_argv)/sizeof(*test_argv), test_argv);
+  SetArgv(GET_ARRAY_SIZE(test_argv), test_argv);
 
   // The first arg is the usage message, also important for testing.
   string usage_message = (string(GetArgv0()) +

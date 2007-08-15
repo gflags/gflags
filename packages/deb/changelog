@@ -1,3 +1,16 @@
+google-gflags (0.6-2) unstable; urgency=low
+
+  * Somehow 0.6-1 was missing the lib* control files, so the .deb produced
+    was empty.  Fix that to get an actual valid .deb file.
+
+ -- Google Inc. <opensource@google.com>  Wed, 15 Aug 2007 12:32:01 -0700
+
+google-gflags (0.6-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Google Inc. <opensource@google.com>  Wed, 15 Aug 2007 07:35:51 -0700
+
 google-gflags (0.5-1) unstable; urgency=low
 
   * New upstream release.

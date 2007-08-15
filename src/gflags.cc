@@ -367,27 +367,20 @@ CommandLineFlag::~CommandLineFlag() {
 
 const char* CommandLineFlag::CleanFileName() const {
   // Compute top-level directory & file that this appears in
-  // search full path backwards.  Set kMaxSlashes = 5,
-  // as the current code has <= 4 levels of dirs.
-  //   E.g. .../froogle/wrapping/autowrap/clustering/*.cc
-  // Also, stop going backwards at "/google3/"; and skip by the first slash.
+  // search full path backwards.
+  // Stop going backwards at kGoogle; and skip by the first slash.
   // E.g.
   //   filename_where_defined = "froogle/wrapping/autowrap/clustering/**.cc"
   //   filename_where_defined = "file/util/fileutil.cc"
-  static const int kMaxSlashes = 5;    // one more than max dir levels
   static const char kGoogle[] = "";    // can set this to whatever
 
   if (sizeof(kGoogle)-1 == 0)          // no prefix to strip
     return filename();
 
   const char* clean_name = filename() + strlen(filename()) - 1;
-  int slashes = 0;
   while ( clean_name > filename() ) {
     if (*clean_name == PATH_SEPARATOR) {
-      ++slashes;
-      if (slashes == kMaxSlashes) {
-        break;    // no dirs now are deeper than this
-      } else if (strncmp(clean_name, kGoogle, sizeof(kGoogle)-1) == 0) {
+      if (strncmp(clean_name, kGoogle, sizeof(kGoogle)-1) == 0) {
         // ".../google/base/logging.cc" ==> "base/logging.cc"
         clean_name += sizeof(kGoogle)-1;    // past "/google/"
         break;
@@ -486,6 +479,7 @@ class FlagRegistry {
   pthread_mutex_t lock_;
   static FlagRegistry* global_registry_;   // a singleton registry
   static pthread_once_t global_registry_once_;
+  static int global_registry_once_nothreads_;   // when we don't link pthreads
 
   static void InitGlobalRegistry();
 
@@ -636,13 +630,21 @@ bool FlagRegistry::SetFlagLocked(CommandLineFlag* flag,
 // Get the singleton FlagRegistry object
 FlagRegistry* FlagRegistry::global_registry_ = NULL;
 pthread_once_t FlagRegistry::global_registry_once_ = PTHREAD_ONCE_INIT;
+int FlagRegistry::global_registry_once_nothreads_ = 0;
 
 void FlagRegistry::InitGlobalRegistry() {
   global_registry_ = new FlagRegistry;
 }
 
+// We want to use pthread_once here, for safety, but have to worry about
+// whether libpthread is linked in or not.
 FlagRegistry* FlagRegistry::GlobalRegistry() {
-  pthread_once(&global_registry_once_, &FlagRegistry::InitGlobalRegistry);
+  if (pthread_once) {   // means we're running with pthreads
+    pthread_once(&global_registry_once_, &FlagRegistry::InitGlobalRegistry);
+  } else {              // not running with pthreads: we're the only thread
+    if (global_registry_once_nothreads_++ == 0)
+      InitGlobalRegistry();
+  }
   return global_registry_;
 }
 

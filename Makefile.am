@@ -31,7 +31,7 @@ lib_LTLIBRARIES =
 ## TESTS_ENVIRONMENT sets environment variables for when you run unittest,
 ## but it only seems to take effect for *binary* unittests (argh!)
 TESTS =
-TESTS_ENVIRONMENT =
+TESTS_ENVIRONMENT = SRCDIR="$(top_srcdir)"
 check_SCRIPTS =
 # Every time you add a unittest to check_SCRIPTS, add it here too
 noinst_SCRIPTS =
@@ -53,10 +53,16 @@ gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDADD = libgflags.la $(PTHREAD_LIBS)
 
+# Also make sure this works when we don't link in pthreads
+TESTS += gflags_nothreads_unittest
+gflags_nothreads_unittest_SOURCES = $(gflags_unittest_SOURCES)
+gflags_nothreads_unittest_LDADD = libgflags.la
+
 check_SCRIPTS += gflags_unittest_sh
 noinst_SCRIPTS += src/gflags_unittest.sh
+dist_noinst_DATA = $(top_srcdir)/src/gflags_unittest_flagfile
 gflags_unittest_sh: gflags_unittest
-	$(top_srcdir)/src/gflags_unittest.sh $(PWD)/$<
+	$(top_srcdir)/src/gflags_unittest.sh $(PWD)/$< $(top_srcdir)
 
 # These aren't part of the c++ source, but we want them to be distributed
 PYTHON = python/setup.py \

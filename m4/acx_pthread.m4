@@ -1,5 +1,5 @@
 # This was retrieved from
-#    http://0pointer.de/cgi-bin/viewcvs.cgi/trunk/common/acx_pthread.m4?rev=1220
+#    http://0pointer.de/cgi-bin/viewcvs.cgi/trunk/common/acx_pthread.m4?rev=1227
 # See also (perhaps for new versions?)
 #    http://0pointer.de/cgi-bin/viewcvs.cgi/trunk/common/acx_pthread.m4
 
@@ -48,7 +48,7 @@ dnl We are also grateful for the helpful feedback of numerous users.
 dnl
 dnl @category InstalledPackages
 dnl @author Steven G. Johnson <stevenj@alum.mit.edu>
-dnl @version 2005-06-15
+dnl @version 2006-05-29
 dnl @license GPLWithACException
 dnl 
 dnl Checks for GCC shared/pthread inconsistency based on work by
@@ -224,19 +224,24 @@ if test "x$acx_pthread_ok" = xyes; then
 
         LIBS="$save_LIBS"
         CFLAGS="$save_CFLAGS"
-
-        # More AIX lossage: must compile with cc_r
-        AC_CHECK_PROG(PTHREAD_CC, cc_r, cc_r, ${CC})
+        # More AIX lossage: must compile with xlc_r or cc_r
+	if test x"$GCC" != xyes; then
+          AC_CHECK_PROGS(PTHREAD_CC, xlc_r cc_r, ${CC})
+        else
+          PTHREAD_CC=$CC
+	fi
 
    # The next part tries to detect GCC inconsistency with -shared on some
    # architectures and systems. The problem is that in certain
    # configurations, when -shared is specified, GCC "forgets" to
    # internally use various flags which are still necessary.
    
-   # First, check whether caller wants us to skip -shared checks
-   # this is useful
    AC_MSG_CHECKING([whether to check for GCC pthread/shared inconsistencies])
-   if test x"$GCC" != xyes; then
+   check_inconsistencies=yes
+   case "${host_cpu}-${host_os}" in
+     *-darwin*) check_inconsistencies=no ;;
+   esac
+   if test x"$GCC" != xyes -o "x$check_inconsistencies" != xyes ; then
       AC_MSG_RESULT([no])
    else
       AC_MSG_RESULT([yes])

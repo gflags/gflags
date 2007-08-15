@@ -38,12 +38,13 @@
 
 if [ -z "$1" ]
 then
-    echo "USAGE: $0 <unittest exe> [tmpdir]"
+    echo "USAGE: $0 <unittest exe> [top_srcdir] [tmpdir]"
     exit 1
 fi
 
 EXE=$1
-TMPDIR=${2:-/tmp/gflags}
+SRCDIR=${2:-./}
+TMPDIR=${3:-/tmp/gflags}
 
 # $1: line-number $2: expected return code.  $3: substring of expected output.
 # $4: a substring you *don't* expect to find in the output.  $5+ flags
@@ -57,7 +58,8 @@ Expect() {
   local unexpected_output="$1"
   shift
 
-  $EXE "$@" > "$TMPDIR/test.$line_number" 2>&1
+  # We always add --srcdir=$SRCDIR because it's needed for correctness
+  $EXE --srcdir="$SRCDIR" "$@" > "$TMPDIR/test.$line_number" 2>&1
   local actual_rc=$?
   if [ $actual_rc != $expected_rc ]; then
     echo "Test on line $line_number failed:" \

@@ -4,7 +4,7 @@
 # make sure we're interpreted by some minimal autoconf
 AC_PREREQ(2.57)
 
-AC_INIT(gflags, 0.5, opensource@google.com)
+AC_INIT(gflags, 0.6, opensource@google.com)
 # The argument here is just something that should be in the current directory
 # (for sanity checking)
 AC_CONFIG_SRCDIR(README)
@@ -38,6 +38,13 @@ AC_CHECK_FUNCS(strtoll)
 AC_CHECK_FUNCS(strtoq)
 
 AX_C___ATTRIBUTE__
+# We only care about __attribute__ ((unused))
+if test x"$ac_cv___attribute__" = x"yes"; then
+  ac_cv___attribute__unused="__attribute__ ((unused))"
+else
+  ac_cv___attribute__unused=
+fi
+
 ACX_PTHREAD
 
 # Find out what namespace 'normal' STL code lives in, and also what namespace
@@ -49,7 +56,7 @@ AC_DEFINE_GOOGLE_NAMESPACE(google)
 AC_SUBST(ac_google_start_namespace)
 AC_SUBST(ac_google_end_namespace)
 AC_SUBST(ac_google_namespace)
-AC_SUBST(ac_cv___attribute__)
+AC_SUBST(ac_cv___attribute__unused)
 AC_SUBST(ac_cv_have_stdint_h)
 AC_SUBST(ac_cv_have_systypes_h)
 AC_SUBST(ac_cv_have_inttypes_h)

@@ -197,9 +197,6 @@ extern std::string SetCommandLineOptionWithMode(const char* name, const char* va
 // usage example above, the compiler would complain that it's an
 // unused variable.
 
-// This is a trick to work with autoconf, which sets a var to "yes" or "no"
-#define HAVE___ATTRIBUTE__yes 1  // will only be referenced if autoconf says yes
-
 class FlagSaver {
  public:
   FlagSaver();
@@ -210,19 +207,14 @@ class FlagSaver {
 
   FlagSaver(const FlagSaver&);  // no copying!
   void operator=(const FlagSaver&);
-}
-// swig seems to have trouble with __attribute__ for some reason
-#if !defined SWIG && defined HAVE___ATTRIBUTE__@ac_cv___attribute__@
-__attribute__ ((unused))
-#endif
-;
+} @ac_cv___attribute__unused@;
 
 // --------------------------------------------------------------------
 // Some deprecated or hopefully-soon-to-be-deprecated functions.
 
 // This is often used for logging.  TODO(csilvers): figure out a better way
 extern std::string CommandlineFlagsIntoString();
-// DEPRECATED.  Usually where this is used, a FlagSaver should be used instead.
+// Usually where this is used, a FlagSaver should be used instead.
 extern bool ReadFlagsFromString(const std::string& flagfilecontents,
                                 const char* prog_name,
                                 bool errors_are_fatal); // uses SET_FLAGS_VALUE
@@ -263,6 +255,8 @@ extern void SetUsageMessage(const std::string& usage);
 
 // Looks for flags in argv and parses them.  Rearranges argv to put
 // flags first, or removes them entirely if remove_flags is true.
+// If a flag is defined more than once in the command line or flag
+// file, the last definition is used.
 // See top-of-file for more details on this function.
 #ifndef SWIG   // In swig, use ParseCommandLineFlagsScript() instead.
 extern uint32 ParseCommandLineFlags(int *argc, char*** argv,
@@ -277,6 +271,8 @@ extern uint32 ParseCommandLineFlags(int *argc, char*** argv,
 // e.g. SetCommandLineOptionWithMode calls) between the time of
 // command line parsing and the time of dumping help information for
 // the flags as a result of command line parsing.
+// If a flag is defined more than once in the command line or flag
+// file, the last definition is used.
 extern uint32 ParseCommandLineNonHelpFlags(int *argc, char*** argv,
                                            bool remove_flags);
 // This is actually defined in commandlineflags_reporting.cc.
@@ -360,7 +356,7 @@ class FlagRegisterer {
       new (dfl_##name.store) namespc type(value));                             \
     namespc type& FLAGS_##name =                                               \
       *(reinterpret_cast<namespc type*>(cur_##name.store));                    \
-    char FLAGS_no##name;                                                       \
+    char FLAGS_no##name @ac_cv___attribute__unused@;                           \
   }                                                                            \
   using Flag_Names_##type::FLAGS_##name
 

@@ -1,17 +1,24 @@
-Wed Dec 13 12:37:19 2006  Google Inc. <opensource@google.com>
+Wed Aug 15 07:35:51 2007  Google Inc. <opensource@google.com>
 
-	* google-gflags: initial release:
-	The gflags package contains a library that implements commandline
-	flags processing.  As such it's a replacement for getopt().  It
-	has increased flexibility, including built-in support for C++
-	types like string, and the ability to define flags in the source
-	file in which they're used.
+	* google-gflags: version 0.6
+	* Deal correctly with case that libpthread is not linked in (csilvers)
+	* Update Makefile/tests so we pass "make distcheck" (csilvers)
+	* Document and test that last assignment to a flag wins (wan)
 
-Mon Jan 22 15:33:06 2007  Google Inc. <opensource@google.com>
+Tue Jun 12 15:23:42 2007  Google Inc. <opensource@google.com>
 
-	* google-gflags: version 0.2
-	* added support for python commandlineflags, as well as c++
-	* gflags2man, a script to turn flags into a man page (dchristian)
+	* google-gflags: version 0.5
+	* Include all m4 macros in the distribution (csilvers)
+	* Python: Fix broken data_files field in setup.py (sidlon)
+	* Python: better string serliaizing and unparsing (abo, csimmons)
+	* Fix checks for NaN and inf to work with Mac OS X (csilvers)
+	
+Thu Apr 19 15:15:07 2007  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.4
+	* Remove is_default from GetCommandLineFlagInfo (csilvers)
+	* Portability fixes: includes, strtoll, gcc4.3 errors (csilvers)
+	* A few doc typo cleanups (csilvers)
 
 Wed Mar 28 12:15:56 2007  Google Inc. <opensource@google.com>
 
@@ -21,17 +28,17 @@ Wed Mar 28 12:15:56 2007  Google Inc. <opensource@google.com>
 	* Make docs a bit prettier (csilvers)
 	* Actually include the python files in the distribution! :-/ (csilvers)
 
-Thu Apr 19 15:15:07 2007  Google Inc. <opensource@google.com>
+Mon Jan 22 15:33:06 2007  Google Inc. <opensource@google.com>
 
-	* google-gflags: version 0.4
-	* Remove is_default from GetCommandLineFlagInfo (csilvers)
-	* Portability fixes: includes, strtoll, gcc4.3 errors (csilvers)
-	* A few doc typo cleanups (csilvers)
+	* google-gflags: version 0.2
+	* added support for python commandlineflags, as well as c++
+	* gflags2man, a script to turn flags into a man page (dchristian)
 
-Tue Jun 12 15:23:42 2007  Google Inc. <opensource@google.com>
+Wed Dec 13 12:37:19 2006  Google Inc. <opensource@google.com>
 
-	* google-gflags: version 0.5
-	* Include all m4 macros in the distribution (csilvers)
-	* Python: Fix broken data_files field in setup.py (sidlon)
-	* Python: better string serliaizing and unparsing (abo, csimmons)
-	* Fix checks for NaN and inf to work with Mac OS X (csilvers)
+	* google-gflags: initial release:
+	The gflags package contains a library that implements commandline
+	flags processing.  As such it's a replacement for getopt().  It
+	has increased flexibility, including built-in support for C++
+	types like string, and the ability to define flags in the source
+	file in which they're used.
