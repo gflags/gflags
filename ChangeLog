@@ -1,3 +1,15 @@
+Thu Oct 18 11:33:20 2007  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.7
+	* Deal even more correctly with libpthread not linked in (csilvers)
+	* Add STRIP_LOG, an improved DO_NOT_SHOW_COMMANDLINE_HELP (sioffe)
+	* Be more accurate printing default flag values in --help (dsturtevant)
+	* Reduce .o file size a bit by using shorter namespace names (jeff)
+	* Use relative install path, so 'setup.py --home' works (csilvers)
+	* Notice when a boolean flag has a non-boolean default (bnmouli)
+	* Broaden --helpshort to match foo-main.cc and foo_main.cc (hendrie)
+	* Fix "no modules match" message for --helpshort, etc (hendrie)
+
 Wed Aug 15 07:35:51 2007  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 0.6

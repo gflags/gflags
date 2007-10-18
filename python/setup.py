@@ -1,4 +1,4 @@
-#!/usr/bin/python2.2
+#!/usr/bin/env python
 
 # Copyright (c) 2007, Google Inc.
 # All rights reserved.
@@ -39,4 +39,4 @@ setup(name='gflags',
       author_email='opensource@google.com',
       url='http://code.google.com/p/google-gflags',
       py_modules=["gflags"],
-      data_files=[("/usr/local/bin", ["gflags2man.py"])])
+      data_files=[("bin", ["gflags2man.py"])])

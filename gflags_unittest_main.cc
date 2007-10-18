@@ -79,18 +79,6 @@ DEFINE_string(test_str3, "initial", "");
 // This is used to test setting tryfromenv manually
 DEFINE_string(test_tryfromenv, "initial", "");
 
-// boolean flag assigned correctly with bool
-DEFINE_bool(test_bool_bool, true, "");
-
-// boolean flag assigned with string
-DEFINE_bool(test_bool_string, "", "");
-
-// boolean flag assigned with float
-DEFINE_bool(test_bool_float, 1.0, "");
-
-// boolean flag assigned with int
-DEFINE_bool(test_bool_int, 1, "");
-
 // These are never used in this unittest, but can be used by
 // commandlineflags_unittest.sh when it needs to specify flags
 // that are legal for commandlineflags_unittest but don't need to
@@ -101,10 +89,6 @@ DEFINE_int64(unused_int64, -2001, "");
 DEFINE_uint64(unused_uint64, 2000, "");
 DEFINE_double(unused_double, -1000.0, "");
 DEFINE_string(unused_string, "unused", "");
-
-// These flags are used by gflags_unittest.sh
-DEFINE_bool(changed_bool1, false, "changed");
-DEFINE_bool(changed_bool2, false, "changed");
 
 _START_GOOGLE_NAMESPACE_
 
@@ -1125,12 +1109,6 @@ static int Main(int argc, char **argv) {
   // evaluates it.
   FLAGS_tryfromenv = "test_tryfromenv";
   setenv("FLAGS_test_tryfromenv", "pre-set", 1);
-
-  // Modify flag values from declared default value in two ways.
-  // The recommended way:
-  SetCommandLineOptionWithMode("changed_bool1", "true", SET_FLAGS_DEFAULT);
-  // The non-recommended way:
-  FLAGS_changed_bool2 = true;
 
   SetUsageMessage(usage_message.c_str());
   ParseCommandLineFlags(&argc, &argv, true);

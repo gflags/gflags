@@ -171,7 +171,7 @@ EXAMPLE USAGE:
       sys.exit(1)
     if FLAGS.debug: print 'non-flag arguments:', argv
     print 'Happy Birthday', FLAGS.name
-    if FLAGS.age != None:
+    if FLAGS.age is not None:
       print "You are a %s, who is %d years old" % (FLAGS.gender, FLAGS.age)
 
   if __name__ == '__main__': main(sys.argv)

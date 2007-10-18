@@ -35,20 +35,21 @@ TESTS_ENVIRONMENT = SRCDIR="$(top_srcdir)"
 check_SCRIPTS =
 # Every time you add a unittest to check_SCRIPTS, add it here too
 noinst_SCRIPTS =
-
+# Used for auto-generated source files
+CLEANFILES =
 
 ## vvvv RULES TO MAKE THE LIBRARIES, BINARIES, AND UNITTESTS
 
 lib_LTLIBRARIES += libgflags.la
 libgflags_la_SOURCES = $(googleinclude_HEADERS) src/config.h \
-	src/gflags.cc src/gflags_reporting.cc
+                       src/gflags.cc src/gflags_reporting.cc
 libgflags_la_CXXFLAGS = $(PTRHEAD_CFLAGS) -DNDEBUG
 libgflags_la_LDFLAGS = $(PTRHEAD_CFLAGS)
 libgflags_la_LIBADD = $(PTHREAD_LIBS)
 
 TESTS += gflags_unittest
 gflags_unittest_SOURCES = $(googleinclude_HEADERS) src/config.h \
-	src/gflags_unittest.cc
+                          src/gflags_unittest.cc
 gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDADD = libgflags.la $(PTHREAD_LIBS)
@@ -58,10 +59,32 @@ TESTS += gflags_nothreads_unittest
 gflags_nothreads_unittest_SOURCES = $(gflags_unittest_SOURCES)
 gflags_nothreads_unittest_LDADD = libgflags.la
 
+# We also want to test that things work properly when the file that
+# holds main() has a name ending with -main or _main.  To keep the
+# Makefile small :-), we test the no-threads version of these.
+TESTS += gflags_unittest2
+gflags_unittest2_SOURCES = $(googleinclude_HEADERS) src/config.h \
+                           src/gflags_unittest-main.cc
+gflags_unittest2_LDADD = libgflags.la
+src/gflags_unittest-main.cc: src/gflags_unittest.cc
+	rm -f src/gflags_unittest-main.cc
+	cp -p src/gflags_unittest.cc src/gflags_unittest-main.cc
+CLEANFILES += src/gflags_unittest-main.cc
+
+TESTS += gflags_unittest3
+gflags_unittest3_SOURCES = $(googleinclude_HEADERS) src/config.h \
+	                   src/gflags_unittest_main.cc
+gflags_unittest3_LDADD = libgflags.la
+src/gflags_unittest_main.cc: src/gflags_unittest.cc
+	rm -f src/gflags_unittest_main.cc
+	cp -p src/gflags_unittest.cc src/gflags_unittest_main.cc
+CLEANFILES += src/gflags_unittest_main.cc
+
+
 check_SCRIPTS += gflags_unittest_sh
 noinst_SCRIPTS += src/gflags_unittest.sh
 dist_noinst_DATA = $(top_srcdir)/src/gflags_unittest_flagfile
-gflags_unittest_sh: gflags_unittest
+gflags_unittest_sh: gflags_unittest gflags_unittest2 gflags_unittest3
 	$(top_srcdir)/src/gflags_unittest.sh $(PWD)/$< $(top_srcdir)
 
 # These aren't part of the c++ source, but we want them to be distributed

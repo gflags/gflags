@@ -293,6 +293,27 @@ extern void AllowCommandLineReparsing();
 extern uint32 ReparseCommandLineNonHelpFlags();
 
 
+// The following code is added to check if proper value types are passed to
+// flags. Specially for boolean flags. Since almost anything can be implicitly
+// casted to boolean many copy-paste type of errors got through and they are
+// there in code now. As of now, flags_safe_cast is written such a way that
+// it raises only warning for type mismatches.
+//
+// TODO(who?): This needs to be changed to give compilation error if type
+// does not match.
+extern void FlagsTypeWarn(const char *name);
+
+template<typename From>
+inline bool flags_safe_bool(From from, const char *name) {
+  FlagsTypeWarn(name);
+  return from;
+}
+
+inline bool flags_safe_bool(bool from, const char *name) {
+  return from;
+}
+
+
 // --------------------------------------------------------------------
 // Now come the command line flag declaration/definition macros that
 // will actually be used.  They're kind of hairy.  A major reason
@@ -340,46 +361,66 @@ class FlagRegisterer {
 };
 
 // namespc should be 'std::', and type 'string', for a var of type 'std::string'
-#define DECLARE_VARIABLE(namespc, type, name)                                 \
-  namespace Flag_Names_##type {                                               \
-    extern namespc type& FLAGS_##name;                                        \
-  }                                                                           \
-  using Flag_Names_##type::FLAGS_##name
+#define DECLARE_VARIABLE(namespc, type, shorttype, name)        \
+  namespace fL##shorttype {                                     \
+    extern namespc type& FLAGS_##name;                          \
+  }                                                             \
+  using fL##shorttype::FLAGS_##name
 
-#define DEFINE_VARIABLE(namespc, type, name, value, help)                      \
-  namespace Flag_Names_##type {                                                \
-    static union { void* align; char store[sizeof(namespc type)]; } cur_##name;\
-    static union { void* align; char store[sizeof(namespc type)]; } dfl_##name;\
-    static @ac_google_namespace@::FlagRegisterer object_##name(                \
-      #name, #type, help, __FILE__,                                            \
-      new (cur_##name.store) namespc type(value),                              \
-      new (dfl_##name.store) namespc type(value));                             \
-    namespc type& FLAGS_##name =                                               \
-      *(reinterpret_cast<namespc type*>(cur_##name.store));                    \
-    char FLAGS_no##name @ac_cv___attribute__unused@;                           \
-  }                                                                            \
-  using Flag_Names_##type::FLAGS_##name
+// If your application #defines STRIP_FLAG_HELP to a non-zero value
+// before #including this file, we remove the help message from the
+// binary file. This can reduce the size of the resulting binary
+// somewhat, and may also be useful for security reasons.
+
+extern const char kStrippedFlagHelp[];
+
+#if defined(STRIP_FLAG_HELP) && STRIP_FLAG_HELP > 0
+// Need this construct to avoid the 'defined but not used' warning.
+#define MAYBE_STRIPPED_HELP(txt) (false ? (txt) : kStrippedFlagHelp)
+#else
+#define MAYBE_STRIPPED_HELP(txt) txt
+#endif
+
+// Each command-line flag defines an internal array of two elements
+// of the appropriate time (each element is actually a union to get
+// the values to be aligned on larger-than-byte boundaries).  Element
+// 0 of the s_##name array holds the current value, and element 1
+// holds the default value.
+#define DEFINE_VARIABLE(namespc, type, shorttype, name, value, help)    \
+  namespace fL##shorttype {                                             \
+    static union { void* align; char store[sizeof(namespc type)]; }     \
+        s_##name[2];                                                    \
+    static @ac_google_namespace@::FlagRegisterer o_##name(              \
+      #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,               \
+      new (s_##name[0].store) namespc type(value),                      \
+      new (s_##name[1].store) namespc type(value));                     \
+    namespc type& FLAGS_##name =                                        \
+      *(reinterpret_cast<namespc type*>(s_##name[0].store));            \
+    char FLAGS_no##name @ac_cv___attribute__unused@;                    \
+  }                                                                     \
+  using fL##shorttype::FLAGS_##name
 
 
 #ifndef SWIG  // In swig, ignore the main flag declarations
 
-#define DECLARE_bool(name)             DECLARE_VARIABLE(, bool, name)
-#define DEFINE_bool(name, val, txt)    DEFINE_VARIABLE(, bool, name, val, txt)
+#define DECLARE_bool(name)          DECLARE_VARIABLE(, bool, B, name)
+#define DEFINE_bool(name, val, txt) \
+    DEFINE_VARIABLE(, bool, B, name, @ac_google_namespace@::flags_safe_bool(val, #name), txt)
 
-#define DECLARE_int32(name)            DECLARE_VARIABLE(@ac_google_namespace@::,int32, name)
-#define DEFINE_int32(name, val, txt)   DEFINE_VARIABLE(@ac_google_namespace@::,int32, name, val, txt)
+#define DECLARE_int32(name)          DECLARE_VARIABLE(@ac_google_namespace@::, int32,I, name)
+#define DEFINE_int32(name, val,txt)  DEFINE_VARIABLE(@ac_google_namespace@::, int32,I, name,val,txt)
 
-#define DECLARE_int64(name)            DECLARE_VARIABLE(@ac_google_namespace@::,int64, name)
-#define DEFINE_int64(name, val, txt)   DEFINE_VARIABLE(@ac_google_namespace@::,int64, name, val, txt)
+#define DECLARE_int64(name)          DECLARE_VARIABLE(@ac_google_namespace@::, int64,I64, name)
+#define DEFINE_int64(name, val,txt)  DEFINE_VARIABLE(@ac_google_namespace@::, int64,I64, name,val,txt)
 
-#define DECLARE_uint64(name)           DECLARE_VARIABLE(@ac_google_namespace@::,uint64, name)
-#define DEFINE_uint64(name, val, txt)  DEFINE_VARIABLE(@ac_google_namespace@::,uint64, name, val, txt)
+#define DECLARE_uint64(name)         DECLARE_VARIABLE(@ac_google_namespace@::, uint64,U64, name)
+#define DEFINE_uint64(name, val,txt) DEFINE_VARIABLE(@ac_google_namespace@::, uint64,U64,name,val,txt)
 
-#define DECLARE_double(name)           DECLARE_VARIABLE(, double, name)
-#define DEFINE_double(name, val, txt)  DEFINE_VARIABLE(, double, name, val, txt)
+#define DECLARE_double(name)         DECLARE_VARIABLE(, double,D, name)
+#define DEFINE_double(name, val,txt) DEFINE_VARIABLE(, double,D, name,val,txt)
 
-#define DECLARE_string(name)           DECLARE_VARIABLE(std::, string, name)
-#define DEFINE_string(name, val, txt)  DEFINE_VARIABLE(std::, string, name, val, txt)
+#define DECLARE_string(name)         DECLARE_VARIABLE(std::, string,S, name)
+#define DEFINE_string(name, val,txt) DEFINE_VARIABLE(std::, string,S, name,val,txt)
 
 #endif  // SWIG
 

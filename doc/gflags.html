@@ -434,6 +434,19 @@ name (<code>argv[0]</code>).</p>
 methods such as <code>google::SetUsageMessage</code>, see
 <code>gflags.h</code>.</p>
 
+
+<h2> <A name="misc">Miscellaneous Notes</code> </h2>
+
+<p>If your application has code like this:</p>
+<pre>
+   #define STRIP_FLAG_HELP 1    // this must go before the #include!
+   #include &lt;google/gflags.h&gt;
+</pre>
+<p>we will remove the help messages from the compiled source. This can
+reduce the size of the resulting binary somewhat, and may also be
+useful for security reasons.</p>
+
+
 <hr>
 <address>
 Craig Silverstein<br>

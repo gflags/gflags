@@ -158,12 +158,22 @@ static string DescribeOneFlag(const CommandLineFlagInfo& flag) {
 
   // Append data type
   AddString(string("type: ") + flag.type, &final_string, &chars_in_line);
-  // Append default value
+  // Append the effective default value (i.e., the value that the flag
+  // will have after the command line is parsed if the flag is not
+  // specified on the command line), which may be different from the
+  // stored default value. This would happen if the value of the flag
+  // was modified before the command line was parsed. (Unless the
+  // value was modified using SetCommandLineOptionWithMode() with mode
+  // SET_FLAGS_DEFAULT.)
+  // Note that we are assuming this code is being executed because a help
+  // request was just parsed from the command line, in which case the
+  // printed value is indeed the effective default, as long as no value
+  // for the flag was parsed from the command line before "--help".
   if (strcmp(flag.type.c_str(), "string") == 0) {  // add quotes for strings
-    AddString(string("default: \"") + flag.default_value + string("\""),
+    AddString(string("default: \"") + flag.current_value + string("\""),
               &final_string, &chars_in_line);
   } else {
-    AddString(string("default: ") + flag.default_value,
+    AddString(string("default: ") + flag.current_value,
               &final_string, &chars_in_line);
   }
 
@@ -217,41 +227,66 @@ static string Dirname(const string& filename) {
   return filename.substr(0, (sep == string::npos) ? 0 : sep);
 }
 
-void ShowUsageWithFlagsRestrict(const char *argv0, const char *restrict) {
-#ifndef DO_NOT_SHOW_COMMANDLINE_HELP
+// Test whether a filename contains at least one of the substrings.
+static bool FileMatchesSubstring(const string& filename,
+                                 const vector<string>& substrings) {
+  for (vector<string>::const_iterator target = substrings.begin();
+       target != substrings.end();
+       ++target) {
+    if (strstr(filename.c_str(), target->c_str()) != NULL) {
+      return true;
+    }
+  }
+  return false;
+}
+
+// Show help for every filename which matches any of the target substrings.
+// If substrings is empty, shows help for every file. If a flag's help message
+// has been stripped (e.g. by adding '#define STRIP_FLAG_HELP 1' to
+// base/global_strip_options.h), then this flag will not be displayed by
+// '--help' and its variants.
+static void ShowUsageWithFlagsMatching(const char *argv0,
+                                       const vector<string> &substrings) {
   fprintf(stdout, "%s: %s\n", Basename(argv0), ProgramUsage());
 
   vector<CommandLineFlagInfo> flags;
   GetAllFlags(&flags);           // flags are sorted by filename, then flagname
 
-  const bool have_restrict = (restrict != NULL) && (*restrict != '\0');
   string last_filename = "";     // so we know when we're at a new file
   bool first_directory = true;   // controls blank lines between dirs
   bool found_match = false;      // stays false iff no dir matches restrict
   for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
        flag != flags.end();
        ++flag) {
-    if (have_restrict && strstr(flag->filename.c_str(), restrict) == NULL) {
-      continue;             // this flag doesn't pass the restrict
-    }
-    found_match = true;     // this flag passed the restrict!
-    if (flag->filename != last_filename) {                      // new file
-      if (Dirname(flag->filename) != Dirname(last_filename)) {  // new dir!
-        if (!first_directory)
-          fprintf(stdout, "\n\n");   // put blank lines between directories
-        first_directory = false;
+    if (substrings.empty() ||
+        FileMatchesSubstring(flag->filename, substrings)) {
+      // If the flag has been stripped, pretend that it doesn't exist.
+      if (flag->description == kStrippedFlagHelp) continue;
+      found_match = true;     // this flag passed the match!
+      if (flag->filename != last_filename) {                      // new file
+        if (Dirname(flag->filename) != Dirname(last_filename)) {  // new dir!
+          if (!first_directory)
+            fprintf(stdout, "\n\n");   // put blank lines between directories
+          first_directory = false;
+        }
+        fprintf(stdout, "\n  Flags from %s:\n", flag->filename.c_str());
+        last_filename = flag->filename;
       }
-      fprintf(stdout, "\n  Flags from %s:\n", flag->filename.c_str());
-      last_filename = flag->filename;
+      // Now print this flag
+      fprintf(stdout, "%s", DescribeOneFlag(*flag).c_str());
     }
-    // Now print this flag
-    fprintf(stdout, "%s", DescribeOneFlag(*flag).c_str());
   }
-  if (!found_match && restrict == NULL) {
-    fprintf(stdout, "\n  No modules matched program name `%s': use -help\n",
-            Basename(argv0));
+  if (!found_match && !substrings.empty()) {
+    fprintf(stdout, "\n  No modules matched: use -help\n");
   }
-#endif  // DO_NOT_SHOW_COMMANDLINE_HELP
+}
+
+void ShowUsageWithFlagsRestrict(const char *argv0, const char *restrict) {
+  vector<string> substrings;
+  if (restrict != NULL && *restrict != '\0') {
+    substrings.push_back(restrict);
+  }
+  ShowUsageWithFlagsMatching(argv0, substrings);
 }
 
 void ShowUsageWithFlags(const char *argv0) {
@@ -276,7 +311,8 @@ static void ShowXMLOfFlags(const char *prog_name) {
   for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
        flag != flags.end();
        ++flag) {
-    fprintf(stdout, "%s\n", DescribeOneFlagInXML(*flag).c_str());
+    if (flag->description != kStrippedFlagHelp)
+      fprintf(stdout, "%s\n", DescribeOneFlagInXML(*flag).c_str());
   }
   // The end of the document
   fprintf(stdout, "</AllFlags>\n");
@@ -312,8 +348,11 @@ void HandleCommandLineHelpFlags() {
   if (FLAGS_helpshort) {
     // show only flags related to this binary:
     // E.g. for fileutil.cc, want flags containing   ... "/fileutil." cc
-    string restrict = string("/") + progname + ".";
-    ShowUsageWithFlagsRestrict(progname, restrict.c_str());
+    vector<string> substrings;
+    substrings.push_back(string("/") + progname + ".");
+    substrings.push_back(string("/") + progname + "-main.");
+    substrings.push_back(string("/") + progname + "_main.");
+    ShowUsageWithFlagsMatching(progname, substrings);
     commandlineflags_exitfunc(1);   // almost certainly exit()
 
   } else if (FLAGS_help || FLAGS_helpfull) {
@@ -338,12 +377,15 @@ void HandleCommandLineHelpFlags() {
     // filename like "/progname.cc", and take the dirname of that.
     vector<CommandLineFlagInfo> flags;
     GetAllFlags(&flags);
-    const string restrict = string("/") + progname + ".";
+    vector<string> substrings;
+    substrings.push_back(string("/") + progname + ".");
+    substrings.push_back(string("/") + progname + "-main.");
+    substrings.push_back(string("/") + progname + "_main.");
     string last_package = "";
     for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
          flag != flags.end();
          ++flag) {
-      if (!strstr(flag->filename.c_str(), restrict.c_str()))
+      if (!FileMatchesSubstring(flag->filename, substrings))
         continue;
       const string package = Dirname(flag->filename) + "/";
       if (package != last_package) {

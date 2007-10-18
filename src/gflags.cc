@@ -93,6 +93,13 @@ _START_GOOGLE_NAMESPACE_
 
 static const char kError[] = "ERROR: ";
 
+// The help message indicating that the commandline flag has been
+// 'stripped'. It will not show up when doing "-help" and its
+// variants. The flag is stripped if STRIP_FLAG_HELP is set to 1
+// before including base/commandlineflags.h (or in
+// base/global_strip_options.h).
+
+const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
 
 // Indicates that undefined options are to be ignored.
 // Enables deferred processing of flags in dynamically loaded libraries.
@@ -637,7 +644,20 @@ void FlagRegistry::InitGlobalRegistry() {
 }
 
 // We want to use pthread_once here, for safety, but have to worry about
-// whether libpthread is linked in or not.
+// whether libpthread is linked in or not.  We declare a weak version of
+// the function, so we'll always compile (if the weak version is the only
+// one that ends up existing, then pthread_once will be equal to NULL).
+#ifdef HAVE___ATTRIBUTE__
+  // __THROW is defined in glibc systems.  It means, counter-intuitively,
+  // "This function will never throw an exception."  It's an optional
+  // optimization tool, but we may need to use it to match glibc prototypes.
+# ifndef __THROW     // I guess we're not on a glibc system
+#   define __THROW   // __THROW is just an optimization, so ok to make it ""
+# endif
+extern "C" int pthread_once(pthread_once_t *, void (*)(void))
+    __THROW __attribute__((weak));
+#endif
+
 FlagRegistry* FlagRegistry::GlobalRegistry() {
   if (pthread_once) {   // means we're running with pthreads
     pthread_once(&global_registry_once_, &FlagRegistry::InitGlobalRegistry);
@@ -646,6 +666,14 @@ FlagRegistry* FlagRegistry::GlobalRegistry() {
       InitGlobalRegistry();
   }
   return global_registry_;
+}
+
+
+void FlagsTypeWarn(const char *name) {
+  fprintf(stderr, "ERROR: Flag %s is of type bool, "
+          "but its default value is not a boolean.\n", name);
+  // This can (and one day should) become a compilations error
+  //commandlineflags_exitfunc(1);   // almost certainly exit()
 }
 
 // --------------------------------------------------------------------

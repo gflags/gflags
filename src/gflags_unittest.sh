@@ -46,9 +46,16 @@ EXE=$1
 SRCDIR=${2:-./}
 TMPDIR=${3:-/tmp/gflags}
 
-# $1: line-number $2: expected return code.  $3: substring of expected output.
-# $4: a substring you *don't* expect to find in the output.  $5+ flags
-Expect() {
+# Executables built with the main source file suffixed with "-main" and "_main".
+EXE2=${EXE}2    # eg, gflags_unittest2
+EXE3=${EXE}3    # eg, gflags_unittest3
+
+# $1: executable
+# $2: line-number $3: expected return code.  $4: substring of expected output.
+# $5: a substring you *don't* expect to find in the output.  $6+ flags
+ExpectExe() {
+  local executable="$1"
+  shift
   local line_number="$1"
   shift
   local expected_rc="$1"
@@ -59,7 +66,7 @@ Expect() {
   shift
 
   # We always add --srcdir=$SRCDIR because it's needed for correctness
-  $EXE --srcdir="$SRCDIR" "$@" > "$TMPDIR/test.$line_number" 2>&1
+  $executable --srcdir="$SRCDIR" "$@" > "$TMPDIR/test.$line_number" 2>&1
   local actual_rc=$?
   if [ $actual_rc != $expected_rc ]; then
     echo "Test on line $line_number failed:" \
@@ -67,17 +74,23 @@ Expect() {
     exit 1;
   fi
   if [ -n "$expected_output" ] &&
-     ! fgrep -q "$expected_output" "$TMPDIR/test.$line_number"; then
+     ! fgrep -q -- "$expected_output" "$TMPDIR/test.$line_number"; then
     echo "Test on line $line_number failed:" \
          "did not find expected substring '$expected_output'"
     exit 1;
   fi
   if [ -n "$unexpected_output" ] &&
-     fgrep -q "$unexpected_output" "$TMPDIR/test.$line_number"; then
+     fgrep -q -- "$unexpected_output" "$TMPDIR/test.$line_number"; then
     echo "Test line $line_number failed:" \
          "found unexpected substring '$unexpected_output'"
     exit 1;
   fi
+}
+
+# $1: line-number $2: expected return code.  $3: substring of expected output.
+# $4: a substring you *don't* expect to find in the output.  $5+ flags
+Expect() {
+  ExpectExe $EXE "$@"
 }
 
 rm -rf $TMPDIR
@@ -101,6 +114,12 @@ Expect $LINENO 0 "PASS" ""
 # --help should show all flags, including flags from gflags_reporting.cc
 Expect $LINENO 1 "/gflags_reporting.cc" "" --help
 
+# Make sure --help reflects flag changes made before flag-parsing
+Expect $LINENO 1 \
+     "-changed_bool1 (changed) type: bool default: true" "" --help
+Expect $LINENO 1 \
+     "-changed_bool2 (changed) type: bool default: true" "" --help
+
 # --nohelp and --help=false should be as if we didn't say anything
 Expect $LINENO 0 "PASS" "" --nohelp
 Expect $LINENO 0 "PASS" "" --help=false
@@ -110,6 +129,12 @@ Expect $LINENO 1 "/gflags_reporting.cc" "" -helpfull
 
 # --helpshort should show only flags from the unittest itself
 Expect $LINENO 1 "/gflags_unittest.cc" "/gflags_reporting.cc" --helpshort
+
+# --helpshort should work if the main source file is suffixed with [_-]main
+ExpectExe $EXE2 $LINENO 1 "/gflags_unittest-main.cc" "/gflags_reporting.cc" \
+  --helpshort
+ExpectExe $EXE3 $LINENO 1 "/gflags_unittest_main.cc" "/gflags_reporting.cc" \
+  --helpshort
 
 # --helpon needs an argument
 Expect $LINENO 1 "'--helpon' is missing its argument" "" --helpon
@@ -129,6 +154,12 @@ Expect $LINENO 1 "/gflags_unittest.cc" "/gflags.cc" \
   -helpmatch _
 Expect $LINENO 1 "/gflags_unittest.cc" "/gflags.cc" \
   -helpmatch=unittest
+
+# if no flags are found with helpmatch or helpon, suggest --help
+Expect $LINENO 1 "No modules matched" "/commandlineflags_unittest.cc" \
+  -helpmatch=nosuchsubstring
+Expect $LINENO 1 "No modules matched" "/commandlineflags_unittest.cc" \
+  -helpon=nosuchmodule
 
 # helppackage shows all the flags in the same dir as this unittest
 # --help should show all flags, including flags from google.cc
@@ -175,6 +206,14 @@ Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" \
 
 # Make sure -- by itself stops argv processing
 Expect $LINENO 0 "PASS" "" -- --help
+
+# Make sure boolean flags gives warning when type of default value is not bool
+Expect $LINENO 0 "Flag test_bool_string is of type bool, but its default value is not a boolean."
+Expect $LINENO 0 "Flag test_bool_float is of type bool, but its default value is not a boolean."
+Expect $LINENO 0 "Flag test_bool_int is of type bool, but its default value is not a boolean."
+
+# Make sure that boolean flags don't give warning when default value is bool
+Expect $LINENO 0 "" "Flag test_bool_bool is of type bool, but its default value is not a boolean."
 
 echo "PASS"
 exit 0
