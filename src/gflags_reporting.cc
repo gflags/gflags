@@ -37,8 +37,8 @@
 // reporting flags, but we also have flags like --helpxml, etc.
 //
 // There's only one function that's meant to be called externally:
-// HandleCommandLineHelpFlags().  (Well, actually,
-// ShowUsageWithFlags() and ShowUsageWithFlagsRestrict() can be called
+// HandleCommandLineHelpFlags().  (Well, actually, ShowUsageWithFlags(),
+// ShowUsageWithFlagsRestrict(), and DescribeOneFlag() can be called
 // externally too, but there's little need for it.)  These are all
 // declared in the main commandlineflags.h header file.
 //
@@ -110,7 +110,7 @@ static void AddString(const string& s,
 
 // Create a descriptive string for a flag.
 // Goes to some trouble to make pretty line breaks.
-static string DescribeOneFlag(const CommandLineFlagInfo& flag) {
+string DescribeOneFlag(const CommandLineFlagInfo& flag) {
   string main_part = (string("    -") + flag.name +
                       " (" + flag.description + ')');
   const char* c_string = main_part.c_str();
@@ -242,8 +242,8 @@ static bool FileMatchesSubstring(const string& filename,
 
 // Show help for every filename which matches any of the target substrings.
 // If substrings is empty, shows help for every file. If a flag's help message
-// has been stripped (e.g. by adding '#define STRIP_FLAG_HELP 1' to
-// base/global_strip_options.h), then this flag will not be displayed by
+// has been stripped (e.g. by adding '#define STRIP_FLAG_HELP 1' before
+// including google/gflags.h), then this flag will not be displayed by
 // '--help' and its variants.
 static void ShowUsageWithFlagsMatching(const char *argv0,
                                        const vector<string> &substrings) {

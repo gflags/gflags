@@ -1,18 +1,17 @@
-%define	ver	%VERSION
 %define	RELEASE	1
 %define rel     %{?CUSTOM_RELEASE} %{!?CUSTOM_RELEASE:%RELEASE}
 %define	prefix	/usr
 
 Name: %NAME
 Summary: A commandline flags library that allows for distributed flags
-Version: %ver
+Version: %VERSION
 Release: %rel
 Group: Development/Libraries
-URL: http://code.google.com/p/google-gflags
+URL: http://code.google.com/p/gflags
 License: BSD
 Vendor: Google
 Packager: Google Inc. <opensource@google.com>
-Source: http://google-gflags.googlecode.com/files/%{NAME}-%{PACKAGE_VERSION}.tar.gz
+Source: http://%{NAME}.googlecode.com/files/%{NAME}-%{VERSION}.tar.gz
 Distribution: Redhat 7 and above.
 Buildroot: %{_tmppath}/%{name}-root
 Prefix: %prefix
@@ -26,6 +25,7 @@ the ability to define flags in the source file in which they're used.
 %package devel
 Summary: A commandline flags library that allows for distributed flags
 Group: Development/Libraries
+Requires: %{NAME} = %{VERSION}
 
 %description devel
 The %name-devel package contains static and debug libraries and header

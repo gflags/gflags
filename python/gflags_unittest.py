@@ -44,6 +44,15 @@ import unittest
 import gflags as flags
 FLAGS=flags.FLAGS
 
+# If we're not running at least python 2.3, as is the case when
+# invoked from flags_unittest_2_2, define True and False.
+# Thanks, Guido, for the code.
+try:
+  True, False
+except NameError:
+  False = 0
+  True = 1
+
 class FlagsUnitTest(unittest.TestCase):
   "Flags Unit Test"
 
@@ -179,10 +188,10 @@ class FlagsUnitTest(unittest.TestCase):
     assert len(argv) == 1, "wrong number of arguments pulled"
     assert argv[0] == './program', "program name not preserved"
     assert FLAGS['debug'].present == 1
-    assert FLAGS['debug'].value == True
+    assert FLAGS['debug'].value
     FLAGS.Reset()
     assert FLAGS['debug'].present == 0
-    assert FLAGS['debug'].value == False
+    assert not FLAGS['debug'].value
 
     # Test that reset restores default value when default value is None.
     argv = ('./program', '--kwery=who')
@@ -531,11 +540,32 @@ class FlagsUnitTest(unittest.TestCase):
     self.assert_(str(FLAGS).find('runhelp d31') == -1)
     self.assert_(str(FLAGS).find('runhelp d32') != -1)
 
+    # Make sure AppendFlagValues works
+    new_flags = flags.FlagValues()
+    flags.DEFINE_boolean("new1", 0, "runhelp n1", flag_values=new_flags)
+    flags.DEFINE_boolean("new2", 0, "runhelp n2", flag_values=new_flags)
+    self.assertEqual(len(new_flags.FlagDict()), 2)
+    old_len = len(FLAGS.FlagDict())
+    FLAGS.AppendFlagValues(new_flags)
+    self.assertEqual(len(FLAGS.FlagDict())-old_len, 2)
+    self.assertEqual("new1" in FLAGS.FlagDict(), True)
+    self.assertEqual("new2" in FLAGS.FlagDict(), True)
+
+    # Make sure AppendFlagValues fails on duplicates
+    flags.DEFINE_boolean("dup4", 0, "runhelp d41")
+    new_flags = flags.FlagValues()
+    flags.DEFINE_boolean("dup4", 0, "runhelp d42", flag_values=new_flags)
+    try:
+      FLAGS.AppendFlagValues(new_flags)
+      raise AssertionError("ignore_copy was not set but caused no exception")
+    except flags.DuplicateFlag, e:
+      pass
+
     # Integer out of bounds
     try:
       argv = ('./program', '--repeat=-4')
       FLAGS(argv)
-      raise AssertionError('integer bounds exception not thrown:'
+      raise AssertionError('integer bounds exception not raised:'
                            + str(FLAGS.repeat))
     except flags.IllegalFlagValue:
       pass
@@ -544,7 +574,7 @@ class FlagsUnitTest(unittest.TestCase):
     try:
       argv = ('./program', '--repeat=2.5')
       FLAGS(argv)
-      raise AssertionError("malformed integer value exception not thrown")
+      raise AssertionError("malformed integer value exception not raised")
     except flags.IllegalFlagValue:
       pass
 
@@ -552,7 +582,7 @@ class FlagsUnitTest(unittest.TestCase):
     try:
       argv = ('./program', '--name')
       FLAGS(argv)
-      raise AssertionError("Flag argument required exception not thrown")
+      raise AssertionError("Flag argument required exception not raised")
     except flags.FlagsError:
       pass
 
@@ -560,23 +590,16 @@ class FlagsUnitTest(unittest.TestCase):
     try:
       argv = ('./program', '--debug=goofup')
       FLAGS(argv)
-      raise AssertionError("No argument allowed exception not thrown")
+      raise AssertionError("No argument allowed exception not raised")
     except flags.FlagsError:
       pass
 
-    # Unknown argument --nosuchflag
-    try:
-      argv = ('./program', '--nosuchflag', '--name=Bob', 'extra')
-      FLAGS(argv)
-      raise AssertionError("Unknown argument exception not thrown")
-    except flags.FlagsError:
-      pass
 
     # Non-numeric argument for integer flag --repeat
     try:
       argv = ('./program', '--repeat', 'Bob', 'extra')
       FLAGS(argv)
-      raise AssertionError("Illegal flag value exception not thrown")
+      raise AssertionError("Illegal flag value exception not raised")
     except flags.IllegalFlagValue:
       pass
 
@@ -708,7 +731,7 @@ class FlagsUnitTest(unittest.TestCase):
   # end testThree def
 
   def testMethod_flagfiles_4(self):
-    """Tests parsing self referetial files + arguments of simulated argv.
+    """Tests parsing self-referential files + arguments of simulated argv.
       This test should print a warning to stderr of some sort.
     """
     self.__DeclareSomeFlags()
@@ -854,6 +877,303 @@ class FlagsUnitTest(unittest.TestCase):
     FLAGS.__delattr__('zz')
     FLAGS.__delattr__('nozz')
 
+  def test_twodasharg_first(self):
+    flags.DEFINE_string("twodash_name", "Bob", "namehelp")
+    flags.DEFINE_string("twodash_blame", "Rob", "blamehelp")
+    argv = ('./program',
+            '--',
+            '--twodash_name=Harry')
+    argv = FLAGS(argv)
+    self.assertEqual('Bob', FLAGS.twodash_name)
+    self.assertEqual(argv[1], '--twodash_name=Harry')
+
+  def test_twodasharg_middle(self):
+    flags.DEFINE_string("twodash2_name", "Bob", "namehelp")
+    flags.DEFINE_string("twodash2_blame", "Rob", "blamehelp")
+    argv = ('./program',
+            '--twodash2_blame=Larry',
+            '--',
+            '--twodash2_name=Harry')
+    argv = FLAGS(argv)
+    self.assertEqual('Bob', FLAGS.twodash2_name)
+    self.assertEqual('Larry', FLAGS.twodash2_blame)
+    self.assertEqual(argv[1], '--twodash2_name=Harry')
+
+  def test_onedasharg_first(self):
+    flags.DEFINE_string("onedash_name", "Bob", "namehelp")
+    flags.DEFINE_string("onedash_blame", "Rob", "blamehelp")
+    argv = ('./program',
+            '-',
+            '--onedash_name=Harry')
+    argv = FLAGS(argv)
+    self.assertEqual(argv[1], '-')
+    # TODO(csilvers): we should still parse --onedash_name=Harry as a
+    # flag, but currently we don't (we stop flag processing as soon as
+    # we see the first non-flag).
+
+  def test_unrecognized_flags(self):
+    # Unknown flag --nosuchflag
+    try:
+      argv = ('./program', '--nosuchflag', '--name=Bob', 'extra')
+      FLAGS(argv)
+      raise AssertionError("Unknown flag exception not raised")
+    except flags.UnrecognizedFlag, e:
+      assert e.flagname == 'nosuchflag'
+
+    # Unknown flag -w (short option)
+    try:
+      argv = ('./program', '-w', '--name=Bob', 'extra')
+      FLAGS(argv)
+      raise AssertionError("Unknown flag exception not raised")
+    except flags.UnrecognizedFlag, e:
+      assert e.flagname == 'w'
+
+    # Unknown flag --nosuchflagwithparam=foo
+    try:
+      argv = ('./program', '--nosuchflagwithparam=foo', '--name=Bob', 'extra')
+      FLAGS(argv)
+      raise AssertionError("Unknown flag exception not raised")
+    except flags.UnrecognizedFlag, e:
+      assert e.flagname == 'nosuchflagwithparam'
+
+    # Allow unknown flag --nosuchflag if specified with undefok
+    argv = ('./program', '--nosuchflag', '--name=Bob',
+            '--undefok=nosuchflag', 'extra')
+    argv = FLAGS(argv)
+    assert len(argv) == 2, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+    assert argv[1]=='extra', "extra argument not preserved"
+
+    # But not if the flagname is misspelled:
+    try:
+      argv = ('./program', '--nosuchflag', '--name=Bob',
+              '--undefok=nosuchfla', 'extra')
+      FLAGS(argv)
+      raise AssertionError("Unknown flag exception not raised")
+    except flags.UnrecognizedFlag, e:
+      assert e.flagname == 'nosuchflag'
+
+    try:
+      argv = ('./program', '--nosuchflag', '--name=Bob',
+              '--undefok=nosuchflagg', 'extra')
+      FLAGS(argv)
+      raise AssertionError("Unknown flag exception not raised")
+    except flags.UnrecognizedFlag:
+      assert e.flagname == 'nosuchflag'
+
+    # Allow unknown short flag -w if specified with undefok
+    argv = ('./program', '-w', '--name=Bob', '--undefok=w', 'extra')
+    argv = FLAGS(argv)
+    assert len(argv) == 2, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+    assert argv[1]=='extra', "extra argument not preserved"
+
+    # Allow unknown flag --nosuchflagwithparam=foo if specified
+    # with undefok
+    argv = ('./program', '--nosuchflagwithparam=foo', '--name=Bob',
+            '--undefok=nosuchflagwithparam', 'extra')
+    argv = FLAGS(argv)
+    assert len(argv) == 2, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+    assert argv[1]=='extra', "extra argument not preserved"
+
+    # Even if undefok specifies multiple flags
+    argv = ('./program', '--nosuchflag', '-w', '--nosuchflagwithparam=foo',
+            '--name=Bob',
+            '--undefok=nosuchflag,w,nosuchflagwithparam',
+            'extra')
+    argv = FLAGS(argv)
+    assert len(argv) == 2, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+    assert argv[1]=='extra', "extra argument not preserved"
+
+    # However, not if undefok doesn't specify the flag
+    try:
+      argv = ('./program', '--nosuchflag', '--name=Bob',
+              '--undefok=another_such', 'extra')
+      FLAGS(argv)
+      raise AssertionError("Unknown flag exception not raised")
+    except flags.UnrecognizedFlag, e:
+      assert e.flagname == 'nosuchflag'
+
+    # Make sure --undefok doesn't mask other option errors.
+    try:
+      # Provide an option requiring a parameter but not giving it one.
+      argv = ('./program', '--undefok=name', '--name')
+      FLAGS(argv)
+      raise AssertionError("Missing option parameter exception not raised")
+    except flags.UnrecognizedFlag:
+      raise AssertionError("Wrong kind of error exception raised")
+    except flags.FlagsError:
+      pass
+
+    # Test --undefok <list>
+    argv = ('./program', '--nosuchflag', '-w', '--nosuchflagwithparam=foo',
+            '--name=Bob',
+            '--undefok',
+            'nosuchflag,w,nosuchflagwithparam',
+            'extra')
+    argv = FLAGS(argv)
+    assert len(argv) == 2, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+    assert argv[1]=='extra', "extra argument not preserved"
+
+  def test_nonglobal_flags(self):
+    """Test use of non-global FlagValues"""
+    nonglobal_flags = flags.FlagValues()
+    flags.DEFINE_string("nonglobal_flag", "Bob", "flaghelp", nonglobal_flags)
+    argv = ('./program',
+            '--nonglobal_flag=Mary',
+            'extra')
+    argv = nonglobal_flags(argv)
+    assert len(argv) == 2, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+    assert argv[1]=='extra', "extra argument not preserved"
+    assert nonglobal_flags['nonglobal_flag'].value == 'Mary'
+
+  def test_unrecognized_nonglobal_flags(self):
+    """Test unrecognized non-global flags"""
+    nonglobal_flags = flags.FlagValues()
+    argv = ('./program',
+            '--nosuchflag')
+    try:
+      argv = nonglobal_flags(argv)
+      raise AssertionError("Unknown flag exception not raised")
+    except flags.UnrecognizedFlag, e:
+      assert e.flagname == 'nosuchflag'
+      pass
+
+    argv = ('./program',
+            '--nosuchflag',
+            '--undefok=nosuchflag')
+
+    argv = nonglobal_flags(argv)
+    assert len(argv) == 1, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+
+  def test_main_module_help(self):
+    """Test MainModuleHelp()"""
+    help = FLAGS.MainModuleHelp()
+
+    # When this test is invoked on behalf of flags_unittest_2_2,
+    # the main module has not defined any flags. Since there's
+    # no easy way to run this script in our test environment
+    # directly from python2.2, don't bother to test the output
+    # of MainModuleHelp() in that scenario.
+    if sys.version.startswith('2.2.'):
+      return
+
+    expected_help = "\n" + sys.argv[0] + ':' + """
+  --[no]debug: debughelp
+    (default: 'false')
+  -u,--[no]dup1: runhelp d12
+    (default: 'true')
+  -u,--[no]dup2: runhelp d22
+    (default: 'true')
+  -u,--[no]dup3: runhelp d32
+    (default: 'true')
+  --[no]dup4: runhelp d41
+    (default: 'false')
+  -?,--[no]help: show this help
+  --[no]helpshort: show usage only for this module
+  --kwery: <who|what|why|where|when>: ?
+  --l: how long to be
+    (default: '9223372032559808512')
+    (an integer)
+  --letters: a list of letters
+    (default: 'a,b,c')
+    (a comma separated list)
+  -m,--m_str: string option that can occur multiple times;
+    repeat this option to specify a list of values
+    (default: "['def1', 'def2']")
+  --name: namehelp
+    (default: 'Bob')
+  --[no]noexec: boolean flag with no as prefix
+    (default: 'true')
+  --[no]q: quiet mode
+    (default: 'true')
+  --[no]quack: superstring of 'q'
+    (default: 'false')
+  -r,--repeat: how many times to repeat (0-5)
+    (default: '4')
+    (a non-negative integer)
+  -s,--s_str: string option that can occur multiple times;
+    repeat this option to specify a list of values
+    (default: "['sing1']")
+  --[no]test0: test boolean parsing
+  --[no]test1: test boolean parsing
+  --[no]testget1: test parsing with defaults
+  --[no]testget2: test parsing with defaults
+  --[no]testget3: test parsing with defaults
+  --testget4: test parsing with defaults
+    (an integer)
+  --testlist: test lists parsing
+    (default: '')
+    (a comma separated list)
+  --[no]testnone: test boolean parsing
+  --testspacelist: tests space lists parsing
+    (default: '')
+    (a whitespace separated list)
+  --x: how eXtreme to be
+    (default: '3')
+    (an integer)
+  -z,--[no]zoom1: runhelp z1
+    (default: 'false')"""
+
+    if help != expected_help:
+      print "Error: FLAGS.MainModuleHelp() didn't return the expected result."
+      print "Got:"
+      print help
+      print "[End of got]"
+
+      help_lines = help.split('\n')
+      expected_help_lines = expected_help.split('\n')
+
+      num_help_lines = len(help_lines)
+      num_expected_help_lines = len(expected_help_lines)
+
+      if num_help_lines != num_expected_help_lines:
+        print "Number of help lines = %d, expected %d" % (
+            num_help_lines, num_expected_help_lines)
+
+      num_to_match = min(num_help_lines, num_expected_help_lines)
+
+      for i in range(num_to_match):
+        if help_lines[i] != expected_help_lines[i]:
+          print "One discrepancy: Got:"
+          print help_lines[i]
+          print "Expected:"
+          print expected_help_lines[i]
+          break
+      else:
+        # If we got here, found no discrepancy, print first new line.
+        if num_help_lines > num_expected_help_lines:
+          print "New help line:"
+          print help_lines[num_expected_help_lines]
+        elif num_expected_help_lines > num_help_lines:
+          print "Missing expected help line:"
+          print expected_help_lines[num_help_lines]
+        else:
+          print "Bug in this test -- discrepancy detected but not found."
+
+      self.fail()
+
+  def test_create_flag_errors(self):
+    # Since the exception classes are exposed, nothing stops users
+    # from creating their own instances. This test makes sure that
+    # people modifying the flags module understand that the external
+    # mechanisms for creating the exceptions should continue to work.
+    e = flags.FlagsError()
+    e = flags.FlagsError("message")
+    e = flags.DuplicateFlag()
+    e = flags.DuplicateFlag("message")
+    e = flags.IllegalFlagValue()
+    e = flags.IllegalFlagValue("message")
+    e = flags.UnrecognizedFlag()
+    e = flags.UnrecognizedFlag("message")
+
+def main():
+  unittest.main()
 
 if __name__ == '__main__':
-  unittest.main()
+  main()

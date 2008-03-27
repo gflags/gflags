@@ -50,6 +50,24 @@
 //
 // For more details, see
 //    doc/gflags.html
+//
+// --- A note about thread-safety:
+//
+// We describe many functions in this routine as being thread-hostile,
+// thread-compatible, or thread-safe.  Here are the meanings we use:
+//
+// thread-safe: it is safe for multiple threads to call this routine
+//   (or, when referring to a class, methods of this class)
+//   concurrently.
+// thread-hostile: it is not safe for multiple threads to call this
+//   routine (or methods of this class) concurrently.  In gflags,
+//   most thread-hostile routines are intended to be called early in,
+//   or even before, main() -- that is, before threads are spawned.
+// thread-compatible: it is safe for multiple threads to read from
+//   this variable (when applied to variables), or to call const
+//   methods of this class (when applied to classes), as long as no
+//   other thread is writing to the variable or calling non-const
+//   methods of this class.
 
 #ifndef BASE_COMMANDLINEFLAGS_H__
 #define BASE_COMMANDLINEFLAGS_H__
@@ -120,13 +138,22 @@ extern void GetAllFlags(std::vector<CommandLineFlagInfo>* OUTPUT);
 extern void ShowUsageWithFlags(const char *argv0);  // what --help does
 extern void ShowUsageWithFlagsRestrict(const char *argv0, const char *restrict);
 
+// Create a descriptive string for a flag.
+// Goes to some trouble to make pretty line breaks.
+extern std::string DescribeOneFlag(const CommandLineFlagInfo& flag);
+
+// Thread-hostile; meant to be called before any threads are spawned.
 extern void SetArgv(int argc, const char** argv);
+// The following functions are thread-safe as long as SetArgv() is
+// only called before any threads start.
 extern const std::vector<std::string>& GetArgvs();  // all of argv as a vector
 extern const char* GetArgv();               // all of argv as a string
 extern const char* GetArgv0();              // only argv0
 extern uint32 GetArgvSum();                 // simple checksum of argv
 extern const char* ProgramInvocationName(); // argv0, or "UNKNOWN" if not set
 extern const char* ProgramInvocationShortName();   // basename(argv0)
+// ProgramUsage() is thread-safe as long as SetUsageMessage() is only
+// called before any threads start.
 extern const char* ProgramUsage();          // string set by SetUsageMessage()
 
 
@@ -135,6 +162,8 @@ extern const char* ProgramUsage();          // string set by SetUsageMessage()
 // or whatever, and set them by calling "FLAGS_foo = bar" (or, more
 // commonly, via the DEFINE_foo macro).  But if you need a bit more
 // control, we have programmatic ways to get/set the flags as well.
+// These programmatic ways to access flags are thread-safe, but direct
+// access is only thread-compatible.
 
 // Return true iff the flagname was found.
 // OUTPUT is set to the flag's value, or unchanged if we return false.
@@ -196,6 +225,8 @@ extern std::string SetCommandLineOptionWithMode(const char* name, const char* va
 // work is done in the constructor and destructor, so in the standard
 // usage example above, the compiler would complain that it's an
 // unused variable.
+//
+// This class is thread-safe.
 
 class FlagSaver {
  public:
@@ -251,6 +282,7 @@ extern const char *StringFromEnv(const char *varname, const char *defval);
 //   usage += argv[0] + " <uselessarg1> <uselessarg2>";
 //   SetUsageMessage(usage);
 // Do not include commandline flags in the usage: we do that for you!
+// Thread-hostile; meant to be called before any threads are spawned.
 extern void SetUsageMessage(const std::string& usage);
 
 // Looks for flags in argv and parses them.  Rearranges argv to put
@@ -280,8 +312,10 @@ extern uint32 ParseCommandLineNonHelpFlags(int *argc, char*** argv,
 // it's too late to change that now. :-(
 extern void HandleCommandLineHelpFlags();   // in commandlineflags_reporting.cc
 
-// Allow command line reparsing.  Disables the error normaly generated
-// when an unknown flag is found, since it may be found in a later parse.
+// Allow command line reparsing.  Disables the error normally
+// generated when an unknown flag is found, since it may be found in a
+// later parse.  Thread-hostile; meant to be called before any threads
+// are spawned.
 extern void AllowCommandLineReparsing();
 
 // Reparse the flags that have not yet been recognized.

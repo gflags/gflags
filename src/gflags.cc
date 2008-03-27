@@ -40,7 +40,6 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
-#include <pthread.h>
 #include <fnmatch.h>
 #include <pthread.h>
 #include <string>
@@ -96,8 +95,7 @@ static const char kError[] = "ERROR: ";
 // The help message indicating that the commandline flag has been
 // 'stripped'. It will not show up when doing "-help" and its
 // variants. The flag is stripped if STRIP_FLAG_HELP is set to 1
-// before including base/commandlineflags.h (or in
-// base/global_strip_options.h).
+// before including google/gflags.h.
 
 const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
 
@@ -105,7 +103,7 @@ const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
 // Enables deferred processing of flags in dynamically loaded libraries.
 static bool allow_command_line_reparsing = false;
 
-static bool logging_is_probably_set_up = false;   // google3-specific
+static bool logging_is_probably_set_up = false;
 
 // This is used by the unittest to test error-exit code
 void (*commandlineflags_exitfunc)(int) = &exit;   // from stdlib.h
@@ -114,7 +112,7 @@ void (*commandlineflags_exitfunc)(int) = &exit;   // from stdlib.h
 // FlagValue
 //    This represent the value a single flag might have.  The major
 //    functionality is to convert from a string to an object of a
-//    given type, and back.
+//    given type, and back.  Thread-compatible.
 // --------------------------------------------------------------------
 
 class FlagValue {
@@ -375,21 +373,19 @@ CommandLineFlag::~CommandLineFlag() {
 const char* CommandLineFlag::CleanFileName() const {
   // Compute top-level directory & file that this appears in
   // search full path backwards.
-  // Stop going backwards at kGoogle; and skip by the first slash.
-  // E.g.
-  //   filename_where_defined = "froogle/wrapping/autowrap/clustering/**.cc"
-  //   filename_where_defined = "file/util/fileutil.cc"
-  static const char kGoogle[] = "";    // can set this to whatever
+  // Stop going backwards at kRootDir; and skip by the first slash.
+  static const char kRootDir[] = "";    // can set this to root directory,
+                                        // e.g. "myproject"
 
-  if (sizeof(kGoogle)-1 == 0)          // no prefix to strip
+  if (sizeof(kRootDir)-1 == 0)          // no prefix to strip
     return filename();
 
   const char* clean_name = filename() + strlen(filename()) - 1;
   while ( clean_name > filename() ) {
     if (*clean_name == PATH_SEPARATOR) {
-      if (strncmp(clean_name, kGoogle, sizeof(kGoogle)-1) == 0) {
-        // ".../google/base/logging.cc" ==> "base/logging.cc"
-        clean_name += sizeof(kGoogle)-1;    // past "/google/"
+      if (strncmp(clean_name, kRootDir, sizeof(kRootDir)-1) == 0) {
+        // ".../myproject/base/logging.cc" ==> "base/logging.cc"
+        clean_name += sizeof(kRootDir)-1;    // past "/myproject/"
         break;
       }
     }
@@ -790,7 +786,7 @@ const char* ProgramInvocationName() {             // like the GNU libc fn
 }
 const char* ProgramInvocationShortName() {        // like the GNU libc fn
   const char* slash = strrchr(argv0, '/');
-#ifdef OS_WINDOWS
+#if defined(WIN32) || defined(_WIN32) || defined(__WIN32__)
   if (!slash)  slash = strrchr(argv0, '\\');
 #endif
   return slash ? slash + 1 : argv0;
@@ -939,7 +935,8 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
     char* arg = (*argv)[i];
 
     // Like getopt(), we permute non-option flags to be at the end.
-    if (arg[0] != '-') {           // must be a program argument
+    if (arg[0] != '-' ||           // must be a program argument
+        (arg[0] == '-' && arg[1] == '\0')) {  // "-" is an argument, not a flag
       memmove((*argv) + i, (*argv) + i+1, (*argc - (i+1)) * sizeof((*argv)[i]));
       (*argv)[*argc-1] = arg;      // we go last
       first_nonopt--;              // we've been pushed onto the stack
@@ -950,7 +947,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
     if (arg[0] == '-') arg++;      // allow leading '-'
     if (arg[0] == '-') arg++;      // or leading '--'
 
-    // - and -- alone mean what they do for GNU: stop options parsing
+    // -- alone means what it does for GNU: stop options parsing
     if (*arg == '\0') {
       first_nonopt = i+1;
       break;

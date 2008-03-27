@@ -81,11 +81,11 @@ translates directly to Python.</p>
 
 <p> Defining a flag is easy: just use the appropriate macro for the
 type you want the flag to be, as defined at the bottom of
-<code>base/commandlineflags.h</code>.  Here's an example file,
+<code>google/gflags.h</code>.  Here's an example file,
 <code>foo.cc</code>:</p>
 
 <pre>
-   #include "base/commandlineflags.h"
+   #include &lt;google/gflags.h&gt;
 
    DEFINE_bool(big_menu, true, "Include 'advanced' options in the menu listing");
    DEFINE_string(languages, "english,french,german",
@@ -131,7 +131,7 @@ be in the global namespace.</p>
 <h2> <A name=using>Accessing the Flag</A> </h2>
 
 <p>All defined flags are available to the program as just a normal
-variable, with the prefix <code>FLAGS_</code> appended.  In the above
+variable, with the prefix <code>FLAGS_</code> prepended.  In the above
 example, the macros define two variables, <code>FLAGS_big_menu</code>
 (a bool), and <code>FLAGS_languages</code> (a C++ string).</p>
 
@@ -145,7 +145,7 @@ variable:</p>
 </pre>
 
 <p>You can also get and set flag values via special functions in
-<code>commandlineflags.h</code>.  That's a rarer use case, though.</p>
+<code>gflags.h</code>.  That's a rarer use case, though.</p>
 
 
 <h2> <A name=declare>DECLARE: Using the Flag in a Different File</A> </h2>
@@ -173,16 +173,21 @@ recommend the following guideline:</p>
 
 <blockquote>
 If you DEFINE a flag in <code>foo.cc</code>, either don't DECLARE it
-at all, or only DECLARE it in <code>foo.h</code>.
+at all, only DECLARE it in tightly related tests, or only DECLARE
+it in <code>foo.h</code>.
 </blockquote>
 
 <p>You should go the do-not-DECLARE route when the flag is only needed
-by <code>foo.cc</code>, and not in any other file.  If the flag does
-span multiple files, DECLARE it in the associated <code>.h</code>
-file, and make others <code>#include</code> that <code>.h</code> file
-if they want to access the flag.  The <code>#include</code> will make
-explicit the dependency between the two files.</p>
+by <code>foo.cc</code>, and not in any other file. If you want to
+modify the value of the flag in the related test file to see if it is
+functioning as expected, DECLARE it in the <code>foo_test.cc</code>
+file.
 
+<p>If the flag does span multiple files, DECLARE it in the associated
+<code>.h</code> file, and make others <code>#include</code> that
+<code>.h</code> file if they want to access the flag.  The
+<code>#include</code> will make explicit the dependency between the
+two files. This causes the flag to be a global variable.</p>
 
 <h2> <A name=together>Putting It Together: How to Set Up Flags</A> </h2>
 

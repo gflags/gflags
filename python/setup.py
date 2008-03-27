@@ -32,7 +32,7 @@
 from distutils.core import setup
 
 setup(name='gflags',
-      version='0.6',
+      version='0.8',
       description='Google Commandline Flags Module',
       license='BSD',
       author='Google Inc.',

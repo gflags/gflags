@@ -116,6 +116,7 @@ SPECIAL FLAGS: There are a few flags that have special meaning:
    --help (or -?)  prints a list of all the flags in a human-readable fashion
    --helpshort     prints a list of all the flags in the 'main' .py file only
    --flagfile=foo  read flags from foo.
+   --undefok=f1,f2 ignore unrecognized option errors for f1,f2
    --              as in getopt(), terminates flag-processing
 
 Note on --flagfile:
@@ -157,11 +158,10 @@ EXAMPLE USAGE:
   # Flag names are globally defined!  So in general, we need to be
   # careful to pick names that are unlikely to be used by other libraries.
   # If there is a conflict, we'll get an error at import time.
-  gflags.DEFINE_string("name", "Mr. President" "NAME: your name")
-  gflags.DEFINE_integer("age", None, "AGE: your age in years", lower_bound=0)
-  gflags.DEFINE_boolean("debug", 0, "produces debugging output")
-  gflags.DEFINE_enum("gender", "male", ["male", "female"],
-                     "GENDER: your gender")
+  gflags.DEFINE_string('name', 'Mr. President', 'your name')
+  gflags.DEFINE_integer('age', None, 'your age in years', lower_bound=0)
+  gflags.DEFINE_boolean('debug', 0, 'produces debugging output')
+  gflags.DEFINE_enum('gender', 'male', ['male', 'female'], 'your gender')
 
   def main(argv):
     try:
@@ -172,13 +172,15 @@ EXAMPLE USAGE:
     if FLAGS.debug: print 'non-flag arguments:', argv
     print 'Happy Birthday', FLAGS.name
     if FLAGS.age is not None:
-      print "You are a %s, who is %d years old" % (FLAGS.gender, FLAGS.age)
+      print 'You are a %s, who is %d years old' % (FLAGS.gender, FLAGS.age)
 
-  if __name__ == '__main__': main(sys.argv)
+  if __name__ == '__main__':
+    main(sys.argv)
 """
 
 import getopt
 import os
+import re
 import sys
 
 # Are we running at least python 2.2?
@@ -188,16 +190,256 @@ try:
 except AttributeError:   # a very old python, that lacks sys.version_info
   raise NotImplementedError("requires python 2.2.0 or later")
 
+# If we're not running at least python 2.3, define True and False
+# Thanks, Guido, for the code.
+try:
+  True, False
+except NameError:
+  False = 0
+  True = 1
+
 # Are we running under pychecker?
 _RUNNING_PYCHECKER = 'pychecker.python' in sys.modules
 
+
+def _GetCallingModule():
+  """
+  Get the name of the module that's calling into this module; e.g.,
+  the module calling a DEFINE_foo... function.
+  """
+  # Walk down the stack to find the first globals dict that's not ours.
+  for depth in range(1, sys.getrecursionlimit()):
+    if not sys._getframe(depth).f_globals is globals():
+      return __GetModuleName(sys._getframe(depth).f_globals)
+  raise AssertionError, "No module was found"
+
+
 # module exceptions:
-class FlagsError(Exception): "The base class for all flags errors"
-class DuplicateFlag(FlagsError): "Thrown if there is a flag naming conflict"
+class FlagsError(Exception):
+  """The base class for all flags errors"""
+
+class DuplicateFlag(FlagsError):
+  """"Raised if there is a flag naming conflict"""
+
+# A DuplicateFlagError conveys more information than
+# a DuplicateFlag. Since there are external modules
+# that create DuplicateFlags, the interface to
+# DuplicateFlag shouldn't change.
+class DuplicateFlagError(DuplicateFlag):
+  def __init__(self, flagname, flag_values):
+    self.flagname = flagname
+    message = "The flag '%s' is defined twice." % self.flagname
+    flags_by_module = flag_values.__dict__['__flags_by_module']
+    for module in flags_by_module:
+      for flag in flags_by_module[module]:
+        if flag.name == flagname:
+          message = message + " First from " + module + ","
+          break
+    message = message + " Second from " + _GetCallingModule()
+    Exception.__init__(self, message)
+
 class IllegalFlagValue(FlagsError): "The flag command line argument is illegal"
+
+class UnrecognizedFlag(FlagsError):
+  """Raised if a flag is unrecognized"""
+
+# An UnrecognizedFlagError conveys more information than
+# an UnrecognizedFlag. Since there are external modules
+# that create DuplicateFlags, the interface to
+# DuplicateFlag shouldn't change.
+class UnrecognizedFlagError(UnrecognizedFlag):
+  def __init__(self, flagname):
+    self.flagname = flagname
+    Exception.__init__(self, "Unknown command line flag '%s'" % flagname)
 
 # Global variable used by expvar
 _exported_flags = {}
+_help_width = 80  # width of help output
+
+
+def GetHelpWidth():
+  """
+  Length of help to be used in TextWrap
+  """
+  global _help_width
+  return _help_width
+
+
+def CutCommonSpacePrefix(text):
+  """
+  Cut out a common space prefix. If the first line does not start with a space
+  it is left as is and only in the remaining lines a common space prefix is
+  being searched for. That means the first line will stay untouched. This is
+  especially useful to turn doc strings into help texts. This is because some
+  people prefer to have the doc comment start already after the apostrophy and
+  then align the following lines while others have the apostrophies on a
+  seperately line. The function also drops trailing empty lines and ignores
+  empty lines following the initial content line while calculating the initial
+  common whitespace.
+
+  Args:
+    text:  text to work on
+
+  Returns:
+    the resulting text
+  """
+  text_lines = text.splitlines()
+  # Drop trailing empty lines
+  while text_lines and not text_lines[-1]:
+    text_lines = text_lines[:-1]
+  if text_lines:
+    # We got some content, is the first line starting with a space?
+    if text_lines[0] and text_lines[0][0].isspace():
+      text_first_line = []
+    else:
+      text_first_line = [text_lines.pop(0)]
+    # Calculate length of common leading whitesppace (only over content lines)
+    common_prefix = os.path.commonprefix([line for line in text_lines if line])
+    space_prefix_len = len(common_prefix) - len(common_prefix.lstrip())
+    # If we have a common space prefix, drop it from all lines
+    if space_prefix_len:
+      for index in xrange(len(text_lines)):
+        if text_lines[index]:
+          text_lines[index] = text_lines[index][space_prefix_len:]
+    return '\n'.join(text_first_line + text_lines)
+  return ''
+
+
+def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
+  """
+  Wrap a given text to a maximum line length and return it.
+  We turn lines that only contain whitespace into empty lines.
+  We keep new lines.
+  We also keep tabs (e.g. we do not treat tabs as spaces).
+
+  Args:
+    text:             text to wrap
+    length:           maximum length of a line, includes indentation
+                      if this is None then use GetHelpWidth()
+    indent:           indent for all but first line
+    firstline_indent: indent for first line, if None then fall back to indent
+    tabs:             replacement for tabs
+
+  Returns:
+    wrapped text
+
+  Raises:
+    CommandsError: if indent not shorter than length
+    CommandsError: if firstline_indent not shorter than length
+  """
+  # Get defaults where callee used None
+  if length is None:
+    length = GetHelpWidth()
+  if indent is None:
+    indent = ''
+  if len(indent) >= length:
+    raise CommandsError('Indent must be shorter than length')
+  # In line we will be holding the current line which is to be started with
+  # indent (or firstline_indent if available) and then appended with words.
+  if firstline_indent is None:
+    firstline_indent = ''
+    line = indent
+  else:
+    line = firstline_indent
+    if len(firstline_indent) >= length:
+      raise CommandsError('First iline indent must be shorter than length')
+
+  # If the callee does not care about tabs we simply convert them to spaces
+  # If callee wanted tabs to be single space then we do that already here.
+  if not tabs or tabs == ' ':
+    text = text.replace('\t', ' ')
+  else:
+    tabs_are_whitespace = not tabs.strip()
+
+  line_regex = re.compile('([ ]*)(\t*)([^ \t]+)', re.MULTILINE)
+
+  # Split the text into lines and the lines with the regex above. The resulting
+  # lines are collected in result[]. For each split we get the spaces, the tabs
+  # and the next non white space (e.g. next word).
+  result = []
+  for text_line in text.splitlines():
+    # Store result length so we can find out whether processing the next line
+    # gave any new content
+    old_result_len = len(result)
+    # Process next line with line_regex. For optimization we do an rstrip().
+    # - process tabs (changes either line or word, see below)
+    # - process word (first try to squeeze on line, then wrap or force wrap)
+    # Spaces found on the line are ignored, they get added while wrapping as
+    # needed.
+    for spaces, current_tabs, word in line_regex.findall(text_line.rstrip()):
+      # If tabs weren't converted to spaces, handle them now
+      if current_tabs:
+        # If the last thing we added was a space anyway then drop it. But
+        # let's not get rid of the indentation.
+        if (((result and line != indent) or
+            (not result and line != firstline_indent)) and line[-1] == ' '):
+          line = line[:-1]
+        # Add the tabs, if that means adding whitespace, just add it at the
+        # line, the rstrip() code while shorten the line down if necessary
+        if tabs_are_whitespace:
+          line += tabs * len(current_tabs)
+        else:
+          # if not all tab replacement is whitespace we prepend it to the word
+          word = tabs * len(current_tabs) + word
+      # Handle the case where word cannot be squeezed onto current last line
+      if len(line) + len(word) > length and len(indent) + len(word) <= length:
+        result.append(line.rstrip())
+        line = indent + word
+        word = ''
+        # No space left on line or can we append a space?
+        if len(line) + 1 >= length:
+          result.append(line.rstrip())
+          line = indent
+        else:
+          line += ' '
+      # Add word and shorten it up to allowed line length. Restart next line
+      # with indent and repeat, or add a space if we're done (word finished)
+      # This deals with words that caanot fit on one line (e.g. indent + word
+      # longer than allowed line length).
+      while len(line) + len(word) >= length:
+        line += word
+        result.append(line[:length])
+        word = line[length:]
+        line = indent
+      # Default case, simply append the word and a space
+      if word:
+        line += word + ' '
+    # End of input line. If we have content we finish the line. If the
+    # current line is just the indent but we had content in during this
+    # original line then we need to add an emoty line.
+    if (result and line != indent) or (not result and line != firstline_indent):
+      result.append(line.rstrip())
+    elif len(result) == old_result_len:
+      result.append('')
+    line = indent
+
+  return '\n'.join(result)
+
+
+def DocToHelp(doc):
+  """
+  Takes a __doc__ string and reformats it as help.
+  """
+  # Get rid of starting and ending white space. Using lstrip() or even strip()
+  # could drop more than maximum of first line and right space of last line.
+  doc = doc.strip()
+
+  # Get rid of all empty lines
+  whitespace_only_line = re.compile('^[ \t]+$', re.M)
+  doc = whitespace_only_line.sub('', doc)
+
+  # Cut out common space at line beginnings
+  doc = CutCommonSpacePrefix(doc)
+
+  # Just like this module's comment, comments tend to be aligned somehow.
+  # In other words they all start with the same amount of white space
+  # 1) keep double new lines
+  # 2) keep ws after new lines if not empty line
+  # 3) all other new lines shall be changed to a space
+  # Solution: Match new lines between non white space and replace with space.
+  doc = re.sub('(?<=\S)\n(?=\S)', ' ', doc, re.M)
+
+  return doc
 
 
 def __GetModuleName(globals_dict):
@@ -207,16 +449,6 @@ def __GetModuleName(globals_dict):
       if name == '__main__':
         return sys.argv[0]
       return name
-  raise AssertionError, "No module was found"
-
-def __GetCallingModule():
-  """Get the name of the module that's calling into this module; e.g.,
-     the module calling a DEFINE_foo... function.
-  """
-  # Walk down the stack to find the first globals dict that's not ours.
-  for depth in range(1, sys.getrecursionlimit()):
-    if not sys._getframe(depth).f_globals is globals():
-      return __GetModuleName(sys._getframe(depth).f_globals)
   raise AssertionError, "No module was found"
 
 def _GetMainModule():
@@ -262,6 +494,7 @@ class FlagValues:
   The str() operator of a 'FlagValues' object provides help for all of
   the registered 'Flag' objects.
   """
+
   def __init__(self):
     # Since everything in this class is so heavily overloaded,
     # the only way of defining and using fields is to access __dict__
@@ -279,6 +512,15 @@ class FlagValues:
     flags_by_module = self.__dict__['__flags_by_module']
     flags_by_module.setdefault(module_name, []).append(flag)
 
+  def AppendFlagValues(self, flag_values):
+    """Append flags registered in another FlagValues instance.
+
+    Args:
+      flag_values: registry to copy from
+    """
+    for flag_name, flag in flag_values.FlagDict().iteritems():
+      self[flag_name] = flag
+
   def __setitem__(self, name, flag):
     """
     Register a new flag variable.
@@ -294,12 +536,12 @@ class FlagValues:
     # Disable check for duplicate keys when pycheck'ing.
     if (fl.has_key(name) and not flag.allow_override and
         not fl[name].allow_override and not _RUNNING_PYCHECKER):
-      raise DuplicateFlag, name
+      raise DuplicateFlagError(name, self)
     short_name = flag.short_name
     if short_name is not None:
       if (fl.has_key(short_name) and not flag.allow_override and
           not fl[short_name].allow_override and not _RUNNING_PYCHECKER):
-        raise DuplicateFlag, short_name
+        raise DuplicateFlagError(short_name, self)
       fl[short_name] = flag
     fl[name] = flag
     global _exported_flags
@@ -365,8 +607,16 @@ class FlagValues:
     Argument Syntax Conventions, using getopt:
 
     http://www.gnu.org/software/libc/manual/html_mono/libc.html#Getopt
-    """
 
+    Args:
+       argv: argument list. Can be of any type that may be converted to a list.
+
+    Returns:
+       The list of arguments not parsed as options, including argv[0]
+
+    Raises:
+       FlagsError: on any parsing error
+    """
     # Support any sequence type that can be converted to a list
     argv = list(argv)
 
@@ -384,7 +634,7 @@ class FlagValues:
     # having options that may or may not have a parameter.  We replace
     # instances of the short form --mybool and --nomybool with their
     # full forms: --mybool=(true|false).
-    original_argv = list(argv)
+    original_argv = list(argv)  # list() makes a copy
     shortest_matches = None
     for name, flag in fl.items():
       if not flag.boolean:
@@ -412,16 +662,45 @@ class FlagValues:
     # Each string ends with an '=' if it takes an argument.
     for name, flag in fl.items():
       longopts.append(name + "=")
-      if len(name) == 1: # one-letter option: allow short flag type also
+      if len(name) == 1:  # one-letter option: allow short flag type also
         shortopts += name
         if not flag.boolean:
           shortopts += ":"
 
-    try:
-      optlist, unparsed_args = getopt.getopt(argv[1:], shortopts, longopts)
-    except getopt.GetoptError, e:
-      raise FlagsError, e
+    longopts.append('undefok=')
+    undefok_flags = []
+
+    # In case --undefok is specified, loop to pick up unrecognized
+    # options one by one.
+    unrecognized_opts = []
+    args = argv[1:]
+    while True:
+      try:
+        optlist, unparsed_args = getopt.getopt(args, shortopts, longopts)
+        break
+      except getopt.GetoptError, e:
+        if not e.opt or e.opt in fl:
+          # Not an unrecognized option, reraise the exception as a FlagsError
+          raise FlagsError(e)
+        # Handle an unrecognized option.
+        unrecognized_opts.append(e.opt)
+        # Remove offender from args and try again
+        for arg_index in range(len(args)):
+          if ((args[arg_index] == '--' + e.opt) or
+              (args[arg_index] == '-' + e.opt) or
+              args[arg_index].startswith('--' + e.opt + '=')):
+            args = args[0:arg_index] + args[arg_index+1:]
+            break
+        else:
+          # We should have found the option, so we don't expect to get
+          # here.  We could assert, but raising the original exception
+          # might work better.
+          raise FlagsError(e)
+
     for name, arg in optlist:
+      if name == '--undefok':
+        undefok_flags.extend(arg.split(','))
+        continue
       if name.startswith('--'):
         # long option
         name = name[2:]
@@ -434,6 +713,12 @@ class FlagValues:
         flag = fl[name]
         if flag.boolean and short_option: arg = 1
         flag.Parse(arg)
+
+    # If there were unrecognized options, raise an exception unless
+    # the options were named via --undefok.
+    for opt in unrecognized_opts:
+      if opt not in undefok_flags:
+        raise UnrecognizedFlagError(opt)
 
     if unparsed_args:
       # unparsed_args becomes the first non-flag detected by getopt to
@@ -472,6 +757,12 @@ class FlagValues:
     """
     Generate a help string for all known flags.
     """
+    return self.GetHelp()
+
+  def GetHelp(self, prefix=""):
+    """
+    Generate a help string for all known flags.
+    """
     helplist = []
 
     flags_by_module = self.__dict__['__flags_by_module']
@@ -487,33 +778,47 @@ class FlagValues:
         modules = [ main_module ] + modules
 
       for module in modules:
-        self.__RenderModuleFlags(module, helplist)
+        self.__RenderOurModuleFlags(module, helplist)
+
+      self.__RenderModuleFlags('google3.pyglib.flags',
+                               _SPECIAL_FLAGS.FlagDict().values(),
+                               helplist)
 
     else:
       # Just print one long list of flags.
-      self.__RenderFlagList(self.FlagDict().values(), helplist)
+      self.__RenderFlagList(
+          self.FlagDict().values() + _SPECIAL_FLAGS.FlagDict().values(),
+          helplist, prefix)
 
     return '\n'.join(helplist)
 
-  def __RenderModuleFlags(self, module, output_lines):
+  def __RenderModuleFlags(self, module, flags, output_lines, prefix=""):
+    """
+    Generate a help string for a given module.
+    """
+    output_lines.append('\n%s%s:' % (prefix, module))
+    self.__RenderFlagList(flags, output_lines, prefix + "  ")
+
+  def __RenderOurModuleFlags(self, module, output_lines, prefix=""):
     """
     Generate a help string for a given module.
     """
     flags_by_module = self.__dict__['__flags_by_module']
     if module in flags_by_module:
-      output_lines.append('\n%s:' % module)
-      self.__RenderFlagList(flags_by_module[module], output_lines)
+      self.__RenderModuleFlags(module, flags_by_module[module],
+                               output_lines, prefix)
 
   def MainModuleHelp(self):
     """
     Generate a help string for all known flags of the main module.
     """
     helplist = []
-    self.__RenderModuleFlags(_GetMainModule(), helplist)
+    self.__RenderOurModuleFlags(_GetMainModule(), helplist)
     return '\n'.join(helplist)
 
-  def __RenderFlagList(self, flaglist, output_lines):
+  def __RenderFlagList(self, flaglist, output_lines, prefix="  "):
     fl = self.FlagDict()
+    special_fl = _SPECIAL_FLAGS.FlagDict()
     flaglist = [(flag.name, flag) for flag in flaglist]
     flaglist.sort()
     flagset = {}
@@ -521,12 +826,13 @@ class FlagValues:
       # It's possible this flag got deleted or overridden since being
       # registered in the per-module flaglist.  Check now against the
       # canonical source of current flag information, the FlagDict.
-      if fl.get(name, None) != flag:   # a different flag is using this name now
+      if fl.get(name, None) != flag and special_fl.get(name, None) != flag:
+        # a different flag is using this name now
         continue
       # only print help once
       if flagset.has_key(flag): continue
       flagset[flag] = 1
-      flaghelp = "  "
+      flaghelp = ""
       if flag.short_name: flaghelp += "-%s," % flag.short_name
       if flag.boolean:
         flaghelp += "--[no]%s" % flag.name + ":"
@@ -535,10 +841,16 @@ class FlagValues:
       flaghelp += "  "
       if flag.help:
         flaghelp += flag.help
+      flaghelp = TextWrap(flaghelp, indent=prefix+"  ",
+                          firstline_indent=prefix)
       if flag.default_as_str:
-        flaghelp += "\n    (default: %s)" % flag.default_as_str
+        flaghelp += "\n"
+        flaghelp += TextWrap("(default: %s)" % flag.default_as_str,
+                             indent=prefix+"  ")
       if flag.parser.syntactic_help:
-        flaghelp += "\n    (%s)" % flag.parser.syntactic_help
+        flaghelp += "\n"
+        flaghelp += TextWrap("(%s)" % flag.parser.syntactic_help,
+                             indent=prefix+"  ")
       output_lines.append(flaghelp)
 
   def get(self, name, default):
@@ -730,7 +1042,7 @@ class FlagValues:
 
   def FlagsIntoString(self):
     """
-    Retreive a string version of all the flags with assignments stored
+    Retrieve a string version of all the flags with assignments stored
     in this FlagValues object.  Should mirror the behavior of the c++
     version of FlagsIntoString.  Each flag assignment is seperated by
     a newline.
@@ -751,9 +1063,7 @@ class FlagValues:
     out_file = open(filename, 'a')
     out_file.write(self.FlagsIntoString())
     out_file.close()
-
-#end of the FLAGS registry class
-
+# end of FlagValues definition
 
 # The global FlagValues instance
 FLAGS = FlagValues()
@@ -869,6 +1179,7 @@ class Flag:
       self.value = None
     self.default = value
     self.default_as_str = self.__GetParsedValueAsString(value)
+# End of Flag definition
 
 class ArgumentParser:
   """
@@ -929,7 +1240,7 @@ def DEFINE_flag(flag, flag_values=FLAGS):
   default, the global FLAGS 'FlagValue' object is used.
 
   Typical users will use one of the more specialized DEFINE_xxx
-  functions, such as DEFINE_string or DEFINEE_integer.  But developers
+  functions, such as DEFINE_string or DEFINE_integer.  But developers
   who need to create Flag objects themselves should use this function to
   register their flags.
   """
@@ -944,7 +1255,7 @@ def DEFINE_flag(flag, flag_values=FLAGS):
     # of which module is creating the flags.
 
     # Tell FLAGS who's defining flag.
-    FLAGS._RegisterFlagByModule(__GetCallingModule(), flag)
+    FLAGS._RegisterFlagByModule(_GetCallingModule(), flag)
 
 
 ###############################
@@ -1369,3 +1680,18 @@ def DEFINE_multi_int(name, default, help, lower_bound=None, upper_bound=None,
 # these flagnames for their own purposes, if they want.
 DEFINE_flag(HelpFlag())
 DEFINE_flag(HelpshortFlag())
+
+# Define special flags here so that help may be generated for them.
+_SPECIAL_FLAGS = FlagValues()
+
+DEFINE_string(
+    'flagfile', "",
+    "Insert flag definitions from the given file into the command line.",
+    _SPECIAL_FLAGS)
+
+DEFINE_string(
+    'undefok', "",
+    "comma-separated list of flag names that it is okay to specify "
+    "on the command line even if the program does not define a flag "
+    "with that name.  IMPORTANT: flags in this list that have "
+    "arguments MUST use the --flag=value format.", _SPECIAL_FLAGS)

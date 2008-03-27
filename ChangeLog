@@ -1,3 +1,14 @@
+Wed Mar 26 15:20:18 2008  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.8
+	* Export DescribeOneFlag() in the API
+	* Add support for automatic line wrapping at 80 cols for gflags.py
+	* Bugfix: do not treat an isolated "-" the same as an isolated "--"
+	* Update rpm spec to point to Google Code rather than sourceforge (!)
+	* Improve documentation (including documenting thread-safety)
+	* Improve #include hygiene
+	* Improve testing
+	
 Thu Oct 18 11:33:20 2007  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 0.7

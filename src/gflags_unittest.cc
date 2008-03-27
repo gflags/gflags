@@ -35,6 +35,7 @@
 
 #include "config.h"
 #include <stdio.h>
+#include <stdlib.h>     // for &exit
 #include <string.h>
 #include <unistd.h>     // for unlink()
 #include <sys/stat.h>   // for mkdir()
@@ -46,8 +47,7 @@
 using std::vector;
 using std::string;
 
-// Returns the number of elements in an array.  We don't use the safer
-// version in base/basictypes.h as commandlineflags is open-sourced.
+// Returns the number of elements in an array.
 #define GET_ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*(arr)))
 
 DECLARE_string(tryfromenv);   // in commandlineflags.cc
@@ -1107,6 +1107,43 @@ TEST(ParseCommandLineFlagsUsesLastDefinitionTest,
 
   EXPECT_EQ(3, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
   EXPECT_EQ(3, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
+TEST(ParseCommandLineFlagsAndDashArgs, TwoDashArgFirst) {
+  const char* argv[] = {
+    "my_test",
+    "--",
+    "--test_flag=0",
+    NULL,
+  };
+
+  EXPECT_EQ(-1, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(-1, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
+TEST(ParseCommandLineFlagsAndDashArgs, TwoDashArgMiddle) {
+  const char* argv[] = {
+    "my_test",
+    "--test_flag=7",
+    "--",
+    "--test_flag=0",
+    NULL,
+  };
+
+  EXPECT_EQ(7, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(7, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
+}
+
+TEST(ParseCommandLineFlagsAndDashArgs, OneDashArg) {
+  const char* argv[] = {
+    "my_test",
+    "-",
+    "--test_flag=0",
+    NULL,
+  };
+
+  EXPECT_EQ(0, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  EXPECT_EQ(0, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
 }
 
 static int Main(int argc, char **argv) {
