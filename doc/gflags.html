@@ -189,6 +189,38 @@ file.
 <code>#include</code> will make explicit the dependency between the
 two files. This causes the flag to be a global variable.</p>
 
+
+<h2> <A name=validate>RegisterFlagValidator: Sanity-checking Flag Values</A> </h2>
+
+<p>After DEFINE-ing a flag, you may optionally register a validator
+function with the flag.  If you do this, after the flag is parsed from
+the commandline, and whenever its value is changes via a call to
+<code>SetCommandLineOption()</code>, the validator function is called
+with the new value as an argument.  The validator function should
+return 'true' if the flag value is valid, and false otherwise. 
+
+<p>Here is an example use of this functionality:</p>
+<pre>
+static bool ValidatePort(const char* flagname, int32 value) {
+   if (value > 0 && value < 32768)   // value is ok
+     return true;
+   printf("Invalid value for --%s: %d\n", flagname, (int)value);
+   return false;
+}
+DEFINE_int32(port, 0, "What port to listen on");
+static const bool port_dummy = RegisterFlagValidator(&FLAGS_port, &ValidatePort);
+</pre>
+
+<p>By doing the registration at global initialization time (right
+after the DEFINE), we ensure that the registration happens before
+the commandline is parsed at the beginning of <code>main()</code>.</p>
+
+<p><code>RegisterFlagValidator()</code> returns true if the
+registration is successful.  It return false if the registration fails
+because a) the first argument does not refer to a commandline flag, or
+b) a different validator has already been registered for this flag.</p>
+
+
 <h2> <A name=together>Putting It Together: How to Set Up Flags</A> </h2>
 
 <p>The final piece is the one that tells the executable to process the

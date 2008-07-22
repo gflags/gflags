@@ -11,10 +11,20 @@ ACLOCAL_AMFLAGS = -I m4
 # This is so we can #include <google/foo>
 AM_CPPFLAGS = -I$(top_srcdir)/src
 
+# This is mostly based on configure options
+AM_CXXFLAGS =
+
+# These are good warnings to turn on by default,
+if GCC
+AM_CXXFLAGS += -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare
+endif
+
 googleincludedir = $(includedir)/google
 ## The .h files you want to install (that is, .h files that people
 ## who install this package can include in their own applications.)
-googleinclude_HEADERS = src/google/gflags.h
+googleinclude_HEADERS = src/google/gflags.h src/google/gflags_completions.h
+
+bin_SCRIPTS = src/gflags_completions.sh
 
 docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
 ## This is for HTML and other documentation you want to install.
@@ -42,9 +52,10 @@ CLEANFILES =
 
 lib_LTLIBRARIES += libgflags.la
 libgflags_la_SOURCES = $(googleinclude_HEADERS) src/config.h \
-                       src/gflags.cc src/gflags_reporting.cc
-libgflags_la_CXXFLAGS = $(PTRHEAD_CFLAGS) -DNDEBUG
-libgflags_la_LDFLAGS = $(PTRHEAD_CFLAGS)
+                       src/gflags.cc src/gflags_reporting.cc \
+                       src/gflags_completions.cc
+libgflags_la_CXXFLAGS = $(PTHREAD_CFLAGS) -DNDEBUG
+libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS)
 libgflags_la_LIBADD = $(PTHREAD_LIBS)
 
 TESTS += gflags_unittest

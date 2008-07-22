@@ -53,7 +53,7 @@ using std::string;
 DECLARE_string(tryfromenv);   // in commandlineflags.cc
 
 DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
-DEFINE_string(srcdir, google::StringFromEnv("SRCDIR", "."),
+DEFINE_string(srcdir, GOOGLE_NAMESPACE::StringFromEnv("SRCDIR", "."),
               "Source-dir root, needed to find gflags_unittest_flagfile");
 
 
@@ -91,6 +91,20 @@ DEFINE_bool(test_bool_float, 1.0, "");
 // boolean flag assigned with int
 DEFINE_bool(test_bool_int, 1, "");
 
+// Don't try this at home!
+static int changeable_var = 12;
+DEFINE_int32(changeable_var, ++changeable_var, "");
+
+static int changeable_bool_var = 8008;
+DEFINE_bool(changeable_bool_var, ++changeable_bool_var == 8009, "");
+
+static int changeable_string_var = 0;
+static string ChangeableString() {
+  char r[] = {'0' + ++changeable_string_var, '\0'};
+  return r;
+}
+DEFINE_string(changeable_string_var, ChangeableString(), "");
+
 // These are never used in this unittest, but can be used by
 // commandlineflags_unittest.sh when it needs to specify flags
 // that are legal for commandlineflags_unittest but don't need to
@@ -105,6 +119,10 @@ DEFINE_string(unused_string, "unused", "");
 // These flags are used by gflags_unittest.sh
 DEFINE_bool(changed_bool1, false, "changed");
 DEFINE_bool(changed_bool2, false, "changed");
+
+static bool AlwaysFail(const char* flag, bool value) { return value == false; }
+DEFINE_bool(always_fail, false, "will fail to validate when you set it");
+static const bool dummy = GOOGLE_NAMESPACE::RegisterFlagValidator(&FLAGS_always_fail, AlwaysFail);
 
 _START_GOOGLE_NAMESPACE_
 
@@ -203,6 +221,31 @@ static int RUN_ALL_TESTS() {
   return 0;
 }
 
+
+// Defining a variable of type CompileAssertTypesEqual<T1, T2> will cause a
+// compiler error iff T1 and T2 are different types.
+template <typename T1, typename T2>
+struct CompileAssertTypesEqual;
+
+template <typename T>
+struct CompileAssertTypesEqual<T, T> {
+};
+
+
+template <typename Expected, typename Actual>
+void AssertIsType(Actual& x) {
+  CompileAssertTypesEqual<Expected, Actual>();
+}
+
+// Verify all the flags are the right type.
+TEST(FlagTypes, FlagTypes) {
+  AssertIsType<bool>(FLAGS_test_bool);
+  AssertIsType<int32>(FLAGS_test_int32);
+  AssertIsType<int64>(FLAGS_test_int64);
+  AssertIsType<uint64>(FLAGS_test_uint64);
+  AssertIsType<double>(FLAGS_test_double);
+  AssertIsType<string>(FLAGS_test_string);
+}
 
 // Death tests for "help" options.
 //
@@ -532,6 +575,36 @@ TEST(SetFlagValueTest, IllegalValues) {
 }
 
 
+// Tests that we only evaluate macro args once
+TEST(MacroArgs, EvaluateOnce) {
+  EXPECT_EQ(13, FLAGS_changeable_var);
+  // Make sure we don't ++ the value somehow, when evaluating the flag.
+  EXPECT_EQ(13, FLAGS_changeable_var);
+  // Make sure the macro only evaluated this var once.
+  EXPECT_EQ(13, changeable_var);
+  // Make sure the actual value and default value are the same
+  SetCommandLineOptionWithMode("changeable_var", "21", SET_FLAG_IF_DEFAULT);
+  EXPECT_EQ(21, FLAGS_changeable_var);
+}
+
+TEST(MacroArgs, EvaluateOnceBool) {
+  EXPECT_EQ(true, FLAGS_changeable_bool_var);
+  EXPECT_EQ(true, FLAGS_changeable_bool_var);
+  EXPECT_EQ(8009, changeable_bool_var);
+  SetCommandLineOptionWithMode("changeable_bool_var", "false",
+                               SET_FLAG_IF_DEFAULT);
+  EXPECT_EQ(false, FLAGS_changeable_bool_var);
+}
+
+TEST(MacroArgs, EvaluateOnceStrings) {
+  EXPECT_EQ("1", FLAGS_changeable_string_var);
+  EXPECT_EQ("1", FLAGS_changeable_string_var);
+  EXPECT_EQ(1, changeable_string_var);
+  SetCommandLineOptionWithMode("changeable_string_var", "different",
+                               SET_FLAG_IF_DEFAULT);
+  EXPECT_EQ("different", FLAGS_changeable_string_var);
+}
+
 // Tests that the FooFromEnv does the right thing
 TEST(FromEnvTest, LegalValues) {
   setenv("BOOL_VAL1", "true", 1);
@@ -856,6 +929,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
   EXPECT_EQ(true, info.is_default);
+  EXPECT_EQ(false, info.has_validator_fn);
 
   FLAGS_test_bool = true;
   r = GetCommandLineFlagInfo("test_bool", &info);
@@ -866,6 +940,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("true", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_EQ(false, info.is_default);
+  EXPECT_EQ(false, info.has_validator_fn);
 
   FLAGS_test_bool = false;
   r = GetCommandLineFlagInfo("test_bool", &info);
@@ -876,6 +951,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("false", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_EQ(false, info.is_default);  // value is same, but flag *was* modified
+  EXPECT_EQ(false, info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
@@ -887,6 +963,7 @@ TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
   info.default_value = "def";
   info.filename = "/";
   info.is_default = false;
+  info.has_validator_fn = true;
   bool r = GetCommandLineFlagInfo("test_int3210", &info);
   EXPECT_EQ(false, r);
   EXPECT_EQ("name", info.name);
@@ -896,6 +973,7 @@ TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
   EXPECT_EQ("def", info.default_value);
   EXPECT_EQ("/", info.filename);
   EXPECT_EQ(false, info.is_default);
+  EXPECT_EQ(true, info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
@@ -914,6 +992,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
   EXPECT_EQ("false", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_EQ(true, info.is_default);
+  EXPECT_EQ(false, info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
@@ -934,6 +1013,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ("true", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_EQ(false, info.is_default);
+  EXPECT_EQ(false, info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagDoesNotExist) {
@@ -1145,6 +1225,203 @@ TEST(ParseCommandLineFlagsAndDashArgs, OneDashArg) {
   EXPECT_EQ(0, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
   EXPECT_EQ(0, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
 }
+
+TEST(ParseCommandLineFlagsUnknownFlag,
+     FlagIsCompletelyUnknown) {
+  const char* argv[] = {
+    "my_test",
+    "--this_flag_does_not_exist",
+    NULL,
+  };
+
+  EXPECT_DEATH(ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv),
+               "unknown command line flag.*");
+  EXPECT_DEATH(ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv),
+               "unknown command line flag.*");
+}
+
+TEST(ParseCommandLineFlagsUnknownFlag,
+     BoolFlagIsCompletelyUnknown) {
+  const char* argv[] = {
+    "my_test",
+    "--nothis_flag_does_not_exist",
+    NULL,
+  };
+
+  EXPECT_DEATH(ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv),
+               "unknown command line flag.*");
+  EXPECT_DEATH(ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv),
+               "unknown command line flag.*");
+}
+
+TEST(ParseCommandLineFlagsUnknownFlag,
+     FlagIsNotABool) {
+  const char* argv[] = {
+    "my_test",
+    "--notest_string",
+    NULL,
+  };
+
+  EXPECT_DEATH(ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv),
+               "boolean value .* specified for .* command line flag");
+  EXPECT_DEATH(ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv),
+               "boolean value .* specified for .* command line flag");
+}
+
+TEST(ParseCommandLineFlagsWrongFields,
+     DescriptionIsInvalid) {
+  // These must not be automatic variables, since command line flags
+  // aren't unregistered and gUnit uses FlagSaver to save and restore
+  // command line flags' values.  If these are on the stack, then when
+  // later tests attempt to save and restore their values, the stack
+  // addresses of these variables will be overwritten...  Stack smash!
+  static bool current_storage;
+  static bool defvalue_storage;
+  FlagRegisterer fr("flag_name", "bool", 0, "filename",
+                    &current_storage, &defvalue_storage);
+  CommandLineFlagInfo fi;
+  EXPECT_TRUE(GetCommandLineFlagInfo("flag_name", &fi));
+  EXPECT_EQ("", fi.description);
+}
+
+static bool ValidateTestFlagIs5(const char* flagname, int32 flagval) {
+  if (flagval == 5)
+    return true;
+  printf("%s isn't 5!\n", flagname);
+  return false;
+}
+
+static bool ValidateTestFlagIs10(const char* flagname, int32 flagval) {
+  return flagval == 10;
+}
+
+
+TEST(FlagsValidator, ValidFlagViaArgv) {
+  const char* argv[] = {
+    "my_test",
+    "--test_flag=5",
+    NULL,
+  };
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  EXPECT_EQ(5, ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv));
+  // Undo the flag validator setting
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+TEST(FlagsValidator, ValidFlagViaSetDefault) {
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  // SetCommandLineOptionWithMode returns the empty string on error.
+  EXPECT_NE("", SetCommandLineOptionWithMode("test_flag", "5",
+                                             SET_FLAG_IF_DEFAULT));
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+TEST(FlagsValidator, ValidFlagViaSetValue) {
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  FLAGS_test_flag = 100;   // doesn't trigger the validator
+  // SetCommandLineOptionWithMode returns the empty string on error.
+  EXPECT_NE("", SetCommandLineOptionWithMode("test_flag", "5",
+                                             SET_FLAGS_VALUE));
+  EXPECT_NE("", SetCommandLineOptionWithMode("test_flag", "5",
+                                             SET_FLAGS_DEFAULT));
+  EXPECT_NE("", SetCommandLineOption("test_flag", "5"));
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+TEST(FlagsValidator, InvalidFlagViaArgv) {
+  const char* argv[] = {
+    "my_test",
+    "--test_flag=50",
+    NULL,
+  };
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  EXPECT_DEATH(ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv),
+               "ERROR: failed validation of new value '50' for flag 'test_flag'");
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+TEST(FlagsValidator, InvalidFlagViaSetDefault) {
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  // SetCommandLineOptionWithMode returns the empty string on error.
+  EXPECT_EQ("", SetCommandLineOptionWithMode("test_flag", "50",
+                                             SET_FLAG_IF_DEFAULT));
+  EXPECT_EQ(-1, FLAGS_test_flag);   // the setting-to-50 should have failed
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+TEST(FlagsValidator, InvalidFlagViaSetValue) {
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  FLAGS_test_flag = 100;   // doesn't trigger the validator
+  // SetCommandLineOptionWithMode returns the empty string on error.
+  EXPECT_EQ("", SetCommandLineOptionWithMode("test_flag", "50",
+                                             SET_FLAGS_VALUE));
+  EXPECT_EQ("", SetCommandLineOptionWithMode("test_flag", "50",
+                                             SET_FLAGS_DEFAULT));
+  EXPECT_EQ("", SetCommandLineOption("test_flag", "50"));
+  EXPECT_EQ(100, FLAGS_test_flag);   // the setting-to-50 should have failed
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+TEST(FlagsValidator, InvalidFlagNeverSet) {
+  // If a flag keeps its default value, and that default value is
+  // invalid, we should die at argv-parse time.
+  const char* argv[] = {
+    "my_test",
+    NULL,
+  };
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  EXPECT_DEATH(ParseTestFlag(true, GET_ARRAY_SIZE(argv) - 1, argv),
+               "ERROR: --test_flag must be set on the commandline");
+}
+
+TEST(FlagsValidator, InvalidFlagPtr) {
+  int32 dummy;
+  EXPECT_FALSE(RegisterFlagValidator(NULL, &ValidateTestFlagIs5));
+  EXPECT_FALSE(RegisterFlagValidator(&dummy, &ValidateTestFlagIs5));
+}
+
+TEST(FlagsValidator, RegisterValidatorTwice) {
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  EXPECT_FALSE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs10));
+  EXPECT_FALSE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs10));
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs10));
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+}
+
+TEST(FlagsValidator, CommandLineFlagInfo) {
+  CommandLineFlagInfo info;
+  info = GetCommandLineFlagInfoOrDie("test_flag");
+  EXPECT_FALSE(info.has_validator_fn);
+
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  info = GetCommandLineFlagInfoOrDie("test_flag");
+  EXPECT_TRUE(info.has_validator_fn);
+
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+  info = GetCommandLineFlagInfoOrDie("test_flag");
+  EXPECT_FALSE(info.has_validator_fn);
+}
+
+TEST(FlagsValidator, FlagSaver) {
+  {
+    FlagSaver fs;
+    EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+    EXPECT_EQ("", SetCommandLineOption("test_flag", "50")); // fails validation
+  }
+  EXPECT_NE("", SetCommandLineOption("test_flag", "50"));  // validator is gone
+
+  EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
+  {
+    FlagSaver fs;
+    EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
+    EXPECT_NE("", SetCommandLineOption("test_flag", "50"));  // no validator
+  }
+  EXPECT_EQ("", SetCommandLineOption("test_flag", "50"));  // validator is back
+}
+
 
 static int Main(int argc, char **argv) {
   // We need to call SetArgv before InitGoogle, so our "test" argv will

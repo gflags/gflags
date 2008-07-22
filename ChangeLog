@@ -1,3 +1,17 @@
+Mon Jul 21 23:01:38 2008  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 0.9
+	* Add the ability to validate a command-line flag (csilvers)
+	* Add completion support for commandline flags in bash (daven)
+	* Add -W compile flags to Makefile, when using gcc (csilvers)
+	* Allow helpstring to be NULL (cristianoc)
+	* Improved documentation of classes in the .cc file (csilvers)
+	* Fix python bug with AppendFlagValues + shortnames (jjtswan)
+	* Use bool instead of int for boolean flags in gflags.py (bcmills)
+	* Simplify the way we declare flags, now more foolproof (csilvers)
+	* Better error messages when bool flags collide (colohan)
+	* Only evaluate DEFINE_foo macro args once (csilvers)
+
 Wed Mar 26 15:20:18 2008  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 0.8

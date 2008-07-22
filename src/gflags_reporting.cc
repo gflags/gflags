@@ -56,6 +56,7 @@
 #include <string>
 #include <vector>
 #include "google/gflags.h"
+#include "google/gflags_completions.h"
 
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR  '/'
@@ -344,6 +345,8 @@ static void ShowVersion() {
 void HandleCommandLineHelpFlags() {
   const char* progname = ProgramInvocationShortName();
   extern void (*commandlineflags_exitfunc)(int);   // in gflags.cc
+
+  HandleCommandLineCompletions();
 
   if (FLAGS_helpshort) {
     // show only flags related to this binary:

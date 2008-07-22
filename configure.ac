@@ -4,7 +4,7 @@
 # make sure we're interpreted by some minimal autoconf
 AC_PREREQ(2.57)
 
-AC_INIT(gflags, 0.8, opensource@google.com)
+AC_INIT(gflags, 0.9, opensource@google.com)
 # The argument here is just something that should be in the current directory
 # (for sanity checking)
 AC_CONFIG_SRCDIR(README)
@@ -15,6 +15,7 @@ AM_CONFIG_HEADER(src/config.h)
 AC_PROG_CC
 AC_PROG_CPP
 AC_PROG_CXX
+AM_CONDITIONAL(GCC, test "$GCC" = yes)   # let the Makefile know if we're gcc
 
 # Uncomment this if you'll be exporting libraries (.so's)
 AC_PROG_LIBTOOL
@@ -67,5 +68,5 @@ AC_SUBST(ac_cv_have___uint16)
 ## Check out ../autoconf/ for other macros you can call to do useful stuff
 
 # Write generated configuration file, and also .h files
-AC_CONFIG_FILES([Makefile src/google/gflags.h])
+AC_CONFIG_FILES([Makefile src/google/gflags.h src/google/gflags_completions.h])
 AC_OUTPUT

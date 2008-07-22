@@ -6,6 +6,12 @@
 # when it makes sense -- for instance, when publishing stl-like code -- you
 # may want to go with a different default, like 'std'.
 
+# We guarantee the invariant that GOOGLE_NAMESPACE starts with ::,
+# unless it's the empty string.  Thus, it's always safe to do
+# GOOGLE_NAMESPACE::foo and be sure you're getting the foo that's
+# actually in the google namespace, and not some other namespace that
+# the namespace rules might kick in.
+
 AC_DEFUN([AC_DEFINE_GOOGLE_NAMESPACE],
   [google_namespace_default=[$1]
    AC_ARG_ENABLE(namespace, [  --enable-namespace=FOO to define these Google
@@ -19,7 +25,7 @@ AC_DEFUN([AC_DEFINE_GOOGLE_NAMESPACE],
                   esac],
                  [google_namespace="$google_namespace_default"])
    if test -n "$google_namespace"; then
-     ac_google_namespace="$google_namespace"
+     ac_google_namespace="::$google_namespace"
      ac_google_start_namespace="namespace $google_namespace {"
      ac_google_end_namespace="}"
    else

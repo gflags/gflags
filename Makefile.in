@@ -40,14 +40,18 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
+
+# These are good warnings to turn on by default,
+@GCC_TRUE@am__append_1 = -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare
 noinst_PROGRAMS = $(am__EXEEXT_1)
 DIST_COMMON = README $(am__configure_deps) $(dist_doc_DATA) \
 	$(dist_noinst_DATA) $(googleinclude_HEADERS) \
 	$(srcdir)/Makefile.am $(srcdir)/Makefile.in \
 	$(top_srcdir)/configure $(top_srcdir)/src/config.h.in \
-	$(top_srcdir)/src/google/gflags.h.in AUTHORS COPYING ChangeLog \
-	INSTALL NEWS compile config.guess config.sub depcomp \
-	install-sh ltmain.sh missing mkinstalldirs
+	$(top_srcdir)/src/google/gflags.h.in \
+	$(top_srcdir)/src/google/gflags_completions.h.in AUTHORS \
+	COPYING ChangeLog INSTALL NEWS compile config.guess config.sub \
+	depcomp install-sh ltmain.sh missing mkinstalldirs
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_have_attribute.m4 \
@@ -61,22 +65,24 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno configure.status.lineno
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/src/config.h
-CONFIG_CLEAN_FILES = src/google/gflags.h
+CONFIG_CLEAN_FILES = src/google/gflags.h \
+	src/google/gflags_completions.h
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
     $(srcdir)/*) f=`echo "$$p" | sed "s|^$$srcdirstrip/||"`;; \
     *) f=$$p;; \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
-am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(docdir)" \
-	"$(DESTDIR)$(googleincludedir)"
+am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
+	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(googleincludedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgflags_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__objects_1 =
 am_libgflags_la_OBJECTS = $(am__objects_1) libgflags_la-gflags.lo \
-	libgflags_la-gflags_reporting.lo
+	libgflags_la-gflags_reporting.lo \
+	libgflags_la-gflags_completions.lo
 libgflags_la_OBJECTS = $(am_libgflags_la_OBJECTS)
 am__EXEEXT_1 = gflags_unittest$(EXEEXT) \
 	gflags_nothreads_unittest$(EXEEXT) gflags_unittest2$(EXEEXT) \
@@ -99,7 +105,8 @@ am_gflags_unittest3_OBJECTS = $(am__objects_1) \
 	gflags_unittest_main.$(OBJEXT)
 gflags_unittest3_OBJECTS = $(am_gflags_unittest3_OBJECTS)
 gflags_unittest3_DEPENDENCIES = libgflags.la
-SCRIPTS = $(noinst_SCRIPTS)
+binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
+SCRIPTS = $(bin_SCRIPTS) $(noinst_SCRIPTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
 depcomp = $(SHELL) $(top_srcdir)/depcomp
 am__depfiles_maybe = depfiles
@@ -172,6 +179,8 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 F77 = @F77@
 FFLAGS = @FFLAGS@
+GCC_FALSE = @GCC_FALSE@
+GCC_TRUE = @GCC_TRUE@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -260,8 +269,12 @@ ACLOCAL_AMFLAGS = -I m4
 
 # This is so we can #include <google/foo>
 AM_CPPFLAGS = -I$(top_srcdir)/src
+
+# This is mostly based on configure options
+AM_CXXFLAGS = $(am__append_1)
 googleincludedir = $(includedir)/google
-googleinclude_HEADERS = src/google/gflags.h
+googleinclude_HEADERS = src/google/gflags.h src/google/gflags_completions.h
+bin_SCRIPTS = src/gflags_completions.sh
 docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
 dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
 	doc/designstyle.css doc/gflags.html
@@ -282,10 +295,11 @@ noinst_SCRIPTS = src/gflags_unittest.sh
 # Used for auto-generated source files
 CLEANFILES = src/gflags_unittest-main.cc src/gflags_unittest_main.cc
 libgflags_la_SOURCES = $(googleinclude_HEADERS) src/config.h \
-                       src/gflags.cc src/gflags_reporting.cc
+                       src/gflags.cc src/gflags_reporting.cc \
+                       src/gflags_completions.cc
 
-libgflags_la_CXXFLAGS = $(PTRHEAD_CFLAGS) -DNDEBUG
-libgflags_la_LDFLAGS = $(PTRHEAD_CFLAGS)
+libgflags_la_CXXFLAGS = $(PTHREAD_CFLAGS) -DNDEBUG
+libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS)
 libgflags_la_LIBADD = $(PTHREAD_LIBS)
 gflags_unittest_SOURCES = $(googleinclude_HEADERS) src/config.h \
                           src/gflags_unittest.cc
@@ -370,6 +384,8 @@ distclean-hdr:
 	-rm -f src/config.h src/stamp-h1
 src/google/gflags.h: $(top_builddir)/config.status $(top_srcdir)/src/google/gflags.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/google/gflags_completions.h: $(top_builddir)/config.status $(top_srcdir)/src/google/gflags_completions.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
 install-libLTLIBRARIES: $(lib_LTLIBRARIES)
 	@$(NORMAL_INSTALL)
 	test -z "$(libdir)" || $(mkdir_p) "$(DESTDIR)$(libdir)"
@@ -418,6 +434,25 @@ gflags_unittest2$(EXEEXT): $(gflags_unittest2_OBJECTS) $(gflags_unittest2_DEPEND
 gflags_unittest3$(EXEEXT): $(gflags_unittest3_OBJECTS) $(gflags_unittest3_DEPENDENCIES) 
 	@rm -f gflags_unittest3$(EXEEXT)
 	$(CXXLINK) $(gflags_unittest3_LDFLAGS) $(gflags_unittest3_OBJECTS) $(gflags_unittest3_LDADD) $(LIBS)
+install-binSCRIPTS: $(bin_SCRIPTS)
+	@$(NORMAL_INSTALL)
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
+	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  if test -f $$d$$p; then \
+	    f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
+	    echo " $(binSCRIPT_INSTALL) '$$d$$p' '$(DESTDIR)$(bindir)/$$f'"; \
+	    $(binSCRIPT_INSTALL) "$$d$$p" "$(DESTDIR)$(bindir)/$$f"; \
+	  else :; fi; \
+	done
+
+uninstall-binSCRIPTS:
+	@$(NORMAL_UNINSTALL)
+	@list='$(bin_SCRIPTS)'; for p in $$list; do \
+	  f=`echo "$$p" | sed 's|^.*/||;$(transform)'`; \
+	  echo " rm -f '$(DESTDIR)$(bindir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(bindir)/$$f"; \
+	done
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -430,6 +465,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gflags_unittest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gflags_unittest_main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_la-gflags.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_la-gflags_completions.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_la-gflags_reporting.Plo@am__quote@
 
 .cc.o:
@@ -466,6 +502,13 @@ libgflags_la-gflags_reporting.lo: src/gflags_reporting.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_reporting.cc' object='libgflags_la-gflags_reporting.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_la_CXXFLAGS) $(CXXFLAGS) -c -o libgflags_la-gflags_reporting.lo `test -f 'src/gflags_reporting.cc' || echo '$(srcdir)/'`src/gflags_reporting.cc
+
+libgflags_la-gflags_completions.lo: src/gflags_completions.cc
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_la_CXXFLAGS) $(CXXFLAGS) -MT libgflags_la-gflags_completions.lo -MD -MP -MF "$(DEPDIR)/libgflags_la-gflags_completions.Tpo" -c -o libgflags_la-gflags_completions.lo `test -f 'src/gflags_completions.cc' || echo '$(srcdir)/'`src/gflags_completions.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libgflags_la-gflags_completions.Tpo" "$(DEPDIR)/libgflags_la-gflags_completions.Plo"; else rm -f "$(DEPDIR)/libgflags_la-gflags_completions.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_completions.cc' object='libgflags_la-gflags_completions.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_la_CXXFLAGS) $(CXXFLAGS) -c -o libgflags_la-gflags_completions.lo `test -f 'src/gflags_completions.cc' || echo '$(srcdir)/'`src/gflags_completions.cc
 
 gflags_unittest.o: src/gflags_unittest.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT gflags_unittest.o -MD -MP -MF "$(DEPDIR)/gflags_unittest.Tpo" -c -o gflags_unittest.o `test -f 'src/gflags_unittest.cc' || echo '$(srcdir)/'`src/gflags_unittest.cc; \
@@ -822,7 +865,7 @@ check: check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(SCRIPTS) $(DATA) \
 		$(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(googleincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(googleincludedir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -874,7 +917,7 @@ info-am:
 
 install-data-am: install-dist_docDATA install-googleincludeHEADERS
 
-install-exec-am: install-libLTLIBRARIES
+install-exec-am: install-binSCRIPTS install-libLTLIBRARIES
 
 install-info: install-info-am
 
@@ -902,8 +945,9 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-dist_docDATA uninstall-googleincludeHEADERS \
-	uninstall-info-am uninstall-libLTLIBRARIES
+uninstall-am: uninstall-binSCRIPTS uninstall-dist_docDATA \
+	uninstall-googleincludeHEADERS uninstall-info-am \
+	uninstall-libLTLIBRARIES
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-TESTS check-am \
 	clean clean-generic clean-libLTLIBRARIES clean-libtool \
@@ -912,14 +956,15 @@ uninstall-am: uninstall-dist_docDATA uninstall-googleincludeHEADERS \
 	distclean-compile distclean-generic distclean-hdr \
 	distclean-libtool distclean-tags distcleancheck distdir \
 	distuninstallcheck dvi dvi-am html html-am info info-am \
-	install install-am install-data install-data-am \
-	install-dist_docDATA install-exec install-exec-am \
-	install-googleincludeHEADERS install-info install-info-am \
-	install-libLTLIBRARIES install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-dist_docDATA \
+	install install-am install-binSCRIPTS install-data \
+	install-data-am install-dist_docDATA install-exec \
+	install-exec-am install-googleincludeHEADERS install-info \
+	install-info-am install-libLTLIBRARIES install-man \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binSCRIPTS uninstall-dist_docDATA \
 	uninstall-googleincludeHEADERS uninstall-info-am \
 	uninstall-libLTLIBRARIES
 

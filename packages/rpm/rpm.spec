@@ -56,6 +56,7 @@ rm -rf $RPM_BUILD_ROOT
 
 %{prefix}/lib/libgflags.so.0
 %{prefix}/lib/libgflags.so.0.0.0
+%{prefix}/bin/gflags_completions.sh
 
 %files devel
 %defattr(-,root,root)

@@ -69,8 +69,8 @@
 //   other thread is writing to the variable or calling non-const
 //   methods of this class.
 
-#ifndef BASE_COMMANDLINEFLAGS_H__
-#define BASE_COMMANDLINEFLAGS_H__
+#ifndef GOOGLE_GFLAGS_H_
+#define GOOGLE_GFLAGS_H_
 
 #include <string>
 #include <vector>
@@ -113,6 +113,45 @@ typedef __uint64 uint64;
 #endif
 
 // --------------------------------------------------------------------
+// To actually define a flag in a file, use DEFINE_bool,
+// DEFINE_string, etc. at the bottom of this file.  You may also find
+// it useful to register a validator with the flag.  This ensures that
+// when the flag is parsed from the commandline, or is later set via
+// SetCommandLineOption, we call the validation function.  The
+// validation function should return true if the flag value is valid,
+// and false otherwise.
+//
+// This function is safe to call at global construct time (as in the
+// example below).
+//
+// Example use:
+//    static bool ValidatePort(const char* flagname, int32 value) {
+//       if (value > 0 && value < 32768)   // value is ok
+//         return true;
+//       printf("Invalid value for --%s: %d\n", flagname, (int)value);
+//       return false;
+//    }
+//    DEFINE_int32(port, 0, "What port to listen on");
+//    static bool dummy = RegisterFlagValidator(&FLAGS_port, &ValidatePort);
+
+// Returns true if successfully registered, false if not (because the
+// first argument doesn't point to a command-line flag, or because a
+// validator is already registered for this flag).
+bool RegisterFlagValidator(const bool* flag,
+                           bool (*validate_fn)(const char*, bool));
+bool RegisterFlagValidator(const int32* flag,
+                           bool (*validate_fn)(const char*, int32));
+bool RegisterFlagValidator(const int64* flag,
+                           bool (*validate_fn)(const char*, int64));
+bool RegisterFlagValidator(const uint64* flag,
+                           bool (*validate_fn)(const char*, uint64));
+bool RegisterFlagValidator(const double* flag,
+                           bool (*validate_fn)(const char*, double));
+bool RegisterFlagValidator(const std::string* flag,
+                           bool (*validate_fn)(const char*, const std::string&));
+
+
+// --------------------------------------------------------------------
 // These methods are the best way to get access to info about the
 // list of commandline flags.  Note that these routines are pretty slow.
 //   GetAllFlags: mostly-complete info about the list, sorted by file.
@@ -130,6 +169,7 @@ struct CommandLineFlagInfo {
   std::string current_value;  // the current value, as a string
   std::string default_value;  // the default value, as a string
   std::string filename;       // 'cleaned' version of filename holding the flag
+  bool has_validator_fn;      // true if RegisterFlagValidator called on flag
   bool is_default;            // true if the flag has default value
 };
 
@@ -206,10 +246,11 @@ extern std::string SetCommandLineOptionWithMode(const char* name, const char* va
 
 // --------------------------------------------------------------------
 // Saves the states (value, default value, whether the user has set
-// the flag, etc) of all flags, and restores them when the FlagSaver
-// is destroyed.  This is very useful in tests, say, when you want to
-// let your tests change the flags, but make sure that they get
-// reverted to the original states when your test is complete.
+// the flag, registered validators, etc) of all flags, and restores
+// them when the FlagSaver is destroyed.  This is very useful in
+// tests, say, when you want to let your tests change the flags, but
+// make sure that they get reverted to the original states when your
+// test is complete.
 //
 // Example usage:
 //   void TestFoo() {
@@ -327,27 +368,6 @@ extern void AllowCommandLineReparsing();
 extern uint32 ReparseCommandLineNonHelpFlags();
 
 
-// The following code is added to check if proper value types are passed to
-// flags. Specially for boolean flags. Since almost anything can be implicitly
-// casted to boolean many copy-paste type of errors got through and they are
-// there in code now. As of now, flags_safe_cast is written such a way that
-// it raises only warning for type mismatches.
-//
-// TODO(who?): This needs to be changed to give compilation error if type
-// does not match.
-extern void FlagsTypeWarn(const char *name);
-
-template<typename From>
-inline bool flags_safe_bool(From from, const char *name) {
-  FlagsTypeWarn(name);
-  return from;
-}
-
-inline bool flags_safe_bool(bool from, const char *name) {
-  return from;
-}
-
-
 // --------------------------------------------------------------------
 // Now come the command line flag declaration/definition macros that
 // will actually be used.  They're kind of hairy.  A major reason
@@ -390,16 +410,9 @@ class FlagRegisterer {
   FlagRegisterer(const char* name, const char* type,
                  const char* help, const char* filename,
                  void* current_storage, void* defvalue_storage);
- private:
-  class CommandLineFlag* flag_;
 };
 
-// namespc should be 'std::', and type 'string', for a var of type 'std::string'
-#define DECLARE_VARIABLE(namespc, type, shorttype, name)        \
-  namespace fL##shorttype {                                     \
-    extern namespc type& FLAGS_##name;                          \
-  }                                                             \
-  using fL##shorttype::FLAGS_##name
+#ifndef SWIG  // In swig, ignore the main flag declarations
 
 // If your application #defines STRIP_FLAG_HELP to a non-zero value
 // before #including this file, we remove the help message from the
@@ -415,49 +428,92 @@ extern const char kStrippedFlagHelp[];
 #define MAYBE_STRIPPED_HELP(txt) txt
 #endif
 
-// Each command-line flag defines an internal array of two elements
-// of the appropriate time (each element is actually a union to get
-// the values to be aligned on larger-than-byte boundaries).  Element
-// 0 of the s_##name array holds the current value, and element 1
-// holds the default value.
-#define DEFINE_VARIABLE(namespc, type, shorttype, name, value, help)    \
-  namespace fL##shorttype {                                             \
-    static union { void* align; char store[sizeof(namespc type)]; }     \
-        s_##name[2];                                                    \
-    static @ac_google_namespace@::FlagRegisterer o_##name(              \
-      #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,               \
-      new (s_##name[0].store) namespc type(value),                      \
-      new (s_##name[1].store) namespc type(value));                     \
-    namespc type& FLAGS_##name =                                        \
-      *(reinterpret_cast<namespc type*>(s_##name[0].store));            \
-    char FLAGS_no##name @ac_cv___attribute__unused@;                    \
-  }                                                                     \
+// Each command-line flag has two variables associated with it: one
+// with the current value, and one with the default value.  However,
+// we have a third variable, which is where value is assigned; it's a
+// constant.  This guarantees that FLAG_##value is initialized at
+// static initialization time (e.g. before program-start) rather than
+// than global construction time (which is after program-start but
+// before main), at least when 'value' is a compile-time constant.  We
+// use a small trick for the "default value" variable, and call it
+// FLAGS_no<name>.  This serves the second purpose of assuring a
+// compile error if someone tries to define a flag named no<name>
+// which is illegal (--foo and --nofoo both affect the "foo" flag).
+#define DEFINE_VARIABLE(type, shorttype, name, value, help) \
+  namespace fL##shorttype {                                     \
+    static const type FLAGS_nono##name = value;                 \
+    type FLAGS_##name = FLAGS_nono##name;                       \
+    type FLAGS_no##name = FLAGS_nono##name;                     \
+    static @ac_google_namespace@::FlagRegisterer o_##name(      \
+      #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,        \
+      &FLAGS_##name, &FLAGS_no##name);                          \
+  }                                                             \
   using fL##shorttype::FLAGS_##name
 
+#define DECLARE_VARIABLE(type, shorttype, name) \
+  namespace fL##shorttype {                     \
+    extern type FLAGS_##name;                   \
+  }                                             \
+  using fL##shorttype::FLAGS_##name
 
-#ifndef SWIG  // In swig, ignore the main flag declarations
+// For boolean flags, we want to do the extra check that the passed-in
+// value is actually a bool, and not a string or something that can be
+// coerced to a bool.  These declarations (no definition needed!) will
+// help us do that, and never evaluate from, which is important.
+// We'll use 'sizeof(IsBool(val))' to distinguish.
+namespace fLB {
+template<typename From> double IsBoolFlag(const From& from);
+bool IsBoolFlag(bool from);
+}
+extern bool FlagsTypeWarn(const char *name);
 
-#define DECLARE_bool(name)          DECLARE_VARIABLE(, bool, B, name)
-#define DEFINE_bool(name, val, txt) \
-    DEFINE_VARIABLE(, bool, B, name, @ac_google_namespace@::flags_safe_bool(val, #name), txt)
+#define DECLARE_bool(name)          DECLARE_VARIABLE(bool,B, name)
+// We have extra code here to make sure 'val' is actually a boolean.
+#define DEFINE_bool(name,val,txt)   namespace fLB { \
+                                      const bool FLAGS_nonono##name = \
+                                        (sizeof(@ac_google_namespace@::fLB::IsBoolFlag(val)) \
+                                        == sizeof(double)) \
+                                        ? @ac_google_namespace@::FlagsTypeWarn(#name) : true; \
+                                    } \
+                                    DEFINE_VARIABLE(bool,B, name, val, txt)
+#define DECLARE_int32(name)         DECLARE_VARIABLE(@ac_google_namespace@::int32,I, name)
+#define DEFINE_int32(name,val,txt)  DEFINE_VARIABLE(@ac_google_namespace@::int32,I, name, val, txt)
 
-#define DECLARE_int32(name)          DECLARE_VARIABLE(@ac_google_namespace@::, int32,I, name)
-#define DEFINE_int32(name, val,txt)  DEFINE_VARIABLE(@ac_google_namespace@::, int32,I, name,val,txt)
+#define DECLARE_int64(name)         DECLARE_VARIABLE(@ac_google_namespace@::int64,I64, name)
+#define DEFINE_int64(name,val,txt)  DEFINE_VARIABLE(@ac_google_namespace@::int64,I64, name, val, txt)
 
-#define DECLARE_int64(name)          DECLARE_VARIABLE(@ac_google_namespace@::, int64,I64, name)
-#define DEFINE_int64(name, val,txt)  DEFINE_VARIABLE(@ac_google_namespace@::, int64,I64, name,val,txt)
+#define DECLARE_uint64(name)        DECLARE_VARIABLE(@ac_google_namespace@::uint64,U64, name)
+#define DEFINE_uint64(name,val,txt) DEFINE_VARIABLE(@ac_google_namespace@::uint64,U64, name, val, txt)
 
-#define DECLARE_uint64(name)         DECLARE_VARIABLE(@ac_google_namespace@::, uint64,U64, name)
-#define DEFINE_uint64(name, val,txt) DEFINE_VARIABLE(@ac_google_namespace@::, uint64,U64,name,val,txt)
+#define DECLARE_double(name)        DECLARE_VARIABLE(double,D, name)
+#define DEFINE_double(name,val,txt) DEFINE_VARIABLE(double,D, name, val, txt)
 
-#define DECLARE_double(name)         DECLARE_VARIABLE(, double,D, name)
-#define DEFINE_double(name, val,txt) DEFINE_VARIABLE(, double,D, name,val,txt)
+// Strings are trickier, because they're not a POD, so we can't
+// construct them at static-initialization time (instead they get
+// constructed at global-constructor time, which is much later).  To
+// try to avoid crashes in that case, we use a char buffer to store
+// the string, which we can static-initialize, and then placement-new
+// into it later.  It's not perfect, but the best we can do.
+#define DECLARE_string(name)  namespace fLS { extern string& FLAGS_##name; } \
+                              using fLS::FLAGS_##name
 
-#define DECLARE_string(name)         DECLARE_VARIABLE(std::, string,S, name)
-#define DEFINE_string(name, val,txt) DEFINE_VARIABLE(std::, string,S, name,val,txt)
+// We need to define a var named FLAGS_no##name so people don't define
+// --string and --nostring.  And we need a temporary place to put val
+// so we don't have to evaluate it twice.  Two great needs that go
+// great together!
+#define DEFINE_string(name, val, txt)                                     \
+  namespace fLS {                                                         \
+    static union { void* align; char s[sizeof(std::string)]; } s_##name[2]; \
+    const string* const FLAGS_no##name = new (s_##name[0].s) std::string(val); \
+    static @ac_google_namespace@::FlagRegisterer o_##name(                \
+      #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
+      s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));   \
+    std::string& FLAGS_##name = *(reinterpret_cast<std::string*>(s_##name[0].s));   \
+  }                                                                       \
+  using fLS::FLAGS_##name
 
 #endif  // SWIG
 
 @ac_google_end_namespace@
 
-#endif  // BASE_COMMANDLINEFLAGS_H__
+#endif  // GOOGLE_GFLAGS_H_

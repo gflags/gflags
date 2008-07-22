@@ -190,13 +190,18 @@ try:
 except AttributeError:   # a very old python, that lacks sys.version_info
   raise NotImplementedError("requires python 2.2.0 or later")
 
-# If we're not running at least python 2.3, define True and False
+# If we're not running at least python 2.2.1, define True, False, and bool.
 # Thanks, Guido, for the code.
 try:
-  True, False
+  True, False, bool
 except NameError:
   False = 0
   True = 1
+  def bool(x):
+    if x:
+      return True
+    else:
+      return False
 
 # Are we running under pychecker?
 _RUNNING_PYCHECKER = 'pychecker.python' in sys.modules
@@ -219,7 +224,7 @@ class FlagsError(Exception):
   """The base class for all flags errors"""
 
 class DuplicateFlag(FlagsError):
-  """"Raised if there is a flag naming conflict"""
+  """Raised if there is a flag naming conflict"""
 
 # A DuplicateFlagError conveys more information than
 # a DuplicateFlag. Since there are external modules
@@ -519,7 +524,13 @@ class FlagValues:
       flag_values: registry to copy from
     """
     for flag_name, flag in flag_values.FlagDict().iteritems():
-      self[flag_name] = flag
+      # Flags with shortnames will appear here twice (once with under
+      # its normal name, and again with its short name).  To prevent
+      # problems (DuplicateFlagError) that occur when doubly
+      # registering flags, we perform a check to make sure that the
+      # entry we're looking at is for its normal name.
+      if flag_name == flag.name:
+        self[flag_name] = flag
 
   def __setitem__(self, name, flag):
     """
@@ -1103,7 +1114,6 @@ class Flag:
   def __init__(self, parser, serializer, name, default, help_string,
                short_name=None, boolean=0, allow_override=0):
     self.name = name
-    self.default = default
 
     if not help_string:
       help_string = '(no help available)'
@@ -1117,17 +1127,7 @@ class Flag:
     self.allow_override = allow_override
     self.value = None
 
-    # We can't allow a None override because it may end up not being
-    # passed to C++ code when we're overriding C++ flags.  So we
-    # cowardly bail out until someone fixes the semantics of trying to
-    # pass None to a C++ flag.  See swig_flags.Init() for details on
-    # this behavior.
-    if default is None and allow_override:
-      raise DuplicateFlag, name
-
-    self.Unparse()
-
-    self.default_as_str = self.__GetParsedValueAsString(self.value)
+    self.SetDefault(default)
 
   def __GetParsedValueAsString(self, value):
     if value is None:
@@ -1172,13 +1172,17 @@ class Flag:
     """
     Change the default value, and current value, of this flag object
     """
-    if value is not None:     # See __init__ for logic details
-      self.Parse(value)
-      self.present -= 1 # reset .present after parsing new default value
-    else:
-      self.value = None
+    # We can't allow a None override because it may end up not being
+    # passed to C++ code when we're overriding C++ flags.  So we
+    # cowardly bail out until someone fixes the semantics of trying to
+    # pass None to a C++ flag.  See swig_flags.Init() for details on
+    # this behavior.
+    if value is None and self.allow_override:
+      raise DuplicateFlag, self.name
+
     self.default = value
-    self.default_as_str = self.__GetParsedValueAsString(value)
+    self.Unparse()
+    self.default_as_str = self.__GetParsedValueAsString(self.value)
 # End of Flag definition
 
 class ArgumentParser:
@@ -1284,14 +1288,21 @@ class BooleanParser(ArgumentParser):
 
   def Convert(self, argument):
     """
-    convert the argument to a boolean (integer); raise ValueError on errors
+    convert the argument to a boolean; raise ValueError on errors
     """
     if type(argument) == str:
       if argument.lower() in ['true', 't', '1']:
-        return 1
+        return True
       elif argument.lower() in ['false', 'f', '0']:
-        return 0
-    return int(argument)
+        return False
+
+    bool_argument = bool(argument)
+    if argument == bool_argument:
+      # The argument is a valid boolean (True, False, 0, or 1), and not just
+      # something that always converts to bool (list, string, int, etc.).
+      return bool_argument
+
+    raise ValueError('Non-boolean argument to boolean flag', argument)
 
   def Parse(self, argument):
     val = self.Convert(argument)
@@ -1300,7 +1311,7 @@ class BooleanParser(ArgumentParser):
 class BooleanFlag(Flag):
   """
   A basic boolean flag.  Boolean flags do not take any arguments, and
-  their value is either 0 (false) or 1 (true).  The false value is
+  their value is either True (1) or False (0).  The false value is
   specified on the command line by prepending the word 'no' to either
   the long or short flag name.
 
@@ -1319,7 +1330,7 @@ def DEFINE_boolean(name, default, help, flag_values=FLAGS, **args):
   If a user wants to specify a false value explicitly, the long option
   beginning with 'no' must be used: i.e. --noflag
 
-  This flag will have a value of None, 0 or 1.  None is possible if
+  This flag will have a value of None, True or False.  None is possible if
   default=None and the user does not specify the flag on the command
   line.
   """

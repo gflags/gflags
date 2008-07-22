@@ -44,14 +44,50 @@ import unittest
 import gflags as flags
 FLAGS=flags.FLAGS
 
-# If we're not running at least python 2.3, as is the case when
-# invoked from flags_unittest_2_2, define True and False.
-# Thanks, Guido, for the code.
-try:
-  True, False
-except NameError:
-  False = 0
-  True = 1
+def MultiLineEqual(expected_help, help):
+  """Returns True if expected_help == help.  Otherwise returns False
+  and logs the difference in a human-readable way.
+  """
+  if help == expected_help:
+    return True
+  
+  print "Error: FLAGS.MainModuleHelp() didn't return the expected result."
+  print "Got:"
+  print help
+  print "[End of got]"
+
+  help_lines = help.split('\n')
+  expected_help_lines = expected_help.split('\n')
+
+  num_help_lines = len(help_lines)
+  num_expected_help_lines = len(expected_help_lines)
+
+  if num_help_lines != num_expected_help_lines:
+    print "Number of help lines = %d, expected %d" % (
+        num_help_lines, num_expected_help_lines)
+
+  num_to_match = min(num_help_lines, num_expected_help_lines)
+
+  for i in range(num_to_match):
+    if help_lines[i] != expected_help_lines[i]:
+      print "One discrepancy: Got:"
+      print help_lines[i]
+      print "Expected:"
+      print expected_help_lines[i]
+      break
+  else:
+    # If we got here, found no discrepancy, print first new line.
+    if num_help_lines > num_expected_help_lines:
+      print "New help line:"
+      print help_lines[num_expected_help_lines]
+    elif num_expected_help_lines > num_help_lines:
+      print "Missing expected help line:"
+      print expected_help_lines[num_help_lines]
+    else:
+      print "Bug in this test -- discrepancy detected but not found."
+
+  return False
+
 
 class FlagsUnitTest(unittest.TestCase):
   "Flags Unit Test"
@@ -551,6 +587,20 @@ class FlagsUnitTest(unittest.TestCase):
     self.assertEqual("new1" in FLAGS.FlagDict(), True)
     self.assertEqual("new2" in FLAGS.FlagDict(), True)
 
+    # Make sure AppendFlagValues works with flags with shortnames.
+    new_flags = flags.FlagValues()
+    flags.DEFINE_boolean("new3", 0, "runhelp n3", flag_values=new_flags)
+    flags.DEFINE_boolean("new4", 0, "runhelp n4", flag_values=new_flags,
+                         short_name="n4")
+    self.assertEqual(len(new_flags.FlagDict()), 3)
+    old_len = len(FLAGS.FlagDict())
+    FLAGS.AppendFlagValues(new_flags)
+    self.assertEqual(len(FLAGS.FlagDict())-old_len, 3)
+    self.assertTrue("new3" in FLAGS.FlagDict())
+    self.assertTrue("new4" in FLAGS.FlagDict())
+    self.assertTrue("n4" in FLAGS.FlagDict())
+    self.assertEqual(FLAGS.FlagDict()['n4'], FLAGS.FlagDict()['new4'])
+
     # Make sure AppendFlagValues fails on duplicates
     flags.DEFINE_boolean("dup4", 0, "runhelp d41")
     new_flags = flags.FlagValues()
@@ -586,12 +636,19 @@ class FlagsUnitTest(unittest.TestCase):
     except flags.FlagsError:
       pass
 
-    # Argument erroneously supplied for boolean
+    # Non-boolean arguments for boolean
     try:
       argv = ('./program', '--debug=goofup')
       FLAGS(argv)
-      raise AssertionError("No argument allowed exception not raised")
-    except flags.FlagsError:
+      raise AssertionError("Illegal flag value exception not raised")
+    except flags.IllegalFlagValue:
+      pass
+
+    try:
+      argv = ('./program', '--debug=42')
+      FLAGS(argv)
+      raise AssertionError("Illegal flag value exception not raised")
+    except flags.IllegalFlagValue:
       pass
 
 
@@ -667,12 +724,14 @@ class FlagsUnitTest(unittest.TestCase):
     flags.DEFINE_boolean('UnitTestBoolFlag', 0, 'Some Boolean thing')
     flags.DEFINE_integer('UnitTestNumber', 12345, 'Some integer',
                          lower_bound=0)
+    flags.DEFINE_list('UnitTestList', "1,2,3", 'Some list')
 
   def _UndeclareSomeFlags(self):
     FLAGS.__delattr__('UnitTestMessage1')
     FLAGS.__delattr__('UnitTestMessage2')
     FLAGS.__delattr__('UnitTestBoolFlag')
     FLAGS.__delattr__('UnitTestNumber')
+    FLAGS.__delattr__('UnitTestList')
 
   #### Flagfile Unit Tests ####
   def testMethod_flagfiles_1(self):
@@ -824,6 +883,13 @@ class FlagsUnitTest(unittest.TestCase):
     self.assertEqual(FLAGS['UnitTestBoolFlag'].default_as_str, "'false'")
     FLAGS([ 'dummyscript', '--UnitTestBoolFlag=true' ])
     self.assertEqual(FLAGS.UnitTestBoolFlag, True)
+
+    # Test that setting a list default works correctly.
+    FLAGS['UnitTestList'].SetDefault('4,5,6')
+    self.assertEqual(FLAGS.UnitTestList, ['4', '5', '6'])
+    self.assertEqual(FLAGS['UnitTestList'].default_as_str, "'4,5,6'")
+    FLAGS([ 'dummyscript', '--UnitTestList=7,8,9' ])
+    self.assertEqual(FLAGS.UnitTestList, ['7', '8', '9'])
 
     # Test that setting invalid defaults raises exceptions
     self.assertRaises(flags.IllegalFlagValue,
@@ -1120,42 +1186,7 @@ class FlagsUnitTest(unittest.TestCase):
   -z,--[no]zoom1: runhelp z1
     (default: 'false')"""
 
-    if help != expected_help:
-      print "Error: FLAGS.MainModuleHelp() didn't return the expected result."
-      print "Got:"
-      print help
-      print "[End of got]"
-
-      help_lines = help.split('\n')
-      expected_help_lines = expected_help.split('\n')
-
-      num_help_lines = len(help_lines)
-      num_expected_help_lines = len(expected_help_lines)
-
-      if num_help_lines != num_expected_help_lines:
-        print "Number of help lines = %d, expected %d" % (
-            num_help_lines, num_expected_help_lines)
-
-      num_to_match = min(num_help_lines, num_expected_help_lines)
-
-      for i in range(num_to_match):
-        if help_lines[i] != expected_help_lines[i]:
-          print "One discrepancy: Got:"
-          print help_lines[i]
-          print "Expected:"
-          print expected_help_lines[i]
-          break
-      else:
-        # If we got here, found no discrepancy, print first new line.
-        if num_help_lines > num_expected_help_lines:
-          print "New help line:"
-          print help_lines[num_expected_help_lines]
-        elif num_expected_help_lines > num_help_lines:
-          print "Missing expected help line:"
-          print expected_help_lines[num_help_lines]
-        else:
-          print "Bug in this test -- discrepancy detected but not found."
-
+    if not MultiLineEqual(expected_help, help):
       self.fail()
 
   def test_create_flag_errors(self):
