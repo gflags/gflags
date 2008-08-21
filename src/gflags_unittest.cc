@@ -42,7 +42,12 @@
 #include <math.h>       // for isinf() and isnan()
 #include <vector>
 #include <string>
-#include "google/gflags.h"
+#include "gflags/gflags.h"
+// I don't actually use this header file, but #include it under the
+// old location to make sure that the include-header-forwarding
+// works.
+#include "google/gflags_completions.h"
+void (*unused_fn)() = &GOOGLE_NAMESPACE::HandleCommandLineCompletions;
 
 using std::vector;
 using std::string;
@@ -151,6 +156,11 @@ _START_GOOGLE_NAMESPACE_
 #define EXPECT_GT(val1, val2)  EXPECT_OP(>, val1, val2)
 #define EXPECT_LT(val1, val2)  EXPECT_OP(<, val1, val2)
 
+// C99 declares isnan and isinf should be macros, so the #ifdef test
+// should be reliable everywhere.  Of course, it's not, but these
+// are testing pertty marginal functionality anyway, so it's ok to
+// not-run them even in situations they might, with effort, be made to work.
+#ifdef isnan  // Some compilers, like sun's for Solaris 10, don't define this
 #define EXPECT_NAN(arg)                                         \
   do {                                                          \
     if (!isnan(arg)) {                                          \
@@ -158,7 +168,11 @@ _START_GOOGLE_NAMESPACE_
       exit(1);                                                  \
     }                                                           \
   } while (0)
+#else
+#define EXPECT_NAN(arg)
+#endif
 
+#ifdef isinf  // Some compilers, like sun's for Solaris 10, don't define this
 #define EXPECT_INF(arg)                                         \
   do {                                                          \
     if (!isinf(arg)) {                                          \
@@ -166,6 +180,9 @@ _START_GOOGLE_NAMESPACE_
       exit(1);                                                  \
     }                                                           \
   } while (0)
+#else
+#define EXPECT_INF(arg)
+#endif
 
 #define EXPECT_DOUBLE_EQ(val1, val2)                                    \
   do {                                                                  \
@@ -497,6 +514,7 @@ TEST(SetFlagValueTest, OrdinaryValues) {
 
 // Tests that flags can be set to exceptional values.
 TEST(SetFlagValueTest, ExceptionalValues) {
+#ifdef isinf   // on systems without isinf, inf stuff may not work at all
   EXPECT_EQ("test_double set to inf\n",
             SetCommandLineOption("test_double", "inf"));
   EXPECT_INF(FLAGS_test_double);
@@ -504,6 +522,7 @@ TEST(SetFlagValueTest, ExceptionalValues) {
   EXPECT_EQ("test_double set to inf\n",
             SetCommandLineOption("test_double", "INF"));
   EXPECT_INF(FLAGS_test_double);
+#endif
 
   // set some bad values
   EXPECT_EQ("",
@@ -512,14 +531,18 @@ TEST(SetFlagValueTest, ExceptionalValues) {
             SetCommandLineOption("test_double", " "));
   EXPECT_EQ("",
             SetCommandLineOption("test_double", ""));
+#ifdef isinf
   EXPECT_EQ("test_double set to -inf\n",
             SetCommandLineOption("test_double", "-inf"));
   EXPECT_INF(FLAGS_test_double);
   EXPECT_GT(0, FLAGS_test_double);
+#endif
 
+#ifdef isnan
   EXPECT_EQ("test_double set to nan\n",
             SetCommandLineOption("test_double", "NaN"));
   EXPECT_NAN(FLAGS_test_double);
+#endif
 }
 
 // Tests that integer flags can be specified in many ways

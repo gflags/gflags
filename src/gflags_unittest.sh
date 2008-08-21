@@ -42,13 +42,13 @@ then
     exit 1
 fi
 
-EXE=$1
-SRCDIR=${2:-./}
-TMPDIR=${3:-/tmp/gflags}
+EXE="$1"
+SRCDIR="${2:-./}"
+TMPDIR="${3:-/tmp/gflags}"
 
 # Executables built with the main source file suffixed with "-main" and "_main".
-EXE2=${EXE}2    # eg, gflags_unittest2
-EXE3=${EXE}3    # eg, gflags_unittest3
+EXE2="${EXE}2"    # eg, gflags_unittest2
+EXE3="${EXE}3"    # eg, gflags_unittest3
 
 # $1: executable
 # $2: line-number $3: expected return code.  $4: substring of expected output.
@@ -66,7 +66,7 @@ ExpectExe() {
   shift
 
   # We always add --srcdir=$SRCDIR because it's needed for correctness
-  $executable --srcdir="$SRCDIR" "$@" > "$TMPDIR/test.$line_number" 2>&1
+  "$executable" --srcdir="$SRCDIR" "$@" > "$TMPDIR/test.$line_number" 2>&1
   local actual_rc=$?
   if [ $actual_rc != $expected_rc ]; then
     echo "Test on line $line_number failed:" \
@@ -74,13 +74,13 @@ ExpectExe() {
     exit 1;
   fi
   if [ -n "$expected_output" ] &&
-     ! fgrep -q -- "$expected_output" "$TMPDIR/test.$line_number"; then
+     ! fgrep -e "$expected_output" "$TMPDIR/test.$line_number" >/dev/null; then
     echo "Test on line $line_number failed:" \
          "did not find expected substring '$expected_output'"
     exit 1;
   fi
   if [ -n "$unexpected_output" ] &&
-     fgrep -q -- "$unexpected_output" "$TMPDIR/test.$line_number"; then
+     fgrep -e "$unexpected_output" "$TMPDIR/test.$line_number" >/dev/null; then
     echo "Test line $line_number failed:" \
          "found unexpected substring '$unexpected_output'"
     exit 1;
@@ -90,17 +90,17 @@ ExpectExe() {
 # $1: line-number $2: expected return code.  $3: substring of expected output.
 # $4: a substring you *don't* expect to find in the output.  $5+ flags
 Expect() {
-  ExpectExe $EXE "$@"
+  ExpectExe "$EXE" "$@"
 }
 
-rm -rf $TMPDIR
-mkdir $TMPDIR || exit 2
+rm -rf "$TMPDIR"
+mkdir "$TMPDIR" || exit 2
 
 # Create a few flagfiles we can use later
-echo "--version" > $TMPDIR/flagfile.1
-echo "--foo=bar" > $TMPDIR/flagfile.2
-echo "--nounused_bool" >> $TMPDIR/flagfile.2
-echo "--flagfile=$TMPDIR/flagfile.2" > $TMPDIR/flagfile.3
+echo "--version" > "$TMPDIR/flagfile.1"
+echo "--foo=bar" > "$TMPDIR/flagfile.2"
+echo "--nounused_bool" >> "$TMPDIR/flagfile.2"
+echo "--flagfile=$TMPDIR/flagfile.2" > "$TMPDIR/flagfile.3"
 
 # Set a few environment variables (useful for --tryfromenv)
 export FLAGS_undefok=foo,bar
@@ -131,13 +131,15 @@ Expect $LINENO 1 "/gflags_reporting.cc" "" -helpfull
 Expect $LINENO 1 "/gflags_unittest.cc" "/gflags_reporting.cc" --helpshort
 
 # --helpshort should work if the main source file is suffixed with [_-]main
-ExpectExe $EXE2 $LINENO 1 "/gflags_unittest-main.cc" "/gflags_reporting.cc" \
+ExpectExe "$EXE2" $LINENO 1 "/gflags_unittest-main.cc" "/gflags_reporting.cc" \
   --helpshort
-ExpectExe $EXE3 $LINENO 1 "/gflags_unittest_main.cc" "/gflags_reporting.cc" \
+ExpectExe "$EXE3" $LINENO 1 "/gflags_unittest_main.cc" "/gflags_reporting.cc" \
   --helpshort
 
 # --helpon needs an argument
-Expect $LINENO 1 "'--helpon' is missing its argument" "" --helpon
+Expect $LINENO 1 \
+     "'--helpon' is missing its argument; flag description: show help on" \
+     "" --helpon
 
 # --helpon argument indicates what file we'll show args from
 Expect $LINENO 1 "/gflags.cc" "/gflags_unittest.cc" --helpon=gflags
@@ -183,9 +185,9 @@ Expect $LINENO 1 "unknown command line flag 'foo'" "" --undefok=foot --foo --unu
 
 # See if we can successfully load our flags from the flagfile
 Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" \
-  --flagfile=$TMPDIR/flagfile.1
-Expect $LINENO 0 "PASS" "" --flagfile=$TMPDIR/flagfile.2
-Expect $LINENO 0 "PASS" "" --flagfile=$TMPDIR/flagfile.3
+  --flagfile="$TMPDIR/flagfile.1"
+Expect $LINENO 0 "PASS" "" --flagfile="$TMPDIR/flagfile.2"
+Expect $LINENO 0 "PASS" "" --flagfile="$TMPDIR/flagfile.3"
 
 # Also try to load flags from the environment
 Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" --fromenv=version

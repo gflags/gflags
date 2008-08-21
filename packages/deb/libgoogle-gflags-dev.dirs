@@ -1,3 +1,4 @@
 usr/lib
 usr/include
 usr/include/google
+usr/include/gflags

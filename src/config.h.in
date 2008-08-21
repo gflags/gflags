@@ -6,6 +6,15 @@
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #undef HAVE_DLFCN_H
 
+/* Define to 1 if you have the <fnmatch.h> header file. */
+#undef HAVE_FNMATCH_H
+
+/* Define to 1 if you have the `InitializeCriticalSection' function. */
+#undef HAVE_INITIALIZECRITICALSECTION
+
+/* Define to 1 if you have the `InterlockedCompareExchange' function. */
+#undef HAVE_INTERLOCKEDCOMPAREEXCHANGE
+
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
 
@@ -44,6 +53,9 @@
 
 /* Define to 1 if you have the <unistd.h> header file. */
 #undef HAVE_UNISTD_H
+
+/* Define to 1 if you have the <windows.h> header file. */
+#undef HAVE_WINDOWS_H
 
 /* define if your compiler has __attribute__ */
 #undef HAVE___ATTRIBUTE__

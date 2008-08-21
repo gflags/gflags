@@ -1,3 +1,15 @@
+Tue Aug 19 16:15:48 2008  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.0rc1
+	* Move #include files from google/ to gflags/ (csilvers)
+	* Small optimizations to reduce binary (library) size (jyrki)
+	* BUGFIX: forgot a std:: in one of the .h files (csilvers)
+	* Speed up locking by making sure calls are inlined (ajenjo)
+	* 64-BIT COMPATIBILITY: Use %PRId64 instead of %lld (csilvers)
+	* PORTABILITY: fix Makefile to work with Cygwin (ajenjo)
+	* PORTABILITY: fix code to compile under Visual Studio (ajenjo)
+	* PORTABILITY: fix code to compile under Solaris 10 with CC (csilvers)
+
 Mon Jul 21 23:01:38 2008  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 0.9

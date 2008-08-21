@@ -1,3 +1,9 @@
+google-gflags (1.0rc1-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Google Inc. <opensource@google.com>  Tue, 19 Aug 2008 16:15:48 -0700
+
 google-gflags (0.9-1) unstable; urgency=low
 
   * New upstream release.

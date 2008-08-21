@@ -55,8 +55,8 @@
 #include <assert.h>
 #include <string>
 #include <vector>
-#include "google/gflags.h"
-#include "google/gflags_completions.h"
+#include "gflags/gflags.h"
+#include "gflags/gflags_completions.h"
 
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR  '/'
@@ -97,7 +97,7 @@ static const int kLineLength = 80;
 
 static void AddString(const string& s,
                       string* final_string, int* chars_in_line) {
-  const int slen = s.length();
+  const int slen = static_cast<int>(s.length());
   if (*chars_in_line + 1 + slen >= kLineLength) {  // < 80 chars/line
     *final_string += "\n      ";
     *chars_in_line = 6;
@@ -115,7 +115,7 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
   string main_part = (string("    -") + flag.name +
                       " (" + flag.description + ')');
   const char* c_string = main_part.c_str();
-  int chars_left = main_part.length();
+  int chars_left = static_cast<int>(main_part.length());
   string final_string = "";
   int chars_in_line = 0;  // how many chars in current line so far?
   while (1) {
@@ -128,7 +128,7 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
       break;
     }
     if (newline != NULL && newline - c_string < kLineLength - chars_in_line) {
-      int n = newline - c_string;
+      int n = static_cast<int>(newline - c_string);
       final_string.append(c_string, n);
       chars_left -= n + 1;
       c_string += n + 1;
@@ -185,9 +185,9 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
 // Simple routine to xml-escape a string: escape & and < only.
 static string XMLText(const string& txt) {
   string ans = txt;
-  for (string::size_type pos = 0; (pos=ans.find("&", pos)) != string::npos; )
+  for (string::size_type pos = 0; (pos = ans.find("&", pos)) != string::npos; )
     ans.replace(pos++, 1, "&amp;");
-  for (string::size_type pos = 0; (pos=ans.find("<", pos)) != string::npos; )
+  for (string::size_type pos = 0; (pos = ans.find("<", pos)) != string::npos; )
     ans.replace(pos++, 1, "&lt;");
   return ans;
 }
@@ -244,7 +244,7 @@ static bool FileMatchesSubstring(const string& filename,
 // Show help for every filename which matches any of the target substrings.
 // If substrings is empty, shows help for every file. If a flag's help message
 // has been stripped (e.g. by adding '#define STRIP_FLAG_HELP 1' before
-// including google/gflags.h), then this flag will not be displayed by
+// including gflags/gflags.h), then this flag will not be displayed by
 // '--help' and its variants.
 static void ShowUsageWithFlagsMatching(const char *argv0,
                                        const vector<string> &substrings) {
@@ -253,7 +253,7 @@ static void ShowUsageWithFlagsMatching(const char *argv0,
   vector<CommandLineFlagInfo> flags;
   GetAllFlags(&flags);           // flags are sorted by filename, then flagname
 
-  string last_filename = "";     // so we know when we're at a new file
+  string last_filename;          // so we know when we're at a new file
   bool first_directory = true;   // controls blank lines between dirs
   bool found_match = false;      // stays false iff no dir matches restrict
   for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
@@ -384,7 +384,7 @@ void HandleCommandLineHelpFlags() {
     substrings.push_back(string("/") + progname + ".");
     substrings.push_back(string("/") + progname + "-main.");
     substrings.push_back(string("/") + progname + "_main.");
-    string last_package = "";
+    string last_package;
     for (vector<CommandLineFlagInfo>::const_iterator flag = flags.begin();
          flag != flags.end();
          ++flag) {
@@ -393,14 +393,14 @@ void HandleCommandLineHelpFlags() {
       const string package = Dirname(flag->filename) + "/";
       if (package != last_package) {
         ShowUsageWithFlagsRestrict(progname, package.c_str());
-        if (last_package != "") {      // means this isn't our first pkg
+        if (!last_package.empty()) {      // means this isn't our first pkg
           fprintf(stderr, "WARNING: Multiple packages contain a file=%s\n",
                   progname);
         }
         last_package = package;
       }
     }
-    if (last_package == "") {   // never found a package to print
+    if (last_package.empty()) {   // never found a package to print
       fprintf(stderr, "WARNING: Unable to find a package for file=%s\n",
               progname);
     }

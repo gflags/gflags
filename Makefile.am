@@ -1,14 +1,9 @@
-## This is a boilerplate file for Google opensource projects.
-## To make it useful, replace <<TEXT>> with actual text for your project.
-## Also, look at comments with "## double hashes" to see if any are worth
-## uncommenting or modifying.
-
 ## Process this file with automake to produce Makefile.in
 
 # Make sure that when we re-make ./configure, we get the macros we need
 ACLOCAL_AMFLAGS = -I m4
 
-# This is so we can #include <google/foo>
+# This is so we can #include <gflags/foo>
 AM_CPPFLAGS = -I$(top_srcdir)/src
 
 # This is mostly based on configure options
@@ -19,9 +14,13 @@ if GCC
 AM_CXXFLAGS += -Wall -Wwrite-strings -Woverloaded-virtual -Wno-sign-compare
 endif
 
-googleincludedir = $(includedir)/google
+gflagsincludedir = $(includedir)/gflags
 ## The .h files you want to install (that is, .h files that people
 ## who install this package can include in their own applications.)
+gflagsinclude_HEADERS = src/gflags/gflags.h src/gflags/gflags_completions.h
+
+# This is for backwards compatibility only.
+googleincludedir = $(includedir)/google
 googleinclude_HEADERS = src/google/gflags.h src/google/gflags_completions.h
 
 bin_SCRIPTS = src/gflags_completions.sh
@@ -51,30 +50,30 @@ CLEANFILES =
 ## vvvv RULES TO MAKE THE LIBRARIES, BINARIES, AND UNITTESTS
 
 lib_LTLIBRARIES += libgflags.la
-libgflags_la_SOURCES = $(googleinclude_HEADERS) src/config.h \
+libgflags_la_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
                        src/gflags.cc src/gflags_reporting.cc \
                        src/gflags_completions.cc
 libgflags_la_CXXFLAGS = $(PTHREAD_CFLAGS) -DNDEBUG
 libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS)
 libgflags_la_LIBADD = $(PTHREAD_LIBS)
 
-TESTS += gflags_unittest
-gflags_unittest_SOURCES = $(googleinclude_HEADERS) src/config.h \
+TESTS += gflags_unittest$(EXEEXT)
+gflags_unittest_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
                           src/gflags_unittest.cc
 gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDADD = libgflags.la $(PTHREAD_LIBS)
 
 # Also make sure this works when we don't link in pthreads
-TESTS += gflags_nothreads_unittest
+TESTS += gflags_nothreads_unittest$(EXEEXT)
 gflags_nothreads_unittest_SOURCES = $(gflags_unittest_SOURCES)
 gflags_nothreads_unittest_LDADD = libgflags.la
 
 # We also want to test that things work properly when the file that
 # holds main() has a name ending with -main or _main.  To keep the
 # Makefile small :-), we test the no-threads version of these.
-TESTS += gflags_unittest2
-gflags_unittest2_SOURCES = $(googleinclude_HEADERS) src/config.h \
+TESTS += gflags_unittest2$(EXEEXT)
+gflags_unittest2_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
                            src/gflags_unittest-main.cc
 gflags_unittest2_LDADD = libgflags.la
 src/gflags_unittest-main.cc: src/gflags_unittest.cc
@@ -82,8 +81,8 @@ src/gflags_unittest-main.cc: src/gflags_unittest.cc
 	cp -p src/gflags_unittest.cc src/gflags_unittest-main.cc
 CLEANFILES += src/gflags_unittest-main.cc
 
-TESTS += gflags_unittest3
-gflags_unittest3_SOURCES = $(googleinclude_HEADERS) src/config.h \
+TESTS += gflags_unittest3$(EXEEXT)
+gflags_unittest3_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
 	                   src/gflags_unittest_main.cc
 gflags_unittest3_LDADD = libgflags.la
 src/gflags_unittest_main.cc: src/gflags_unittest.cc
@@ -91,12 +90,18 @@ src/gflags_unittest_main.cc: src/gflags_unittest.cc
 	cp -p src/gflags_unittest.cc src/gflags_unittest_main.cc
 CLEANFILES += src/gflags_unittest_main.cc
 
-
+# Some buggy sh's ignore "" instead of treating it as a positional
+# parameter.  Since we use "" in this script, we prefer bash if we
+# can.  If there's no bash, we fall back to sh.
 check_SCRIPTS += gflags_unittest_sh
 noinst_SCRIPTS += src/gflags_unittest.sh
-dist_noinst_DATA = $(top_srcdir)/src/gflags_unittest_flagfile
-gflags_unittest_sh: gflags_unittest gflags_unittest2 gflags_unittest3
-	$(top_srcdir)/src/gflags_unittest.sh $(PWD)/$< $(top_srcdir)
+dist_noinst_DATA = src/gflags_unittest_flagfile
+gflags_unittest_sh: gflags_unittest$(EXEEXT) \
+                    gflags_unittest2$(EXEEXT) \
+                    gflags_unittest3$(EXEEXT)
+	bash --version >/dev/null && export SH=bash || export SH=sh; \
+	$$SH "$(top_srcdir)/src/gflags_unittest.sh" "$(PWD)/gflags_unittest" \
+                                                    "$(top_srcdir)"
 
 # These aren't part of the c++ source, but we want them to be distributed
 PYTHON = python/setup.py \

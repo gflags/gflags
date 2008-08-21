@@ -89,20 +89,34 @@
 // are, similarly, mostly hooks into the functionality described above.
 
 #include "config.h"
+// This comes first to ensure we define __STDC_FORMAT_MACROS in time.
+#ifdef HAVE_INTTYPES_H
+#ifndef __STDC_FORMAT_MACROS
+# define __STDC_FORMAT_MACROS 1   // gcc requires this to get PRId64, etc.
+#endif
+#include <inttypes.h>
+#endif  // HAVE_INTTYPES_H
 #include <stdio.h>     // for snprintf
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
+#ifdef HAVE_FNMATCH_H
 #include <fnmatch.h>
+#endif  // HAVE_FNMATCH_H
+#ifdef HAVE_PTHREAD
 #include <pthread.h>
+#endif  // HAVE_PTHREAD
+#ifdef HAVE_WINDOWS_H
+#include <windows.h>
+#endif  // HAVE_WINDOWS_H
 #include <iostream>    // for cerr
 #include <string>
 #include <map>
 #include <vector>
 #include <utility>     // for pair<>
 #include <algorithm>
-#include "google/gflags.h"
+#include "gflags/gflags.h"
 
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR  '/'
@@ -121,17 +135,31 @@
 # define strtouint64 strtoul
 #endif
 
+// If we have inttypes.h, it will have defined PRId32/etc for us.  If
+// not, take our best guess.
+#ifndef PRId32
+# define PRId32 "d"
+#endif
+#ifndef PRId64
+# define PRId64 "lld"
+#endif
+#ifndef PRIu64
+# define PRIu64 "llu"
+#endif
+
 using std::string;
 using std::map;
 using std::vector;
 using std::pair;
 using std::cerr;
+using std::sort;
 
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
 DEFINE_string(flagfile, "",
               "load flags from file");
 DEFINE_string(fromenv, "",
-              "set flags from the environment [use 'export FLAGS_flag1=value']");
+              "set flags from the environment"
+              " [use 'export FLAGS_flag1=value']");
 DEFINE_string(tryfromenv, "",
               "set flags from the environment if present");
 
@@ -147,7 +175,7 @@ _START_GOOGLE_NAMESPACE_
 // The help message indicating that the commandline flag has been
 // 'stripped'. It will not show up when doing "-help" and its
 // variants. The flag is stripped if STRIP_FLAG_HELP is set to 1
-// before including google/gflags.h.
+// before including gflags/gflags.h.
 
 // This is used by this file, and also in commandlineflags_reporting.cc
 const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
@@ -191,9 +219,9 @@ class FlagValue {
   string ToString() const;
 
  private:
-  friend class CommandLineFlag; // for many things, including Validate()
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl; // calls New()
-  friend class FlagRegistry;    // checks value_buffer_ for flags_by_ptr_ map
+  friend class CommandLineFlag;  // for many things, including Validate()
+  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // calls New()
+  friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
   template <typename T> friend T GetFromEnv(const char*, const char*, T);
   friend bool TryParseLocked(const class CommandLineFlag*, FlagValue*,
                              const char*, string*);  // for New(), CopyFrom()
@@ -250,7 +278,7 @@ bool FlagValue::ParseFrom(const char* value) {
   if (type_ == FV_BOOL) {
     const char* kTrue[] = { "1", "t", "true", "y", "yes" };
     const char* kFalse[] = { "0", "f", "false", "n", "no" };
-    for (int i = 0; i < sizeof(kTrue)/sizeof(*kTrue); ++i) {
+    for (size_t i = 0; i < sizeof(kTrue)/sizeof(*kTrue); ++i) {
       if (strcasecmp(value, kTrue[i]) == 0) {
         SET_VALUE_AS(bool, true);
         return true;
@@ -307,7 +335,7 @@ bool FlagValue::ParseFrom(const char* value) {
       return true;
     }
     default: {
-      assert(false); // unknown type
+      assert(false);  // unknown type
       return false;
     }
   }
@@ -319,13 +347,13 @@ string FlagValue::ToString() const {
     case FV_BOOL:
       return VALUE_AS(bool) ? "true" : "false";
     case FV_INT32:
-      snprintf(intbuf, sizeof(intbuf), "%d", VALUE_AS(int32));
+      snprintf(intbuf, sizeof(intbuf), "%"PRId32, VALUE_AS(int32));
       return intbuf;
     case FV_INT64:
-      snprintf(intbuf, sizeof(intbuf), "%lld", VALUE_AS(int64));
+      snprintf(intbuf, sizeof(intbuf), "%"PRId64, VALUE_AS(int64));
       return intbuf;
     case FV_UINT64:
-      snprintf(intbuf, sizeof(intbuf), "%llu", VALUE_AS(uint64));
+      snprintf(intbuf, sizeof(intbuf), "%"PRIu64, VALUE_AS(uint64));
       return intbuf;
     case FV_DOUBLE:
       snprintf(intbuf, sizeof(intbuf), "%.17g", VALUE_AS(double));
@@ -333,7 +361,8 @@ string FlagValue::ToString() const {
     case FV_STRING:
       return VALUE_AS(string);
     default:
-      assert(false); return ""; // unknown type
+      assert(false);
+      return "";  // unknown type
   }
 }
 
@@ -359,7 +388,7 @@ bool FlagValue::Validate(const char* flagname,
       return reinterpret_cast<bool (*)(const char*, const string&)>(
           validate_fn_proto)(flagname, VALUE_AS(string));
     default:
-      assert(false); // unknown type
+      assert(false);  // unknown type
       return false;
   }
 }
@@ -372,7 +401,7 @@ const char* FlagValue::TypeName() const {
     case FV_UINT64: return "uint64";
     case FV_DOUBLE: return "double";
     case FV_STRING: return "string";
-    default: assert(false); return ""; // unknown type
+    default: assert(false); return "";  // unknown type
   }
 }
 
@@ -386,19 +415,19 @@ bool FlagValue::Equal(const FlagValue& x) const {
     case FV_UINT64: return VALUE_AS(uint64) == OTHER_VALUE_AS(x, uint64);
     case FV_DOUBLE: return VALUE_AS(double) == OTHER_VALUE_AS(x, double);
     case FV_STRING: return VALUE_AS(string) == OTHER_VALUE_AS(x, string);
-    default: assert(false); return false; // unknown type
+    default: assert(false); return false;  // unknown type
   }
 }
 
 FlagValue* FlagValue::New() const {
   switch (type_) {
-    case FV_BOOL:   return new FlagValue(new bool, "bool");
-    case FV_INT32:  return new FlagValue(new int32, "int32");
-    case FV_INT64:  return new FlagValue(new int64, "int64");
-    case FV_UINT64: return new FlagValue(new uint64, "uint64");
-    case FV_DOUBLE: return new FlagValue(new double, "double");
+    case FV_BOOL:   return new FlagValue(new bool(false), "bool");
+    case FV_INT32:  return new FlagValue(new int32(0), "int32");
+    case FV_INT64:  return new FlagValue(new int64(0), "int64");
+    case FV_UINT64: return new FlagValue(new uint64(0), "uint64");
+    case FV_DOUBLE: return new FlagValue(new double(0.0), "double");
     case FV_STRING: return new FlagValue(new string, "string");
-    default: assert(false); return NULL; // assert false
+    default: assert(false); return NULL;  // unknown type
   }
 }
 
@@ -411,7 +440,7 @@ void FlagValue::CopyFrom(const FlagValue& x) {
     case FV_UINT64: SET_VALUE_AS(uint64, OTHER_VALUE_AS(x, uint64));  break;
     case FV_DOUBLE: SET_VALUE_AS(double, OTHER_VALUE_AS(x, double));  break;
     case FV_STRING: SET_VALUE_AS(string, OTHER_VALUE_AS(x, string));  break;
-    default: assert(false); // unknown type
+    default: assert(false);  // unknown type
   }
 }
 
@@ -449,10 +478,12 @@ class CommandLineFlag {
   bool ValidateCurrent() const { return Validate(*current_); }
 
  private:
-  friend class FlagRegistry;    // for SetFlagLocked() and setting flags_by_ptr_
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl; // for cloning the values
+  // for SetFlagLocked() and setting flags_by_ptr_
+  friend class FlagRegistry;
+  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // for cloning the values
   friend bool GetCommandLineOption(const char*, string*, bool*);
-  friend bool AddFlagValidator(const void*, ValidateFnProto); // set validate_fn
+  // set validate_fn
+  friend bool AddFlagValidator(const void*, ValidateFnProto);
 
   // This copies all the non-const members: modified, processed, defvalue, etc.
   void CopyFrom(const CommandLineFlag& src);
@@ -535,10 +566,11 @@ void CommandLineFlag::UpdateModifiedBit() {
 
 void CommandLineFlag::CopyFrom(const CommandLineFlag& src) {
   // Note we only copy the non-const members; others are fixed at construct time
-  modified_ = src.modified_;
-  current_->CopyFrom(*src.current_);
-  defvalue_->CopyFrom(*src.defvalue_);
-  validate_fn_proto_ = src.validate_fn_proto_;
+  if (modified_ != src.modified_) modified_ = src.modified_;
+  if (!current_->Equal(*src.current_)) current_->CopyFrom(*src.current_);
+  if (!defvalue_->Equal(*src.defvalue_)) defvalue_->CopyFrom(*src.defvalue_);
+  if (validate_fn_proto_ != src.validate_fn_proto_)
+    validate_fn_proto_ = src.validate_fn_proto_;
 }
 
 bool CommandLineFlag::Validate(const FlagValue& value) const {
@@ -565,18 +597,16 @@ struct StringCmp {  // Used by the FlagRegistry map class to compare char*'s
   }
 };
 
-#define SAFE_PTHREAD(fncall)  do { if ((fncall) != 0) abort(); } while (0)
-
 class FlagRegistry {
  public:
-  FlagRegistry() { SAFE_PTHREAD(pthread_mutex_init(&lock_, NULL)); }
-  ~FlagRegistry() { SAFE_PTHREAD(pthread_mutex_destroy(&lock_)); }
+  FlagRegistry();
+  ~FlagRegistry();
+
+  void Lock();
+  void Unlock();
 
   // Store a flag in this registry.  Takes ownership of the given pointer.
   void RegisterFlag(CommandLineFlag* flag);
-
-  void Lock() { SAFE_PTHREAD(pthread_mutex_lock(&lock_)); }
-  void Unlock() { SAFE_PTHREAD(pthread_mutex_unlock(&lock_)); }
 
   // Returns the flag object for the specified name, or NULL if not found.
   CommandLineFlag* FindFlagLocked(const char* name);
@@ -618,12 +648,20 @@ class FlagRegistry {
   typedef map<const void*, CommandLineFlag*> FlagPtrMap;
   FlagPtrMap flags_by_ptr_;
 
+#if defined(HAVE_PTHREAD)
   pthread_mutex_t lock_;
+#elif defined(HAVE_INITIALIZECRITICALSECTION)
+  CRITICAL_SECTION lock_;
+#else
+#error "Need to define a mutual-exclusion object for your system"
+#endif
 
   static FlagRegistry* global_registry_;   // a singleton registry
-  static pthread_once_t global_registry_once_;
-  static int global_registry_once_nothreads_;   // when we don't link pthreads
 
+  // If global_registry_ has not yet been initialized, this function allocates
+  // a new global registry.  If InterlockedCompareExchange() is available, it
+  // does so in a thread-safe manner; otherwise, single-threaded execution (or
+  // serialization using pthread_once) is assumed.
   static void InitGlobalRegistry();
 
   // Disallow
@@ -631,14 +669,98 @@ class FlagRegistry {
   FlagRegistry& operator=(const FlagRegistry&);
 };
 
-class FlagRegistryLock {
- public:
-  explicit FlagRegistryLock(FlagRegistry* fr) : fr_(fr) { fr_->Lock(); }
-  ~FlagRegistryLock() { fr_->Unlock(); }
- private:
-  FlagRegistry *const fr_;
-};
+#if defined(HAVE_PTHREAD)
+// The pthread.h header is available.  The pthreads library may or may not be
+// linked in with -lpthread.  If that library is not linked in, then it is
+// assumed that all operations involving command-line flags will be
+// single-threaded.
 
+#define SAFE_PTHREAD(fncall)  do { if ((fncall) != 0) abort(); } while (0)
+
+inline FlagRegistry::FlagRegistry() {
+  SAFE_PTHREAD(pthread_mutex_init(&lock_, NULL));
+}
+inline FlagRegistry::~FlagRegistry() {
+  SAFE_PTHREAD(pthread_mutex_destroy(&lock_));
+}
+
+inline void FlagRegistry::Lock() {
+  SAFE_PTHREAD(pthread_mutex_lock(&lock_));
+}
+inline void FlagRegistry::Unlock() {
+  SAFE_PTHREAD(pthread_mutex_unlock(&lock_));
+}
+
+// We want to use pthread_once here, for safety, but have to worry about
+// whether libpthread is linked in or not.  We declare a weak version of
+// the function, so we'll always compile (if the weak version is the only
+// one that ends up existing, then pthread_once will be equal to NULL).
+#ifdef HAVE___ATTRIBUTE__
+  // __THROW is defined in glibc systems.  It means, counter-intuitively,
+  // "This function will never throw an exception."  It's an optional
+  // optimization tool, but we may need to use it to match glibc prototypes.
+# ifndef __THROW     // I guess we're not on a glibc system
+#   define __THROW   // __THROW is just an optimization, so ok to make it ""
+# endif
+extern "C" int pthread_once(pthread_once_t *, void (*)(void))
+    __THROW __attribute__((weak));
+#endif
+
+FlagRegistry* FlagRegistry::GlobalRegistry() {
+  if (pthread_once) {   // means we're linked with -lpthread
+    static pthread_once_t global_registry_once = PTHREAD_ONCE_INIT;
+    pthread_once(&global_registry_once, &InitGlobalRegistry);
+  } else {
+    // Assume single-threaded execution.
+    InitGlobalRegistry();
+  }
+  return global_registry_;
+}
+
+#elif defined(HAVE_INITIALIZECRITICALSECTION)
+// The Windows version of the thread-safe code uses EnterCriticalSection and
+// LeaveCriticalSection to serialize access to the registry.
+
+#ifndef HAVE_INTERLOCKEDCOMPAREEXCHANGE
+// InitializeCriticalSection is available, but InterlockedCompareExchange
+// is not.  On a Windows system both should be available, and on Unix, neither
+// one should be available.
+#error "Please check settings for HAVE_INTERLOCKED... and HAVE_INITIALIZE..."
+#endif  // !HAVE_INTERLOCKEDCOMPAREEXCHANGE
+
+inline FlagRegistry::FlagRegistry() { InitializeCriticalSection(&lock_); }
+inline FlagRegistry::~FlagRegistry() { DeleteCriticalSection(&lock_); }
+
+inline void FlagRegistry::Lock() { EnterCriticalSection(&lock_); }
+inline void FlagRegistry::Unlock() { LeaveCriticalSection(&lock_); }
+
+FlagRegistry* FlagRegistry::GlobalRegistry() {
+  InitGlobalRegistry();
+  return global_registry_;
+}
+#endif  // !HAVE_PTHREAD && HAVE_INITIALIZECRITICALSECTION
+
+// Get the singleton FlagRegistry object
+FlagRegistry* FlagRegistry::global_registry_ = NULL;
+
+void FlagRegistry::InitGlobalRegistry() {
+  if (!global_registry_) {
+#ifdef HAVE_INTERLOCKEDCOMPAREEXCHANGE
+    FlagRegistry* new_global_registry = new FlagRegistry;
+    if (InterlockedCompareExchangePointer(
+            reinterpret_cast<void* volatile *>(&global_registry_),
+            new_global_registry,
+            NULL) != NULL) {
+      // Some other thread initialized global_registry_ first.
+      delete new_global_registry;
+    }
+#else  // !HAVE_INTERLOCKEDCOMPAREEXCHANGE
+    // Assume single-threaded execution, or else that this function call was
+    // serialized using pthread_once.
+    global_registry_ = new FlagRegistry;
+#endif  // HAVE_INTERLOCKEDCOMPAREEXCHANGE
+  }
+}
 
 void FlagRegistry::RegisterFlag(CommandLineFlag* flag) {
   Lock();
@@ -756,7 +878,7 @@ bool TryParseLocked(const CommandLineFlag* flag, FlagValue* flag_value,
     delete tentative_value;
     return false;
   } else if (!flag->Validate(*tentative_value)) {
-    if (msg){
+    if (msg) {
       *msg += (string(kError) + "failed validation of new value "
                + "'" + tentative_value->ToString() + "' for flag '" +
                + flag->name() + "'\n");
@@ -810,46 +932,21 @@ bool FlagRegistry::SetFlagLocked(CommandLineFlag* flag,
     }
     default: {
       // unknown set_mode
-      assert(false); return false;
+      assert(false);
+      return false;
     }
   }
 
   return true;
 }
 
-// Get the singleton FlagRegistry object
-FlagRegistry* FlagRegistry::global_registry_ = NULL;
-pthread_once_t FlagRegistry::global_registry_once_ = PTHREAD_ONCE_INIT;
-int FlagRegistry::global_registry_once_nothreads_ = 0;
-
-void FlagRegistry::InitGlobalRegistry() {
-  global_registry_ = new FlagRegistry;
-}
-
-// We want to use pthread_once here, for safety, but have to worry about
-// whether libpthread is linked in or not.  We declare a weak version of
-// the function, so we'll always compile (if the weak version is the only
-// one that ends up existing, then pthread_once will be equal to NULL).
-#ifdef HAVE___ATTRIBUTE__
-  // __THROW is defined in glibc systems.  It means, counter-intuitively,
-  // "This function will never throw an exception."  It's an optional
-  // optimization tool, but we may need to use it to match glibc prototypes.
-# ifndef __THROW     // I guess we're not on a glibc system
-#   define __THROW   // __THROW is just an optimization, so ok to make it ""
-# endif
-extern "C" int pthread_once(pthread_once_t *, void (*)(void))
-    __THROW __attribute__((weak));
-#endif
-
-FlagRegistry* FlagRegistry::GlobalRegistry() {
-  if (pthread_once) {   // means we're running with pthreads
-    pthread_once(&global_registry_once_, &FlagRegistry::InitGlobalRegistry);
-  } else {              // not running with pthreads: we're the only thread
-    if (global_registry_once_nothreads_++ == 0)
-      InitGlobalRegistry();
-  }
-  return global_registry_;
-}
+class FlagRegistryLock {
+ public:
+  explicit FlagRegistryLock(FlagRegistry* fr) : fr_(fr) { fr_->Lock(); }
+  ~FlagRegistryLock() { fr_->Unlock(); }
+ private:
+  FlagRegistry *const fr_;
+};
 
 // --------------------------------------------------------------------
 // CommandLineFlagParser
@@ -915,14 +1012,15 @@ class CommandLineFlagParser {
   // These are called by ProcessSingleOptionLocked and, similarly, return
   // new values if everything went ok, or the empty-string if not.
   string ProcessFlagfileLocked(const string& flagval, FlagSettingMode set_mode);
+  // diff fromenv/tryfromenv
   string ProcessFromenvLocked(const string& flagval, FlagSettingMode set_mode,
-                              bool errors_are_fatal); // diff fromenv/tryfromenv
+                              bool errors_are_fatal);
 
  private:
   FlagRegistry* const registry_;
-  map<string, string> error_flags_;     // map from name to error message
+  map<string, string> error_flags_;      // map from name to error message
   // This could be a set<string>, but we reuse the map to minimize the .o size
-  map<string, string> undefined_names_; // --name for name that's not registered
+  map<string, string> undefined_names_;  // --[flag] name was not registered
 };
 
 
@@ -932,10 +1030,10 @@ static void ParseFlagList(const char* value, vector<string>* flags) {
     p = strchr(value, ',');
     int len;
     if (p) {
-      len = p - value;
+      len = static_cast<int>(p - value);
       p++;
     } else {
-      len = strlen(value);
+      len = static_cast<int>(strlen(value));
     }
 
     if (len == 0) {
@@ -958,13 +1056,13 @@ static void ParseFlagList(const char* value, vector<string>* flags) {
 #define PFATAL(s)  do { perror(s); commandlineflags_exitfunc(1); } while (0)
 
 static string ReadFileIntoString(const char* filename) {
-  const int bufsize = 8092;
-  char buffer[bufsize];
+  const int kBufSize = 8092;
+  char buffer[kBufSize];
   string s;
   FILE* fp = fopen(filename, "r");
   if (!fp)  PFATAL(filename);
-  int n;
-  while ( (n=fread(buffer, 1, bufsize, fp)) > 0 ) {
+  size_t n;
+  while ( (n=fread(buffer, 1, kBufSize, fp)) > 0 ) {
     if (ferror(fp))  PFATAL(filename);
     s.append(buffer, n);
   }
@@ -1019,8 +1117,13 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
       assert(strcmp(flag->type_name(), "bool") != 0);
       if (i+1 >= first_nonopt) {
         // This flag needs a value, but there is nothing available
-        error_flags_[key] = (string(kError) + "flag '" + (*argv)[i] + "'" +
-                            + " is missing its argument\n");
+        error_flags_[key] = (string(kError) + "flag '" + (*argv)[i] + "'"
+                             + " is missing its argument");
+        if (flag->help() && flag->help()[0] > '\001') {
+          // Be useful in case we have a non-stripped description.
+          error_flags_[key] += string("; flag description: ") + flag->help();
+        }
+        error_flags_[key] += "\n";
         break;    // we treat this as an unrecoverable error
       } else {
         value = (*argv)[++i];                   // read next arg for value
@@ -1052,7 +1155,7 @@ string CommandLineFlagParser::ProcessFlagfileLocked(const string& flagval,
   string msg;
   vector<string> filename_list;
   ParseFlagList(flagval.c_str(), &filename_list);  // take a list of filenames
-  for (int i = 0; i < filename_list.size(); ++i) {
+  for (size_t i = 0; i < filename_list.size(); ++i) {
     const char* file = filename_list[i].c_str();
     msg += ProcessOptionsFromStringLocked(ReadFileIntoString(file), set_mode);
   }
@@ -1069,7 +1172,7 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
   vector<string> flaglist;
   ParseFlagList(flagval.c_str(), &flaglist);
 
-  for (int i = 0; i < flaglist.size(); ++i) {
+  for (size_t i = 0; i < flaglist.size(); ++i) {
     const char* flagname = flaglist[i].c_str();
     CommandLineFlag* flag = registry_->FindFlagLocked(flagname);
     if (flag == NULL) {
@@ -1123,7 +1226,6 @@ string CommandLineFlagParser::ProcessSingleOptionLocked(
 
   } else if (strcmp(flag->name(), "tryfromenv") == 0) {
     msg += ProcessFromenvLocked(FLAGS_tryfromenv, set_mode, false);
-
   }
 
   return msg;
@@ -1152,7 +1254,7 @@ bool CommandLineFlagParser::ReportErrors() {
   if (!FLAGS_undefok.empty()) {
     vector<string> flaglist;
     ParseFlagList(FLAGS_undefok.c_str(), &flaglist);
-    for (int i = 0; i < flaglist.size(); ++i)
+    for (size_t i = 0; i < flaglist.size(); ++i)
       if (undefined_names_.find(flaglist[i]) != undefined_names_.end()) {
         error_flags_[flaglist[i]] = "";    // clear the error message
       }
@@ -1161,13 +1263,13 @@ bool CommandLineFlagParser::ReportErrors() {
   // are ok; we just silently ignore them now, and hope that a future
   // parse will pick them up somehow.
   if (allow_command_line_reparsing) {
-    for (map<string,string>::const_iterator it = undefined_names_.begin();
+    for (map<string, string>::const_iterator it = undefined_names_.begin();
          it != undefined_names_.end();  ++it)
       error_flags_[it->first] = "";      // clear the error message
   }
 
   bool found_error = false;
-  for (map<string,string>::const_iterator it = error_flags_.begin();
+  for (map<string, string>::const_iterator it = error_flags_.begin();
        it != error_flags_.end(); ++it) {
     if (!it->second.empty()) {
       fprintf(stderr, "%s", it->second.c_str());
@@ -1190,7 +1292,8 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
     while (*flagfile_contents && isspace(*flagfile_contents))
       ++flagfile_contents;
     line_end = strchr(flagfile_contents, '\n');
-    int len = line_end ? line_end-flagfile_contents : strlen(flagfile_contents);
+    size_t len = line_end ? static_cast<size_t>(line_end - flagfile_contents)
+                          : strlen(flagfile_contents);
     string line(flagfile_contents, len);
 
     // Each line can be one of four things:
@@ -1240,8 +1343,17 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
           space = word + strlen(word);
         const string glob(word, space - word);
         // We try matching both against the full argv0 and basename(argv0)
-        if (fnmatch(glob.c_str(), ProgramInvocationName(), FNM_PATHNAME) == 0 ||
-            fnmatch(glob.c_str(), ProgramInvocationShortName(), FNM_PATHNAME) == 0) {
+#ifdef HAVE_FNMATCH_H
+        if (fnmatch(glob.c_str(),
+                    ProgramInvocationName(),
+                    FNM_PATHNAME) == 0 ||
+            fnmatch(glob.c_str(),
+                    ProgramInvocationShortName(),
+                    FNM_PATHNAME) == 0) {
+#else  // !HAVE_FNMATCH_H
+        if ((glob == ProgramInvocationName()) ||
+            (glob == ProgramInvocationShortName())) {
+#endif  // HAVE_FNMATCH_H
           flags_are_relevant = true;
         }
       }
@@ -1393,8 +1505,7 @@ static const char* argv0 = "UNKNOWN";      // just the program name
 static const char* cmdline = "";           // the entire command-line
 static vector<string> argvs;
 static uint32 argv_sum = 0;
-static const char* program_usage = "Warning: SetUsageMessage() never called";
-static bool program_usage_set = false;
+static const char* program_usage = NULL;
 
 void SetArgv(int argc, const char** argv) {
   static bool called_set_argv = false;
@@ -1407,11 +1518,11 @@ void SetArgv(int argc, const char** argv) {
   argv0 = strdup(argv[0]);     // small memory leak, but fn only called once
   assert(argv0);
 
-  string cmdline_string = string("");        // easier than doing strcats
-  argvs.clear();
+  string cmdline_string;       // easier than doing strcats
   for (int i = 0; i < argc; i++) {
-    if (i != 0)
+    if (i != 0) {
       cmdline_string += " ";
+    }
     cmdline_string += argv[i];
     argvs.push_back(argv[i]);
   }
@@ -1419,7 +1530,6 @@ void SetArgv(int argc, const char** argv) {
   assert(cmdline);
 
   // Compute a simple sum of all the chars in argv
-  argv_sum = 0;
   for (const char* c = cmdline; *c; c++)
     argv_sum += *c;
 }
@@ -1440,17 +1550,18 @@ const char* ProgramInvocationShortName() {        // like the GNU libc fn
 }
 
 void SetUsageMessage(const string& usage) {
-  if (program_usage_set) {
-    fprintf(stderr, "ERROR: SetUsageMessage() called more than once\n");
+  if (program_usage != NULL) {
+    fprintf(stderr, "ERROR: SetUsageMessage() called twice\n");
     exit(1);
   }
-
   program_usage = strdup(usage.c_str());      // small memory leak
-  program_usage_set = true;
 }
 
 const char* ProgramUsage() {
-  return program_usage;
+  if (program_usage) {
+    return program_usage;
+  }
+  return "Warning: SetUsageMessage() never called";
 }
 
 // --------------------------------------------------------------------
@@ -1600,7 +1711,8 @@ class FlagSaverImpl {
   void operator=(const FlagSaverImpl&);
 };
 
-FlagSaver::FlagSaver() : impl_(new FlagSaverImpl(FlagRegistry::GlobalRegistry())) {
+FlagSaver::FlagSaver()
+    : impl_(new FlagSaverImpl(FlagRegistry::GlobalRegistry())) {
   impl_->SaveFromRegistry();
 }
 
@@ -1629,7 +1741,7 @@ static string TheseCommandlineFlagsIntoString(
     const vector<CommandLineFlagInfo>& flags) {
   vector<CommandLineFlagInfo>::const_iterator i;
 
-  int retval_space = 0;
+  size_t retval_space = 0;
   for (i = flags.begin(); i != flags.end(); ++i) {
     // An (over)estimate of how much space it will take to print this flag
     retval_space += i->name.length() + i->current_value.length() + 5;
@@ -1654,7 +1766,7 @@ string CommandlineFlagsIntoString() {
 }
 
 bool ReadFlagsFromString(const string& flagfilecontents,
-                         const char* prog_name,   // TODO(csilvers): nix this
+                         const char* /*prog_name*/,  // TODO(csilvers): nix this
                          bool errors_are_fatal) {
   FlagRegistry* const registry = FlagRegistry::GlobalRegistry();
   FlagSaverImpl saved_states(registry);
@@ -1844,7 +1956,7 @@ uint32 ParseCommandLineNonHelpFlags(int* argc, char*** argv,
 //    dlopen, to get the new flags.  But you have to explicitly
 //    Allow() it; otherwise, you get the normal default behavior
 //    of unrecognized flags calling a fatal error.
-//    TODO(csilvers): this isn't used.  Just delete it?
+// TODO(csilvers): this isn't used.  Just delete it?
 // --------------------------------------------------------------------
 
 void AllowCommandLineReparsing() {
@@ -1854,7 +1966,7 @@ void AllowCommandLineReparsing() {
 uint32 ReparseCommandLineNonHelpFlags() {
   // We make a copy of argc and argv to pass in
   const vector<string>& argvs = GetArgvs();
-  int tmp_argc = argvs.size();
+  int tmp_argc = static_cast<int>(argvs.size());
   char** tmp_argv = new char* [tmp_argc + 1];
   for (int i = 0; i < tmp_argc; ++i)
     tmp_argv[i] = strdup(argvs[i].c_str());   // TODO(csilvers): don't dup

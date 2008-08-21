@@ -52,7 +52,13 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 
-%doc AUTHORS COPYING ChangeLog INSTALL NEWS README doc/designstyle.css doc/gflags.html
+## Mark all installed files within /usr/share/doc/{package name} as
+## documentation.  This depends on the following two lines appearing in
+## Makefile.am:
+##     docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
+##     dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README
+%docdir %{prefix}/share/doc/%{NAME}-%{VERSION}
+%{prefix}/share/doc/%{NAME}-%{VERSION}/*
 
 %{prefix}/lib/libgflags.so.0
 %{prefix}/lib/libgflags.so.0.0.0
@@ -62,6 +68,7 @@ rm -rf $RPM_BUILD_ROOT
 %defattr(-,root,root)
 
 %{prefix}/include/google
+%{prefix}/include/gflags
 %{prefix}/lib/libgflags.a
 %{prefix}/lib/libgflags.la
 %{prefix}/lib/libgflags.so

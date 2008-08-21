@@ -103,11 +103,11 @@ typedef int32_t int32;
 typedef u_int32_t uint32;
 typedef int64_t int64;
 typedef u_int64_t uint64;
-#elif @ac_cv_have___uint16@    // the windows (vc7) format
+#elif @ac_cv_have___int16@     // the windows (vc7) format
 typedef __int32 int32;
-typedef __uint32 uint32;
+typedef unsigned __int32 uint32;
 typedef __int64 int64;
-typedef __uint64 uint64;
+typedef unsigned __int64 uint64;
 #else
 #error Do not know how to define a 32-bit integer quantity on your system
 #endif
@@ -504,7 +504,7 @@ extern bool FlagsTypeWarn(const char *name);
 #define DEFINE_string(name, val, txt)                                     \
   namespace fLS {                                                         \
     static union { void* align; char s[sizeof(std::string)]; } s_##name[2]; \
-    const string* const FLAGS_no##name = new (s_##name[0].s) std::string(val); \
+    const std::string* const FLAGS_no##name = new (s_##name[0].s) std::string(val); \
     static @ac_google_namespace@::FlagRegisterer o_##name(                \
       #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
       s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));   \

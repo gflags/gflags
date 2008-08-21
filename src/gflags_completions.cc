@@ -56,7 +56,7 @@
 #include <utility>
 #include <vector>
 
-#include "google/gflags.h"
+#include "gflags/gflags.h"
 
 using std::set;
 using std::string;
@@ -145,7 +145,7 @@ static void OutputSingleGroupWithLimit(
     const string &footer,
     bool long_output_format,
     int *remaining_line_limit,
-    int *completion_elements_added,
+    size_t *completion_elements_added,
     vector<string> *completions);
 
 // (helpers for #5)
@@ -424,7 +424,7 @@ static void CategorizeAllMatchingFlags(
         all_matches.begin();
       it != all_matches.end();
       ++it) {
-    //VLOG(2) << "Examinging match '" << (*it)->name << "'";
+    //VLOG(2) << "Examining match '" << (*it)->name << "'";
     //VLOG(7) << "  filename: '" << (*it)->filename << "'";
     string::size_type pos = string::npos;
     if (!package_dir.empty())
@@ -507,6 +507,17 @@ struct DisplayInfoGroup {
   string header;
   string footer;
   set<const CommandLineFlagInfo *> *group;
+
+  int SizeInLines() const {
+    int size_in_lines = static_cast<int>(group->size()) + 1;
+    if (!header.empty()) {
+      size_in_lines++;
+    }
+    if (!footer.empty()) {
+      size_in_lines++;
+    }
+    return size_in_lines;
+  }
 };
 
 // 4) Finalize and trim output flag set
@@ -533,45 +544,47 @@ static void FinalizeCompletionOutput(
   if (lines_so_far < max_desired_lines &&
       !notable_flags->perfect_match_flag.empty()) {
     perfect_match_found = true;
-    lines_so_far += notable_flags->perfect_match_flag.size() + 2;  // no header
     DisplayInfoGroup group =
-        { "", "==========", &notable_flags->perfect_match_flag };
+        { string(),
+          "==========",
+          &notable_flags->perfect_match_flag };
+    lines_so_far += group.SizeInLines();
     output_groups.push_back(group);
   }
   if (lines_so_far < max_desired_lines &&
       !notable_flags->module_flags.empty()) {
-    lines_so_far += notable_flags->module_flags.size() + 3;
     DisplayInfoGroup group = {
         "-* Matching module flags *-",
         "===========================",
         &notable_flags->module_flags };
+    lines_so_far += group.SizeInLines();
     output_groups.push_back(group);
   }
   if (lines_so_far < max_desired_lines &&
       !notable_flags->package_flags.empty()) {
-    lines_so_far += notable_flags->package_flags.size() + 3;
     DisplayInfoGroup group = {
         "-* Matching package flags *-",
         "============================",
         &notable_flags->package_flags };
+    lines_so_far += group.SizeInLines();
     output_groups.push_back(group);
   }
   if (lines_so_far < max_desired_lines &&
       !notable_flags->most_common_flags.empty()) {
-    lines_so_far += notable_flags->most_common_flags.size() + 3;
     DisplayInfoGroup group = {
         "-* Commonly used flags *-",
         "=========================",
         &notable_flags->most_common_flags };
+    lines_so_far += group.SizeInLines();
     output_groups.push_back(group);
   }
   if (lines_so_far < max_desired_lines &&
       !notable_flags->subpackage_flags.empty()) {
-    lines_so_far += notable_flags->subpackage_flags.size() + 3;
     DisplayInfoGroup group = {
         "-* Matching sub-package flags *-",
         "================================",
         &notable_flags->subpackage_flags };
+    lines_so_far += group.SizeInLines();
     output_groups.push_back(group);
   }
 
@@ -579,11 +592,11 @@ static void FinalizeCompletionOutput(
   if (lines_so_far < max_desired_lines) {
     RetrieveUnusedFlags(matching_flags, *notable_flags, &obscure_flags);
     if (!obscure_flags.empty()) {
-      lines_so_far += obscure_flags.size() + 2;  // no footer
       DisplayInfoGroup group = {
           "-* Other flags *-",
-          "",
+          string(),
           &obscure_flags };
+      lines_so_far += group.SizeInLines();
       output_groups.push_back(group);
     }
   }
@@ -591,8 +604,8 @@ static void FinalizeCompletionOutput(
   // Second, go through each of the chosen output groups and output
   // as many of those flags as we can, while remaining below our limit
   int remaining_lines = max_desired_lines;
-  int completions_output = 0;
-  int indent = output_groups.size() - 1;
+  size_t completions_output = 0;
+  int indent = static_cast<int>(output_groups.size()) - 1;
   for (vector<DisplayInfoGroup>::const_iterator it =
         output_groups.begin();
       it != output_groups.end();
@@ -646,7 +659,7 @@ static void OutputSingleGroupWithLimit(
     const string &footer,
     bool long_output_format,
     int *remaining_line_limit,
-    int *completion_elements_output,
+    size_t *completion_elements_output,
     vector<string> *completions) {
   if (group.empty()) return;
   if (!header.empty()) {
@@ -681,11 +694,12 @@ static string GetShortFlagLine(
        ("'" + info.default_value + "'") :
        info.default_value)
     + "] ";
-  int remainder = FLAGS_tab_completion_columns - prefix.size();
-  string suffix = "";
+  int remainder =
+      FLAGS_tab_completion_columns - static_cast<int>(prefix.size());
+  string suffix;
   if (remainder > 0)
     suffix =
-        (info.description.size() > remainder ?
+        (static_cast<int>(info.description.size()) > remainder ?
          (info.description.substr(0, remainder - 3) + "...").c_str() :
          info.description.c_str());
   return prefix + suffix;
@@ -726,7 +740,7 @@ static string GetLongFlagLine(
   for (string::size_type newline = output.find('\n');
       newline != string::npos;
       newline = output.find('\n')) {
-    int newline_pos = newline % FLAGS_tab_completion_columns;
+    int newline_pos = static_cast<int>(newline) % FLAGS_tab_completion_columns;
     int missing_spaces = FLAGS_tab_completion_columns - newline_pos;
     output.replace(newline, 1, line_of_spaces, 1, missing_spaces);
   }
