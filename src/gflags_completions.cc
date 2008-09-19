@@ -202,7 +202,7 @@ struct NotableFlags {
 static void PrintFlagCompletionInfo(void) {
   string cursor_word = FLAGS_tab_completion_word;
   string canonical_token;
-  CompletionOptions options;
+  CompletionOptions options = { };
   CanonicalizeCursorWordAndSearchOptions(
       cursor_word,
       &canonical_token,

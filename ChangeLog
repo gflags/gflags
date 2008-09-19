@@ -1,4 +1,14 @@
-Tue Aug 19 16:15:48 2008  Google Inc. <opensource@google.com>
+Thu Sep 18 12:58:05 2008  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.0rc2
+	* Report current flag values in --helpxml (hdn)
+	* Fix compilation troubles with gcc 4.3.3 (simonb)
+	* BUG FIX: I was missing a std:: in DECLARE_string (csilvers)
+	* BUG FIX: Clarify in docs how to specify --bool flags (csilvers)
+	* BUG FIX: Fix --helpshort for source files not in a subdir (csilvers)
+	* BUG FIX: Fix python unittest for 64-bit builds (bcmills)
+	
+Tue Aug 19 16:15:48 2008
 
 	* google-gflags: version 1.0rc1
 	* Move #include files from google/ to gflags/ (csilvers)

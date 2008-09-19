@@ -494,7 +494,7 @@ extern bool FlagsTypeWarn(const char *name);
 // try to avoid crashes in that case, we use a char buffer to store
 // the string, which we can static-initialize, and then placement-new
 // into it later.  It's not perfect, but the best we can do.
-#define DECLARE_string(name)  namespace fLS { extern string& FLAGS_##name; } \
+#define DECLARE_string(name)  namespace fLS { extern std::string& FLAGS_##name; } \
                               using fLS::FLAGS_##name
 
 // We need to define a var named FLAGS_no##name so people don't define

@@ -7,7 +7,7 @@ Summary: A commandline flags library that allows for distributed flags
 Version: %VERSION
 Release: %rel
 Group: Development/Libraries
-URL: http://code.google.com/p/gflags
+URL: http://code.google.com/p/google-gflags
 License: BSD
 Vendor: Google
 Packager: Google Inc. <opensource@google.com>

@@ -210,6 +210,7 @@ typedef bool (*ValidateFnProto)();
 //    given type, and back.  Thread-compatible.
 // --------------------------------------------------------------------
 
+class CommandLineFlag;
 class FlagValue {
  public:
   FlagValue(void* valbuf, const char* type);
@@ -223,7 +224,7 @@ class FlagValue {
   friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // calls New()
   friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
   template <typename T> friend T GetFromEnv(const char*, const char*, T);
-  friend bool TryParseLocked(const class CommandLineFlag*, FlagValue*,
+  friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
                              const char*, string*);  // for New(), CopyFrom()
 
   enum ValueType {FV_BOOL, FV_INT32, FV_INT64, FV_UINT64, FV_DOUBLE, FV_STRING};

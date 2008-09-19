@@ -130,6 +130,10 @@ Expect $LINENO 1 "/gflags_reporting.cc" "" -helpfull
 # --helpshort should show only flags from the unittest itself
 Expect $LINENO 1 "/gflags_unittest.cc" "/gflags_reporting.cc" --helpshort
 
+# --helpshort should show the tldflag we created in the unittest dir
+Expect $LINENO 1 "tldflag1" "/google.cc" --helpshort
+Expect $LINENO 1 "tldflag2" "/google.cc" --helpshort
+
 # --helpshort should work if the main source file is suffixed with [_-]main
 ExpectExe "$EXE2" $LINENO 1 "/gflags_unittest-main.cc" "/gflags_reporting.cc" \
   --helpshort
@@ -158,9 +162,9 @@ Expect $LINENO 1 "/gflags_unittest.cc" "/gflags.cc" \
   -helpmatch=unittest
 
 # if no flags are found with helpmatch or helpon, suggest --help
-Expect $LINENO 1 "No modules matched" "/commandlineflags_unittest.cc" \
+Expect $LINENO 1 "No modules matched" "/gflags_unittest.cc" \
   -helpmatch=nosuchsubstring
-Expect $LINENO 1 "No modules matched" "/commandlineflags_unittest.cc" \
+Expect $LINENO 1 "No modules matched" "/gflags_unittest.cc" \
   -helpon=nosuchmodule
 
 # helppackage shows all the flags in the same dir as this unittest

@@ -81,11 +81,11 @@ translates directly to Python.</p>
 
 <p> Defining a flag is easy: just use the appropriate macro for the
 type you want the flag to be, as defined at the bottom of
-<code>google/gflags.h</code>.  Here's an example file,
+<code>gflags/gflags.h</code>.  Here's an example file,
 <code>foo.cc</code>:</p>
 
 <pre>
-   #include &lt;google/gflags.h&gt;
+   #include &lt;gflags/gflags.h&gt;
 
    DEFINE_bool(big_menu, true, "Include 'advanced' options in the menu listing");
    DEFINE_string(languages, "english,french,german",
@@ -287,14 +287,12 @@ specify the "languages" flag:</p>
   <li> <code>app_containing_foo -languages "chinese,japanese,korean"</code>
 </ul>
 
-<p>For boolean flags, there are even more possibilities:</p>
+<p>For boolean flags, the possibilities are slightly different:</p>
 <ul>
   <li> <code>app_containing_foo --big_menu</code>
   <li> <code>app_containing_foo --nobig_menu</code>
   <li> <code>app_containing_foo --big_menu=true</code>
   <li> <code>app_containing_foo --big_menu=false</code>
-  <li> <code>app_containing_foo --big_menu true</code>
-  <li> <code>app_containing_foo --big_menu false</code>
 </ul>
 <p>(as well as the single-dash variant on all of these).</p>
 
@@ -477,7 +475,7 @@ methods such as <code>google::SetUsageMessage</code>, see
 <p>If your application has code like this:</p>
 <pre>
    #define STRIP_FLAG_HELP 1    // this must go before the #include!
-   #include &lt;google/gflags.h&gt;
+   #include &lt;gflags/gflags.h&gt;
 </pre>
 <p>we will remove the help messages from the compiled source. This can
 reduce the size of the resulting binary somewhat, and may also be

@@ -201,6 +201,7 @@ static string DescribeOneFlagInXML(const CommandLineFlagInfo& flag) {
           "<name>" + XMLText(flag.name) + "</name>" +
           "<meaning>" + XMLText(flag.description) + "</meaning>" +
           "<default>" + XMLText(flag.default_value) + "</default>" +
+          "<current>" + XMLText(flag.current_value) + "</current>" +
           "<type>" + XMLText(flag.type) + "</type>" +
           string("</flag>"));
 }
@@ -234,9 +235,16 @@ static bool FileMatchesSubstring(const string& filename,
   for (vector<string>::const_iterator target = substrings.begin();
        target != substrings.end();
        ++target) {
-    if (strstr(filename.c_str(), target->c_str()) != NULL) {
+    if (strstr(filename.c_str(), target->c_str()) != NULL)
       return true;
-    }
+    // If the substring starts with a '/', that means that we want
+    // the string to be at the beginning of a directory component.
+    // That should match the first directory component as well, so
+    // we allow '/foo' to match a filename of 'foo'.
+    if (!target->empty() && (*target)[0] == '/' &&
+        strncmp(filename.c_str(), target->c_str() + 1,
+                strlen(target->c_str() + 1)) == 0)
+      return true;
   }
   return false;
 }

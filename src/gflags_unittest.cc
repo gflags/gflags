@@ -31,7 +31,7 @@
 // Author: Marius Eriksen
 //
 // For now, this unit test does not cover all features of
-// commandlineflags.cc
+// gflags.cc
 
 #include "config.h"
 #include <stdio.h>
@@ -51,11 +51,13 @@ void (*unused_fn)() = &GOOGLE_NAMESPACE::HandleCommandLineCompletions;
 
 using std::vector;
 using std::string;
+using GOOGLE_NAMESPACE::int32;
+using GOOGLE_NAMESPACE::FlagRegisterer;
 
 // Returns the number of elements in an array.
 #define GET_ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*(arr)))
 
-DECLARE_string(tryfromenv);   // in commandlineflags.cc
+DECLARE_string(tryfromenv);   // in gflags.cc
 
 DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
 DEFINE_string(srcdir, GOOGLE_NAMESPACE::StringFromEnv("SRCDIR", "."),
@@ -111,8 +113,8 @@ static string ChangeableString() {
 DEFINE_string(changeable_string_var, ChangeableString(), "");
 
 // These are never used in this unittest, but can be used by
-// commandlineflags_unittest.sh when it needs to specify flags
-// that are legal for commandlineflags_unittest but don't need to
+// gflags_unittest.sh when it needs to specify flags
+// that are legal for gflags_unittest but don't need to
 // be a particular value.
 DEFINE_bool(unused_bool, true, "unused bool-ness");
 DEFINE_int32(unused_int32, -1001, "");
@@ -128,6 +130,31 @@ DEFINE_bool(changed_bool2, false, "changed");
 static bool AlwaysFail(const char* flag, bool value) { return value == false; }
 DEFINE_bool(always_fail, false, "will fail to validate when you set it");
 static const bool dummy = GOOGLE_NAMESPACE::RegisterFlagValidator(&FLAGS_always_fail, AlwaysFail);
+
+// This is a psuedo-flag -- we want to register a flag with a filename
+// at the top level, but there is no way to do this except by faking
+// the filename.
+namespace fLI {
+  static const int32 FLAGS_nonotldflag1 = 12;
+  int32 FLAGS_tldflag1 = FLAGS_nonotldflag1;
+  int32 FLAGS_notldflag1 = FLAGS_nonotldflag1;
+  static FlagRegisterer o_tldflag1(
+    "tldflag1", "int32",
+    "should show up in --helpshort", "gflags_unittest.cc",
+    &FLAGS_tldflag1, &FLAGS_notldflag1);
+}
+using fLI::FLAGS_tldflag1;
+
+namespace fLI {
+  static const int32 FLAGS_nonotldflag2 = 23;
+  int32 FLAGS_tldflag2 = FLAGS_nonotldflag2;
+  int32 FLAGS_notldflag2 = FLAGS_nonotldflag2;
+  static FlagRegisterer o_tldflag2(
+    "tldflag2", "int32",
+    "should show up in --helpshort", "gflags_unittest.",
+    &FLAGS_tldflag2, &FLAGS_notldflag2);
+}
+using fLI::FLAGS_tldflag2;
 
 _START_GOOGLE_NAMESPACE_
 
@@ -674,7 +701,7 @@ TEST(FromEnvTest, LegalValues) {
 }
 
 // Tests that the FooFromEnv dies on parse-error
-TEST(FromEnvTest, IllegalValues) {
+TEST(FromEnvDeathTest, IllegalValues) {
   setenv("BOOL_BAD1", "so true!",1 );
   setenv("BOOL_BAD2", "", 1);
   EXPECT_DEATH(BoolFromEnv("BOOL_BAD1", false), "error parsing env variable");
@@ -1039,7 +1066,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ(false, info.has_validator_fn);
 }
 
-TEST(GetCommandLineFlagInfoOrDieTest, FlagDoesNotExist) {
+TEST(GetCommandLineFlagInfoOrDieDeathTest, FlagDoesNotExist) {
   EXPECT_DEATH(GetCommandLineFlagInfoOrDie("test_int3210"),
                ".*: flag test_int3210 does not exist");
 }
@@ -1249,7 +1276,7 @@ TEST(ParseCommandLineFlagsAndDashArgs, OneDashArg) {
   EXPECT_EQ(0, ParseTestFlag(false, GET_ARRAY_SIZE(argv) - 1, argv));
 }
 
-TEST(ParseCommandLineFlagsUnknownFlag,
+TEST(ParseCommandLineFlagsUnknownFlagDeathTest,
      FlagIsCompletelyUnknown) {
   const char* argv[] = {
     "my_test",
@@ -1263,7 +1290,7 @@ TEST(ParseCommandLineFlagsUnknownFlag,
                "unknown command line flag.*");
 }
 
-TEST(ParseCommandLineFlagsUnknownFlag,
+TEST(ParseCommandLineFlagsUnknownFlagDeathTest,
      BoolFlagIsCompletelyUnknown) {
   const char* argv[] = {
     "my_test",
@@ -1277,7 +1304,7 @@ TEST(ParseCommandLineFlagsUnknownFlag,
                "unknown command line flag.*");
 }
 
-TEST(ParseCommandLineFlagsUnknownFlag,
+TEST(ParseCommandLineFlagsUnknownFlagDeathTest,
      FlagIsNotABool) {
   const char* argv[] = {
     "my_test",
@@ -1351,7 +1378,7 @@ TEST(FlagsValidator, ValidFlagViaSetValue) {
   EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
 }
 
-TEST(FlagsValidator, InvalidFlagViaArgv) {
+TEST(FlagsValidatorDeathTest, InvalidFlagViaArgv) {
   const char* argv[] = {
     "my_test",
     "--test_flag=50",
@@ -1385,7 +1412,7 @@ TEST(FlagsValidator, InvalidFlagViaSetValue) {
   EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, NULL));
 }
 
-TEST(FlagsValidator, InvalidFlagNeverSet) {
+TEST(FlagsValidatorDeathTest, InvalidFlagNeverSet) {
   // If a flag keeps its default value, and that default value is
   // invalid, we should die at argv-parse time.
   const char* argv[] = {

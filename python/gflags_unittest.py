@@ -243,14 +243,12 @@ class FlagsUnitTest(unittest.TestCase):
     # Test integer argument passing
     argv = ('./program', '--x', '0x12345')
     argv = FLAGS(argv)
-    # 0x12345 == 74565
-    self.assertEquals(FLAGS.x, 74565)
+    self.assertEquals(FLAGS.x, 0x12345)
     self.assertEquals(type(FLAGS.x), int)
 
-    argv = ('./program', '--x', '0x123456789A')
+    argv = ('./program', '--x', '0x1234567890ABCDEF1234567890ABCDEF')
     argv = FLAGS(argv)
-    # 0x123456789A == 78187493530L
-    self.assertEquals(FLAGS.x, 78187493530L)
+    self.assertEquals(FLAGS.x, 0x1234567890ABCDEF1234567890ABCDEF)
     self.assertEquals(type(FLAGS.x), long)
 
     # Treat 0-prefixed parameters as base-10, not base-8
