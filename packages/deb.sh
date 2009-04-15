@@ -12,6 +12,7 @@ LIB=
 #LIB=lib
 
 PACKAGE="$1"
+VERSION="$2"
 
 # We can only build Debian packages, if the Debian build tools are installed
 if [ \! -x /usr/bin/debuild ]; then
@@ -30,7 +31,8 @@ fi
 topdir="${PWD%/*}"
 
 # Find the tar archive built by "make dist"
-archive="$(basename "$(ls -1 ${topdir}/$PACKAGE*.tar.gz | tail -n 1)" .tar.gz)"
+archive="${PACKAGE}-${VERSION}"
+archive_with_underscore="${PACKAGE}_${VERSION}"
 if [ -z "${archive}" ]; then
   echo "Cannot find ../$PACKAGE*.tar.gz. Run \"make dist\" first." 1>&2
   exit 0
@@ -48,11 +50,13 @@ cd tmp
 # packages to the parent of the source directory. We accommodate these
 # requirements by building directly from the tar file.
 ln -s "${topdir}/${archive}.tar.gz" "${LIB}${archive}.orig.tar.gz"
+# Some version of debuilder want foo.orig.tar.gz with _ between versions.
+ln -s "${topdir}/${archive}.tar.gz" "${LIB}${archive_with_underscore}.orig.tar.gz"
 tar zfx "${LIB}${archive}.orig.tar.gz"
 [ -n "${LIB}" ] && mv "${archive}" "${LIB}${archive}"
 cd "${LIB}${archive}"
 # This is one of those 'specific requirements': where the deb control files live
-ln -s "packages/deb" "debian"
+cp -a "packages/deb" "debian"
 
 # Now, we can call Debian's standard build tool
 debuild -uc -us

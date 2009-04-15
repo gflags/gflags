@@ -44,13 +44,18 @@ import unittest
 import gflags as flags
 FLAGS=flags.FLAGS
 
+# For historic reasons, we use the name module_foo instead of
+# test_module_foo, and module_bar instead of test_module_bar.
+import test_module_foo as module_foo
+import test_module_bar as module_bar
+
 def MultiLineEqual(expected_help, help):
   """Returns True if expected_help == help.  Otherwise returns False
   and logs the difference in a human-readable way.
   """
   if help == expected_help:
     return True
-  
+
   print "Error: FLAGS.MainModuleHelp() didn't return the expected result."
   print "Got:"
   print help
@@ -91,6 +96,18 @@ def MultiLineEqual(expected_help, help):
 
 class FlagsUnitTest(unittest.TestCase):
   "Flags Unit Test"
+
+  def assertListEqual(self, list1, list2):
+    """Asserts that, when sorted, list1 and list2 are identical."""
+    sorted_list1 = list1[:]
+    sorted_list2 = list2[:]
+    sorted_list1.sort()
+    sorted_list2.sort()
+    self.assertEqual(sorted_list1, sorted_list2)
+
+  def assertMultiLineEqual(self, expected, actual):
+    self.assert_(MultiLineEqual(expected, actual))
+
 
   def test_flags(self):
 
@@ -470,9 +487,9 @@ class FlagsUnitTest(unittest.TestCase):
       "--kwery None "
       "--l 9223372032559808512 "
       "--letters ['a', 'b', 'c'] "
-      "--m ['str1', 'str2'] --m_str ['str1', 'str2'] " 
-      "--name giants " 
-      "--repeat 3 " 
+      "--m ['str1', 'str2'] --m_str ['str1', 'str2'] "
+      "--name giants "
+      "--repeat 3 "
       "--s ['sing1'] --s_str ['sing1'] "
       "--testget4 None --testlist [] "
       "--testspacelist [] --x 10 "
@@ -1008,6 +1025,14 @@ class FlagsUnitTest(unittest.TestCase):
     assert argv[0]=='./program', "program name not preserved"
     assert argv[1]=='extra', "extra argument not preserved"
 
+    # Allow unknown flag --noboolflag if undefok=boolflag is specified
+    argv = ('./program', '--noboolflag', '--name=Bob',
+            '--undefok=boolflag', 'extra')
+    argv = FLAGS(argv)
+    assert len(argv) == 2, "wrong number of arguments pulled"
+    assert argv[0]=='./program', "program name not preserved"
+    assert argv[1]=='extra', "extra argument not preserved"
+
     # But not if the flagname is misspelled:
     try:
       argv = ('./program', '--nosuchflag', '--name=Bob',
@@ -1201,8 +1226,303 @@ class FlagsUnitTest(unittest.TestCase):
     e = flags.UnrecognizedFlag()
     e = flags.UnrecognizedFlag("message")
 
+  def testFlagValuesDelAttr(self):
+    """Checks that del FLAGS.flag_id works."""
+    default_value = 'default value for testFlagValuesDelAttr'
+    # 1. Declare and delete a flag with no short name.
+    flags.DEFINE_string('delattr_foo', default_value, 'A simple flag.')
+    self.assertEquals(FLAGS.delattr_foo, default_value)
+    flag_obj = FLAGS['delattr_foo']
+    # We also check that _FlagIsRegistered works as expected :)
+    self.assertTrue(FLAGS._FlagIsRegistered(flag_obj))
+    del FLAGS.delattr_foo
+    self.assertFalse('delattr_foo' in FLAGS.FlagDict())
+    self.assertFalse(FLAGS._FlagIsRegistered(flag_obj))
+    # If the previous del FLAGS.delattr_foo did not work properly, the
+    # next definition will trigger a redefinition error.
+    flags.DEFINE_integer('delattr_foo', 3, 'A simple flag.')
+    del FLAGS.delattr_foo
+
+    self.assertFalse('delattr_foo' in FLAGS.RegisteredFlags())
+
+    # 2. Declare and delete a flag with a short name.
+    flags.DEFINE_string('delattr_bar', default_value, 'flag with short name',
+                        short_name='x5')
+    flag_obj = FLAGS['delattr_bar']
+    self.assertTrue(FLAGS._FlagIsRegistered(flag_obj))
+    del FLAGS.x5
+    self.assertTrue(FLAGS._FlagIsRegistered(flag_obj))
+    del FLAGS.delattr_bar
+    self.assertFalse(FLAGS._FlagIsRegistered(flag_obj))
+
+    # 3. Just like 2, but del FLAGS.name last
+    flags.DEFINE_string('delattr_bar', default_value, 'flag with short name',
+                        short_name='x5')
+    flag_obj = FLAGS['delattr_bar']
+    self.assertTrue(FLAGS._FlagIsRegistered(flag_obj))
+    del FLAGS.delattr_bar
+    self.assertTrue(FLAGS._FlagIsRegistered(flag_obj))
+    del FLAGS.x5
+    self.assertFalse(FLAGS._FlagIsRegistered(flag_obj))
+
+    self.assertFalse('delattr_bar' in FLAGS.RegisteredFlags())
+    self.assertFalse('x5' in FLAGS.RegisteredFlags())
+
+  def _GetNamesOfDefinedFlags(self, module, flag_values=FLAGS):
+    """Returns the list of names of flags defined by a module.
+
+    Auxiliary for the testKeyFlags* methods.
+
+    Args:
+      module: A module object or a string module name.
+      flag_values: A FlagValues object.
+
+    Returns:
+      A list of strings.
+    """
+    return [f.name for f in flag_values._GetFlagsDefinedByModule(module)]
+
+  def _GetNamesOfKeyFlags(self, module, flag_values=FLAGS):
+    """Returns the list of names of key flags for a module.
+
+    Auxiliary for the testKeyFlags* methods.
+
+    Args:
+      module: A module object or a string module name.
+      flag_values: A FlagValues object.
+
+    Returns:
+      A list of strings.
+    """
+    return [f.name for f in flag_values._GetKeyFlagsForModule(module)]
+
+  def testKeyFlags(self):
+    # Before starting any testing, make sure no flags are already
+    # defined for module_foo and module_bar.
+    self.assertListEqual(self._GetNamesOfKeyFlags(module_foo), [])
+    self.assertListEqual(self._GetNamesOfKeyFlags(module_bar), [])
+    self.assertListEqual(self._GetNamesOfDefinedFlags(module_foo), [])
+    self.assertListEqual(self._GetNamesOfDefinedFlags(module_bar), [])
+
+    try:
+      # Defines a few flags in module_foo and module_bar.
+      module_foo.DefineFlags()
+
+      # Part 1. Check that all flags defined by module_foo are key for
+      # that module, and similarly for module_bar.
+      for module in [module_foo, module_bar]:
+        self.assertListEqual(FLAGS._GetFlagsDefinedByModule(module),
+                             FLAGS._GetKeyFlagsForModule(module))
+        # Also check that each module defined the expected flags.
+        self.assertListEqual(self._GetNamesOfDefinedFlags(module),
+                             module.NamesOfDefinedFlags())
+
+      # Part 2. Check that flags.DECLARE_key_flag works fine.
+      # Declare that some flags from module_bar are key for
+      # module_foo.
+      module_foo.DeclareKeyFlags()
+
+      # Check that module_foo has the expected list of defined flags.
+      self.assertListEqual(self._GetNamesOfDefinedFlags(module_foo),
+                           module_foo.NamesOfDefinedFlags())
+
+      # Check that module_foo has the expected list of key flags.
+      self.assertListEqual(self._GetNamesOfKeyFlags(module_foo),
+                           module_foo.NamesOfDeclaredKeyFlags())
+
+      # Part 3. Check that flags.ADOPT_module_key_flags works fine.
+      # Trigger a call to flags.ADOPT_module_key_flags(module_bar)
+      # inside module_foo.  This should declare a few more key
+      # flags in module_foo.
+      module_foo.DeclareExtraKeyFlags()
+
+      # Check that module_foo has the expected list of key flags.
+      self.assertListEqual(self._GetNamesOfKeyFlags(module_foo),
+                           module_foo.NamesOfDeclaredKeyFlags() +
+                           module_foo.NamesOfDeclaredExtraKeyFlags())
+    finally:
+      module_foo.RemoveFlags()
+
+  def testKeyFlagsWithNonDefaultFlagValuesObject(self):
+    # Check that key flags work even when we use a FlagValues object
+    # that is not the default flags.FLAGS object.  Otherwise, this
+    # test is similar to testKeyFlags, but it uses only module_bar.
+    # The other test module (module_foo) uses only the default values
+    # for the flag_values keyword arguments.  This way, testKeyFlags
+    # and this method test both the default FlagValues, the explicitly
+    # specified one, and a mixed usage of the two.
+
+    # A brand-new FlagValues object, to use instead of flags.FLAGS.
+    fv = flags.FlagValues()
+
+    # Before starting any testing, make sure no flags are already
+    # defined for module_foo and module_bar.
+    self.assertListEqual(
+        self._GetNamesOfKeyFlags(module_bar, flag_values=fv),
+        [])
+    self.assertListEqual(
+        self._GetNamesOfDefinedFlags(module_bar, flag_values=fv),
+        [])
+
+    module_bar.DefineFlags(flag_values=fv)
+
+    # Check that all flags defined by module_bar are key for that
+    # module, and that module_bar defined the expected flags.
+    self.assertListEqual(fv._GetFlagsDefinedByModule(module_bar),
+                         fv._GetKeyFlagsForModule(module_bar))
+    self.assertListEqual(
+        self._GetNamesOfDefinedFlags(module_bar, flag_values=fv),
+        module_bar.NamesOfDefinedFlags())
+
+    # Pick two flags from module_bar, declare them as key for the
+    # current (i.e., main) module (via flags.DECLARE_key_flag), and
+    # check that we get the expected effect.  The important thing is
+    # that we always use flags_values=fv (instead of the default
+    # FLAGS).
+    main_module = flags._GetMainModule()
+    names_of_flags_defined_by_bar = module_bar.NamesOfDefinedFlags()
+    flag_name_0 = names_of_flags_defined_by_bar[0]
+    flag_name_2 = names_of_flags_defined_by_bar[2]
+
+    flags.DECLARE_key_flag(flag_name_0, flag_values=fv)
+    self.assertListEqual(
+        self._GetNamesOfKeyFlags(main_module, flag_values=fv),
+        [flag_name_0])
+
+    flags.DECLARE_key_flag(flag_name_2, flag_values=fv)
+    self.assertListEqual(
+        self._GetNamesOfKeyFlags(main_module, flag_values=fv),
+        [flag_name_0, flag_name_2])
+
+    flags.ADOPT_module_key_flags(module_bar, flag_values=fv)
+    key_flags = self._GetNamesOfKeyFlags(main_module, flag_values=fv)
+    # Order is irrelevant; hence, we sort both lists before comparison.
+    key_flags.sort()
+    names_of_flags_defined_by_bar.sort()
+    self.assertListEqual(key_flags, names_of_flags_defined_by_bar)
+
+  def testMainModuleHelpWithKeyFlags(self):
+    # Similar to test_main_module_help, but this time we make sure to
+    # declare some key flags.
+    try:
+      help_flag_help = (
+          "  -?,--[no]help: show this help\n"
+          "  --[no]helpshort: show usage only for this module")
+
+      expected_help = "\n%s:\n%s" % (sys.argv[0], help_flag_help)
+
+      # Safety check that the main module does not declare any flags
+      # at the beginning of this test.
+      self.assertMultiLineEqual(expected_help, FLAGS.MainModuleHelp())
+
+      # Define one flag in this main module and some flags in modules
+      # a and b.  Also declare one flag from module a and one flag
+      # from module b as key flags for the main module.
+      flags.DEFINE_integer('main_module_int_fg', 1,
+                           'Integer flag in the main module.')
+
+      main_module_int_fg_help = (
+          "  --main_module_int_fg: Integer flag in the main module.\n"
+          "    (default: '1')\n"
+          "    (an integer)")
+
+      expected_help += "\n" + main_module_int_fg_help
+      self.assertMultiLineEqual(expected_help, FLAGS.MainModuleHelp())
+
+      # The following call should be a no-op: any flag declared by a
+      # module is automatically key for that module.
+      flags.DECLARE_key_flag('main_module_int_fg')
+      self.assertMultiLineEqual(expected_help, FLAGS.MainModuleHelp())
+
+      # The definition of a few flags in an imported module should not
+      # change the main module help.
+      module_foo.DefineFlags()
+      self.assertMultiLineEqual(expected_help, FLAGS.MainModuleHelp())
+
+      flags.DECLARE_key_flag('tmod_foo_bool')
+      tmod_foo_bool_help = (
+          "  --[no]tmod_foo_bool: Boolean flag from module foo.\n"
+          "    (default: 'true')")
+      expected_help += "\n" + tmod_foo_bool_help
+      self.assertMultiLineEqual(expected_help, FLAGS.MainModuleHelp())
+
+      flags.DECLARE_key_flag('tmod_bar_z')
+      tmod_bar_z_help = (
+          "  --[no]tmod_bar_z: Another boolean flag from module bar.\n"
+          "    (default: 'false')")
+      # Unfortunately, there is some flag sorting inside
+      # MainModuleHelp, so we can't keep incrementally extending
+      # the expected_help string ...
+      expected_help = ("\n%s:\n%s\n%s\n%s\n%s" %
+                       (sys.argv[0],
+                        help_flag_help,
+                        main_module_int_fg_help,
+                        tmod_bar_z_help,
+                        tmod_foo_bool_help))
+      self.assertMultiLineEqual(FLAGS.MainModuleHelp(), expected_help)
+
+    finally:
+      # At the end, delete all the flag information we created.
+      FLAGS.__delattr__('main_module_int_fg')
+      module_foo.RemoveFlags()
+
+  def test_ADOPT_module_key_flags(self):
+    # Check that ADOPT_module_key_flags raises an exception when
+    # called with a module name (as opposed to a module object).
+    self.assertRaises(flags.FlagsError,
+                      flags.ADOPT_module_key_flags,
+                      'google3.pyglib.app')
+
+  def test_GetCallingModule(self):
+    self.assertEqual(flags._GetCallingModule(), sys.argv[0])
+    self.assertEqual(
+        module_foo.GetModuleName(),
+        'google3.pyglib.tests.flags_modules_for_testing.module_foo')
+    self.assertEqual(
+        module_bar.GetModuleName(),
+        'google3.pyglib.tests.flags_modules_for_testing.module_bar')
+
+    # We execute the following exec statements for their side-effect
+    # (i.e., not raising an error).  They emphasize the case that not
+    # all code resides in one of the imported modules: Python is a
+    # really dynamic language, where we can dynamically construct some
+    # code and execute it.
+    code = ("from google3.pyglib import flags\n"
+            "module_name = flags._GetCallingModule()")
+    exec code
+
+    # Next two exec statements executes code with a global environment
+    # that is different from the global environment of any imported
+    # module.
+    exec code in {}
+    # vars(self) returns a dictionary corresponding to the symbol
+    # table of the self object.  dict(...) makes a distinct copy of
+    # this dictionary, such that any new symbol definition by the
+    # exec-ed code (e.g., import flags, module_name = ...) does not
+    # affect the symbol table of self.
+    exec code in dict(vars(self))
+
+    # Next test is actually more involved: it checks not only that
+    # _GetCallingModule does not crash inside exec code, it also checks
+    # that it returns the expected value: the code executed via exec
+    # code is treated as being executed by the current module.  We
+    # check it twice: first time by executing exec from the main
+    # module, second time by executing it from module_bar.
+    global_dict = {}
+    exec code in global_dict
+    self.assertEqual(global_dict['module_name'],
+                     sys.argv[0])
+
+    global_dict = {}
+    module_bar.ExecuteCode(code, global_dict)
+    self.assertEqual(
+        global_dict['module_name'],
+        'google3.pyglib.tests.flags_modules_for_testing.module_bar')
+
+
 def main():
   unittest.main()
+
 
 if __name__ == '__main__':
   main()

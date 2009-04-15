@@ -77,6 +77,7 @@ described with the flag.
 
 DEFINE_string: takes any input, and interprets it as a string.
 
+DEFINE_bool or
 DEFINE_boolean: typically does not take an argument: say --myflag to
                 set FLAGS.myflag to true, or --nomyflag to set
                 FLAGS.myflag to false.  Alternately, you can say
@@ -116,10 +117,14 @@ SPECIAL FLAGS: There are a few flags that have special meaning:
    --help (or -?)  prints a list of all the flags in a human-readable fashion
    --helpshort     prints a list of all the flags in the 'main' .py file only
    --flagfile=foo  read flags from foo.
-   --undefok=f1,f2 ignore unrecognized option errors for f1,f2
+   --undefok=f1,f2 ignore unrecognized option errors for f1,f2.
+                   For boolean flags, you should use --undefok=boolflag, and
+                   --boolflag and --noboolflag will be accepted.  Do not use
+                   --undefok=noboolflag.
    --              as in getopt(), terminates flag-processing
 
-Note on --flagfile:
+
+NOTE ON --flagfile:
 
 Flags may be loaded from text files in addition to being specified on
 the commandline.
@@ -176,6 +181,120 @@ EXAMPLE USAGE:
 
   if __name__ == '__main__':
     main(sys.argv)
+
+
+KEY FLAGS:
+
+As we already explained, each module gains access to all flags defined
+by all the other modules it transitively imports.  In the case of
+non-trivial scripts, this means a lot of flags ...  For documentation
+purposes, it is good to identify the flags that are key (i.e., really
+important) to a module.  Clearly, the concept of "key flag" is a
+subjective one.  When trying to determine whether a flag is key to a
+module or not, assume that you are trying to explain your module to a
+potential user: which flags would you really like to mention first?
+
+We'll describe shortly how to declare which flags are key to a module.
+For the moment, assume we know the set of key flags for each module.
+Assume we are using the special flags --help and --helpshort to get
+information on the available flags:
+
+  --help prints the help for all flags (those declared in the main
+  module and those declared in the transitively imported modules).
+  Hence, --help generates complete but usually overly-verbose flag
+  information.
+
+  --helpshort prints only the help for the flags that are key to the
+  main module.
+
+The set of key flags for a module M is composed of:
+
+1. Flags defined by module M by calling a DEFINE_* function.
+
+2. Flags that module M explictly declares as key by using the function
+
+     DECLARE_key_flag(<flag_name>)
+
+3. Key flags of other modules that M specifies by using the function
+
+     ADOPT_module_key_flags(<other_module>)
+
+   This is a "bulk" declaration of key flags: each flag that is key
+   for <other_module> becomes key for the current module too.
+
+Notice that if you do not use the functions described at points 2 and
+3 above, then --helpshort prints information only about the flags
+defined by the main module of our script.  In many cases, this
+behavior is good enough.  But if you move part of the main module code
+(together with the related flags) into a different module, then it is
+nice to use DECLARE_key_flag / ADOPT_module_key_flags and make sure
+--helpshort lists all relevant flags (otherwise, your code refactoring
+may confuse your users).
+
+Note: each of DECLARE_key_flag / ADOPT_module_key_flags has its own
+pluses and minuses: DECLARE_key_flag is more targeted and may lead a
+more focused --helpshort documentation.  ADOPT_module_key_flags is
+good for cases when an entire module is considered key to the current
+script.  Also, it does not require updates to client scripts when a
+new flag is added to the module.
+
+
+EXAMPLE USAGE 2 (WITH KEY FLAGS):
+
+Consider an application that contains the following three files (two
+auxiliary modules and a main module):
+
+File libfoo.py:
+
+  import gflags
+
+  gflags.DEFINE_integer('num_replicas', 3, 'Number of replicas to start')
+  gflags.DEFINE_boolean('rpc2', True, 'Turn on the usage of RPC2.')
+
+  ... some code ...
+
+File libbar.py:
+
+  import gflags
+
+  gflags.DEFINE_string('bar_gfs_path', '/gfs/path',
+                       'Path to the GFS files for libbar.')
+  gflags.DEFINE_string('email_for_bar_errors', 'bar-team@google.com',
+                       'Email address for bug reports about module libbar.')
+  gflags.DEFINE_boolean('bar_risky_hack', False,
+                        'Turn on an experimental and buggy optimization.')
+
+  ... some code ...
+
+File myscript.py:
+
+  import gflags
+  import libfoo
+  import libbar
+
+  gflags.DEFINE_integer('num_iterations', 0, 'Number of iterations.')
+
+  # Declare that all flags that are key for libfoo are
+  # key for this module too.
+  gflags.ADOPT_module_key_flags(libfoo)
+
+  # Declare that the flag --bar_gfs_path (defined in libbar) is key
+  # for this module.
+  gflags.DECLARE_key_flag('bar_gfs_path')
+
+  ... some code ...
+
+
+When myscript is invoked with the flag --helpshort, the resulted help
+message lists information about all the key flags for myscript:
+--num_iterations, --num_replicas, --rpc2, and --bar_gfs_path (in
+addition to the special flags --help and --helpshort).
+
+Of course, myscript uses all the flags declared by it (in this case,
+just --num_replicas) or by any of the modules it transitively imports
+(e.g., the modules libfoo, libbar).  E.g., it can access the value of
+FLAGS.bar_risky_hack, even if --bar_risky_hack is not declared as a
+key flag for myscript.
 """
 
 import getopt
@@ -183,15 +302,15 @@ import os
 import re
 import sys
 
-# Are we running at least python 2.2?
+# Are we running at least python 2.2?                                           
 try:
   if tuple(sys.version_info[:3]) < (2,2,0):
     raise NotImplementedError("requires python 2.2.0 or later")
-except AttributeError:   # a very old python, that lacks sys.version_info
+except AttributeError:   # a very old python, that lacks sys.version_info       
   raise NotImplementedError("requires python 2.2.0 or later")
 
-# If we're not running at least python 2.2.1, define True, False, and bool.
-# Thanks, Guido, for the code.
+# If we're not running at least python 2.2.1, define True, False, and bool.     
+# Thanks, Guido, for the code.                                                  
 try:
   True, False, bool
 except NameError:
@@ -215,7 +334,9 @@ def _GetCallingModule():
   # Walk down the stack to find the first globals dict that's not ours.
   for depth in range(1, sys.getrecursionlimit()):
     if not sys._getframe(depth).f_globals is globals():
-      return __GetModuleName(sys._getframe(depth).f_globals)
+      module_name = __GetModuleName(sys._getframe(depth).f_globals)
+      if module_name is not None:
+        return module_name
   raise AssertionError, "No module was found"
 
 
@@ -234,7 +355,7 @@ class DuplicateFlagError(DuplicateFlag):
   def __init__(self, flagname, flag_values):
     self.flagname = flagname
     message = "The flag '%s' is defined twice." % self.flagname
-    flags_by_module = flag_values.__dict__['__flags_by_module']
+    flags_by_module = flag_values.FlagsByModuleDict()
     for module in flags_by_module:
       for flag in flags_by_module[module]:
         if flag.name == flagname:
@@ -329,8 +450,8 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
     wrapped text
 
   Raises:
-    CommandsError: if indent not shorter than length
-    CommandsError: if firstline_indent not shorter than length
+    FlagsError: if indent not shorter than length
+    FlagsError: if firstline_indent not shorter than length
   """
   # Get defaults where callee used None
   if length is None:
@@ -338,7 +459,7 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
   if indent is None:
     indent = ''
   if len(indent) >= length:
-    raise CommandsError('Indent must be shorter than length')
+    raise FlagsError('Indent must be shorter than length')
   # In line we will be holding the current line which is to be started with
   # indent (or firstline_indent if available) and then appended with words.
   if firstline_indent is None:
@@ -347,7 +468,7 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
   else:
     line = firstline_indent
     if len(firstline_indent) >= length:
-      raise CommandsError('First iline indent must be shorter than length')
+      raise FlagsError('First iline indent must be shorter than length')
 
   # If the callee does not care about tabs we simply convert them to spaces
   # If callee wanted tabs to be single space then we do that already here.
@@ -448,13 +569,23 @@ def DocToHelp(doc):
 
 
 def __GetModuleName(globals_dict):
-  """Given a globals dict, find the module in which it's defined."""
+  """Given a globals dict, returns the name of the module that defines it.
+
+  Args:
+    globals_dict: A dictionary that should correspond to an
+      environment providing the values of the globals.
+
+  Returns:
+    A string (the name of the module) or None (if the module could not
+    be identified.
+  """
   for name, module in sys.modules.iteritems():
     if getattr(module, '__dict__', None) is globals_dict:
       if name == '__main__':
         return sys.argv[0]
       return name
-  raise AssertionError, "No module was found"
+  return None
+
 
 def _GetMainModule():
   """Get the module name from which execution started."""
@@ -504,18 +635,105 @@ class FlagValues:
     # Since everything in this class is so heavily overloaded,
     # the only way of defining and using fields is to access __dict__
     # directly.
+
+    # Dictionary: flag name (string) -> Flag object.
     self.__dict__['__flags'] = {}
-    self.__dict__['__flags_by_module'] = {} # A dict module -> list of flag
+    # Dictionary: module name (string) -> list of Flag objects that
+    # are defined by that module.
+    self.__dict__['__flags_by_module'] = {}
+    # Dictionary: module name (string) -> list of Flag objects that
+    # are key for that module.
+    self.__dict__['__key_flags_by_module'] = {}
 
   def FlagDict(self):
     return self.__dict__['__flags']
 
-  def _RegisterFlagByModule(self, module_name, flag):
-    """We keep track of which flag is defined by which module so that
-       we can later sort the flags by module.
+  def FlagsByModuleDict(self):
+    """Returns the dictionary of module_name -> list of defined flags.
+
+    Returns:
+      A dictionary.  Its keys are module names (strings).  Its values
+      are lists of Flag objects.
     """
-    flags_by_module = self.__dict__['__flags_by_module']
+    return self.__dict__['__flags_by_module']
+
+  def KeyFlagsByModuleDict(self):
+    """Returns the dictionary of module_name -> list of key flags.
+
+    Returns:
+      A dictionary.  Its keys are module names (strings).  Its values
+      are lists of Flag objects.
+    """
+    return self.__dict__['__key_flags_by_module']
+
+  def _RegisterFlagByModule(self, module_name, flag):
+    """Record the module that defines a specific flag.
+
+    We keep track of which flag is defined by which module so that
+    we can later sort the flags by module.
+
+    Args:
+      module_name: A string, the name of a Python module.
+      flag: A Flag object, a flag that is key to the module.
+    """
+    flags_by_module = self.FlagsByModuleDict()
     flags_by_module.setdefault(module_name, []).append(flag)
+
+  def _RegisterKeyFlagForModule(self, module_name, flag):
+    """Specify that a flag is a key flag for a module.
+
+    Args:
+      module_name: A string, the name of a Python module.
+      flag: A Flag object, a flag that is key to the module.
+    """
+    key_flags_by_module = self.KeyFlagsByModuleDict()
+    # The list of key flags for the module named module_name.
+    key_flags = key_flags_by_module.setdefault(module_name, [])
+    # Add flag, but avoid duplicates.
+    if flag not in key_flags:
+      key_flags.append(flag)
+
+  def _GetFlagsDefinedByModule(self, module):
+    """Returns the list of flags defined by a module.
+
+    Args:
+      module: A module object or a module name (a string).
+
+    Returns:
+      A fresh list of Flag objects.  The caller may update this list
+        as he wishes: none of these changes will affect the internals
+        of this FlagValue object.
+    """
+    if not isinstance(module, str):
+      module = module.__name__
+
+    return list(self.FlagsByModuleDict().get(module, []))
+
+  def _GetKeyFlagsForModule(self, module):
+    """Returns the list of key flags for a module.
+
+    Args:
+      module: A module object or a module name (a string)
+
+    Returns:
+      A list of Flag objects.  This is a new list, disjoint from the
+        internals of this FlagValue object.  Hence, the caller may
+        mutate this list as he wishes: none of these changes will
+        affect this FlagValue object.
+    """
+    if not isinstance(module, str):
+      module = module.__name__
+
+    # Any flag is a key flag for the module that defined it.  NOTE:
+    # key_flags is a fresh list: we can update it without affecting
+    # the internals of this FlagValues object.
+    key_flags = self._GetFlagsDefinedByModule(module)
+
+    # Take into account flags explicitly declared as key for a module.
+    for flag in self.KeyFlagsByModuleDict().get(module, []):
+      if flag not in key_flags:
+        key_flags.append(flag)
+    return key_flags
 
   def AppendFlagValues(self, flag_values):
     """Append flags registered in another FlagValues instance.
@@ -581,14 +799,82 @@ class FlagValues:
     fl[name].value = value
     return value
 
-  def __delattr__(self, name):
+  def _FlagIsRegistered(self, flag_obj):
+    """Checks whether a Flag object is registered under some name.
+
+    Note: this is not as trivial as it seems: in addition to its
+    normal name, a flag may have a short name too.  In
+    self.FlagDict(), both the normal and the short name are mapped to
+    the same flag object.  E.g., calling only "del FLAGS.short_name"
+    is not unregistering the corresponding Flag object (it is still
+    registered under the longer name).
+
+    Args:
+      flag_obj: A Flag object.
+
+    Returns:
+      A boolean: True iff flag_obj is registered under some name.
     """
-    Delete a previously-defined flag from a flag object.
+    flag_dict = self.FlagDict()
+    # Check whether flag_obj is registered under its long name.
+    name = flag_obj.name
+    if flag_dict.get(name, None) == flag_obj:
+      return True
+    # Check whether flag_obj is registered under its short name.
+    short_name = flag_obj.short_name
+    if (short_name is not None and
+        flag_dict.get(short_name, None) == flag_obj):
+      return True
+    # The flag cannot be registered under any other name, so we do not
+    # need to do a full search through the values of self.FlagDict().
+    return False
+
+  def __delattr__(self, flag_name):
+    """Delete a previously-defined flag from a flag object.
+
+    This method makes sure we can delete a flag by using
+
+      del flag_values_object.<flag_name>
+
+    E.g.,
+
+      flags.DEFINE_integer('foo', 1, 'Integer flag.')
+      del flags.FLAGS.foo
+
+    Args:
+      flag_name: A string, the name of the flag to be deleted.
+
+    Raises:
+      AttributeError: When there is no registered flag named flag_name.
     """
     fl = self.FlagDict()
-    if not fl.has_key(name):
-      raise AttributeError, name
-    del fl[name]
+    if flag_name not in fl:
+      raise AttributeError(flag_name)
+
+    flag_obj = fl[flag_name]
+    del fl[flag_name]
+
+    if not self._FlagIsRegistered(flag_obj):
+      # If the Flag object indicated by flag_name is no longer
+      # registered (please see the docstring of _FlagIsRegistered),
+      # then we delete the occurences of the flag object in all our
+      # internal dictionaries.
+      self.__RemoveFlagFromDictByModule(self.FlagsByModuleDict(), flag_obj)
+      self.__RemoveFlagFromDictByModule(self.KeyFlagsByModuleDict(), flag_obj)
+
+  def __RemoveFlagFromDictByModule(self, flags_by_module_dict, flag_obj):
+    """Removes a flag object from a module -> list of flags dictionary.
+
+    Args:
+      flags_by_module_dict: A dictionary that maps module names to
+        lists of flags.
+      flag_obj: A flag object.
+    """
+    for unused_module, flags_in_module in flags_by_module_dict.iteritems():
+      # while (as opposed to if) takes care of multiple occurences
+      # of a flag in the list for the same module.
+      while flag_obj in flags_in_module:
+        flags_in_module.remove(flag_obj)
 
   def SetDefault(self, name, value):
     """
@@ -710,7 +996,17 @@ class FlagValues:
 
     for name, arg in optlist:
       if name == '--undefok':
-        undefok_flags.extend(arg.split(','))
+        flag_names = arg.split(',')
+        undefok_flags.extend(flag_names)
+        # For boolean flags, if --undefok=boolflag is specified, then we should
+        # also accept --noboolflag, in addition to --boolflag.
+        # Since we don't know the type of the undefok'd flag, this will affect
+        # non-boolean flags as well.
+        # NOTE: You shouldn't use --undefok=noboolflag, because then we will
+        # accept --nonoboolflag here.  We are choosing not to do the conversion
+        # from noboolflag -> boolflag because of the ambiguity that flag names
+        # can start with 'no'.
+        undefok_flags.extend('no' + name for name in flag_names)
         continue
       if name.startswith('--'):
         # long option
@@ -747,8 +1043,10 @@ class FlagValues:
       f.Unparse()
 
   def RegisteredFlags(self):
-    """
-    Return a list of all registered flags.
+    """Return a list of the names of all registered flags.
+
+    Returns:
+      A list of all names and short names which flags are registered under.
     """
     return self.FlagDict().keys()
 
@@ -776,7 +1074,7 @@ class FlagValues:
     """
     helplist = []
 
-    flags_by_module = self.__dict__['__flags_by_module']
+    flags_by_module = self.FlagsByModuleDict()
     if flags_by_module:
 
       modules = flags_by_module.keys()
@@ -791,7 +1089,7 @@ class FlagValues:
       for module in modules:
         self.__RenderOurModuleFlags(module, helplist)
 
-      self.__RenderModuleFlags('google3.pyglib.flags',
+      self.__RenderModuleFlags('gflags',
                                _SPECIAL_FLAGS.FlagDict().values(),
                                helplist)
 
@@ -814,17 +1112,27 @@ class FlagValues:
     """
     Generate a help string for a given module.
     """
-    flags_by_module = self.__dict__['__flags_by_module']
-    if module in flags_by_module:
-      self.__RenderModuleFlags(module, flags_by_module[module],
-                               output_lines, prefix)
+    flags = self._GetFlagsDefinedByModule(module)
+    if flags:
+      self.__RenderModuleFlags(module, flags, output_lines, prefix)
+
+  def __RenderOurModuleKeyFlags(self, module, output_lines, prefix=""):
+    """Generate a help string for the key flags of a given module.
+
+    Args:
+      module: A module object or a module name (a string).
+      output_lines: A list of strings.  The generated help message
+        lines will be appended to this list.
+      prefix: A string that is prepended to each generated help line.
+    """
+    key_flags = self._GetKeyFlagsForModule(module)
+    if key_flags:
+      self.__RenderModuleFlags(module, key_flags, output_lines, prefix)
 
   def MainModuleHelp(self):
-    """
-    Generate a help string for all known flags of the main module.
-    """
+    """Returns: A string describing the key flags of the main module."""
     helplist = []
-    self.__RenderOurModuleFlags(_GetMainModule(), helplist)
+    self.__RenderOurModuleKeyFlags(_GetMainModule(), helplist)
     return '\n'.join(helplist)
 
   def __RenderFlagList(self, flaglist, output_lines, prefix="  "):
@@ -1251,15 +1559,86 @@ def DEFINE_flag(flag, flag_values=FLAGS):
   # copying the reference to flag_values prevents pychecker warnings
   fv = flag_values
   fv[flag.name] = flag
+  # Tell flag_values who's defining the flag.
+  if isinstance(flag_values, FlagValues):
+    # Regarding the above isinstance test: some users pass funny
+    # values of flag_values (e.g., {}) in order to avoid the flag
+    # registration (in the past, there used to be a flag_values ==
+    # FLAGS test here) and redefine flags with the same name (e.g.,
+    # debug).  To avoid breaking their code, we perform the
+    # registration only if flag_values is a real FlagValues object.
+    flag_values._RegisterFlagByModule(_GetCallingModule(), flag)
 
-  if flag_values == FLAGS:
-    # We are using the global flags dictionary, so we'll want to sort the
-    # usage output by calling module in FlagValues.__str__ (FLAGS is an
-    # instance of FlagValues). This requires us to keep track
-    # of which module is creating the flags.
 
-    # Tell FLAGS who's defining flag.
-    FLAGS._RegisterFlagByModule(_GetCallingModule(), flag)
+def _InternalDeclareKeyFlags(flag_names, flag_values=FLAGS):
+  """Declare a flag as key for the calling module.
+
+  Internal function.  User code should call DECLARE_key_flag or
+  ADOPT_module_key_flags instead.
+
+  Args:
+    flag_names: A list of strings that are names of already-registered
+      Flag objects.
+    flag_values: A FlagValues object.  This should almost never need
+      to be overridden.
+
+  Raises:
+    UnrecognizedFlagError: when we refer to a flag that was not
+      defined yet.
+  """
+  module = _GetCallingModule()
+
+  for flag_name in flag_names:
+    if flag_name not in flag_values:
+      raise UnrecognizedFlagError(flag_name)
+    flag = flag_values.FlagDict()[flag_name]
+    flag_values._RegisterKeyFlagForModule(module, flag)
+
+
+def DECLARE_key_flag(flag_name, flag_values=FLAGS):
+  """Declare one flag as key to the current module.
+
+  Key flags are flags that are deemed really important for a module.
+  They are important when listing help messages; e.g., if the
+  --helpshort command-line flag is used, then only the key flags of
+  the main module are listed (instead of all flags, as in the case of
+  --help).
+
+  Sample usage:
+
+    flags.DECLARED_key_flag('flag_1')
+
+  Args:
+    flag_name: A string, the name of an already declared flag.
+      (Redeclaring flags as key, including flags implicitly key
+      because they were declared in this module, is a no-op.)
+    flag_values: A FlagValues object.  This should almost never
+      need to be overridden.
+  """
+  _InternalDeclareKeyFlags([flag_name], flag_values=flag_values)
+
+
+def ADOPT_module_key_flags(module, flag_values=FLAGS):
+  """Declare that all flags key to a module are key to the current module.
+
+  Args:
+    module: A module object.
+    flag_values: A FlagValues object.  This should almost never need
+      to be overridden.
+
+  Raises:
+    FlagsError: When given an argument that is a module name (a
+    string), instead of a module object.
+  """
+  # NOTE(salcianu): an even better test would be if not
+  # isinstance(module, types.ModuleType) but I didn't want to import
+  # types for such a tiny use.
+  if isinstance(module, str):
+    raise FlagsError('Received module name %s; expected a module object.'
+                     % module)
+  _InternalDeclareKeyFlags(
+      [f.name for f in flag_values._GetKeyFlagsForModule(module.__name__)],
+      flag_values=flag_values)
 
 
 ###############################
@@ -1335,6 +1714,9 @@ def DEFINE_boolean(name, default, help, flag_values=FLAGS, **args):
   line.
   """
   DEFINE_flag(BooleanFlag(name, default, help, **args), flag_values)
+
+# Match C++ API to unconfuse C++ people.
+DEFINE_bool = DEFINE_boolean
 
 class HelpFlag(BooleanFlag):
   """

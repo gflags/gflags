@@ -1,3 +1,17 @@
+gflags (1.1-1) unstable; urgency=low
+
+  * New upstream release.
+  * Renamed package to gflags, from google-gflags, to match the package
+    and library names used in the .rpm file, and in the tarball.
+
+ -- Google Inc. <opensource@google.com>  Tue, 14 Apr 2009 12:35:25 -0700
+
+google-gflags (1.0-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Google Inc. <opensource@google.com>  Fri, 03 Oct 2008 15:16:46 -0700
+
 google-gflags (1.0rc2-1) unstable; urgency=low
 
   * New upstream release.

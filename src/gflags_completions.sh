@@ -111,7 +111,9 @@ params="$params --tab_completion_word \"$completion_word\""
 
 # If we think we have a reasonable command to execute, then execute it
 # and hope for the best.
-if [ -f "$binary" ] && [ -x "$binary" ]; then
+candidate=$(type -p "$binary")
+if [ ! -z "$candidate" ]; then
+  eval "$candidate 2>/dev/null $params"
+elif [ -f "$binary" ] && [ -x "$binary" ]; then
   eval "$binary 2>/dev/null $params"
 fi
-

@@ -197,7 +197,10 @@ function with the flag.  If you do this, after the flag is parsed from
 the commandline, and whenever its value is changes via a call to
 <code>SetCommandLineOption()</code>, the validator function is called
 with the new value as an argument.  The validator function should
-return 'true' if the flag value is valid, and false otherwise. 
+return 'true' if the flag value is valid, and false otherwise.
+If the function returns false for the new setting of the
+flag, the flag will retain its current value. If it returns false for the
+default value, InitGoogle will die.
 
 <p>Here is an example use of this functionality:</p>
 <pre>

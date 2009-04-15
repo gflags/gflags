@@ -62,6 +62,8 @@ rm -rf $RPM_BUILD_ROOT
 
 %{prefix}/lib/libgflags.so.0
 %{prefix}/lib/libgflags.so.0.0.0
+%{prefix}/lib/libgflags_nothreads.so.0
+%{prefix}/lib/libgflags_nothreads.so.0.0.0
 %{prefix}/bin/gflags_completions.sh
 
 %files devel
@@ -72,3 +74,6 @@ rm -rf $RPM_BUILD_ROOT
 %{prefix}/lib/libgflags.a
 %{prefix}/lib/libgflags.la
 %{prefix}/lib/libgflags.so
+%{prefix}/lib/libgflags_nothreads.a
+%{prefix}/lib/libgflags_nothreads.la
+%{prefix}/lib/libgflags_nothreads.so

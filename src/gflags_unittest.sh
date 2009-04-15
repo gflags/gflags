@@ -181,6 +181,8 @@ Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" --version
 # --undefok is a fun flag...
 Expect $LINENO 1 "unknown command line flag 'foo'" "" --undefok= --foo --unused_bool
 Expect $LINENO 0 "PASS" "" --undefok=foo --foo --unused_bool
+# If you say foo is ok to be undefined, we'll accept --nofoo as well
+Expect $LINENO 0 "PASS" "" --undefok=foo --nofoo --unused_bool
 # It's ok if the foo is in the middle
 Expect $LINENO 0 "PASS" "" --undefok=fee,fi,foo,fum --foo --unused_bool
 # But the spelling has to be just right...

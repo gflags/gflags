@@ -117,9 +117,12 @@ typedef unsigned __int64 uint64;
 // DEFINE_string, etc. at the bottom of this file.  You may also find
 // it useful to register a validator with the flag.  This ensures that
 // when the flag is parsed from the commandline, or is later set via
-// SetCommandLineOption, we call the validation function.  The
-// validation function should return true if the flag value is valid,
-// and false otherwise.
+// SetCommandLineOption, we call the validation function.
+//
+// The validation function should return true if the flag value is valid, and
+// false otherwise. If the function returns false for the new setting of the
+// flag, the flag will retain its current value. If it returns false for the
+// default value, InitGoogle will die.
 //
 // This function is safe to call at global construct time (as in the
 // example below).
@@ -501,6 +504,9 @@ extern bool FlagsTypeWarn(const char *name);
 // --string and --nostring.  And we need a temporary place to put val
 // so we don't have to evaluate it twice.  Two great needs that go
 // great together!
+// The weird 'using' + 'extern' inside the fLS namespace is to work around
+// an unknown compiler bug/issue with the gcc 4.2.1 on SUSE 10.  See
+//    http://code.google.com/p/google-gflags/issues/detail?id=20
 #define DEFINE_string(name, val, txt)                                     \
   namespace fLS {                                                         \
     static union { void* align; char s[sizeof(std::string)]; } s_##name[2]; \
@@ -508,6 +514,8 @@ extern bool FlagsTypeWarn(const char *name);
     static @ac_google_namespace@::FlagRegisterer o_##name(                \
       #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
       s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));   \
+    extern std::string& FLAGS_##name;                                     \
+    using fLS::FLAGS_##name;                                              \
     std::string& FLAGS_##name = *(reinterpret_cast<std::string*>(s_##name[0].s));   \
   }                                                                       \
   using fLS::FLAGS_##name

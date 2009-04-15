@@ -82,31 +82,38 @@ LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
 libgflags_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am__objects_1 =
-am_libgflags_la_OBJECTS = $(am__objects_1) libgflags_la-gflags.lo \
+am__objects_2 = $(am__objects_1) libgflags_la-gflags.lo \
 	libgflags_la-gflags_reporting.lo \
 	libgflags_la-gflags_completions.lo
+am_libgflags_la_OBJECTS = $(am__objects_2)
 libgflags_la_OBJECTS = $(am_libgflags_la_OBJECTS)
+libgflags_nothreads_la_LIBADD =
+am__objects_3 = $(am__objects_1) libgflags_nothreads_la-gflags.lo \
+	libgflags_nothreads_la-gflags_reporting.lo \
+	libgflags_nothreads_la-gflags_completions.lo
+am_libgflags_nothreads_la_OBJECTS = $(am__objects_3)
+libgflags_nothreads_la_OBJECTS = $(am_libgflags_nothreads_la_OBJECTS)
 am__EXEEXT_1 = gflags_unittest$(EXEEXT) \
 	gflags_nothreads_unittest$(EXEEXT) gflags_unittest2$(EXEEXT) \
 	gflags_unittest3$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
-am__objects_2 = $(am__objects_1) gflags_unittest.$(OBJEXT)
-am_gflags_nothreads_unittest_OBJECTS = $(am__objects_2)
+am__objects_4 = $(am__objects_1) gflags_unittest.$(OBJEXT)
+am_gflags_nothreads_unittest_OBJECTS = $(am__objects_4)
 gflags_nothreads_unittest_OBJECTS =  \
 	$(am_gflags_nothreads_unittest_OBJECTS)
-gflags_nothreads_unittest_DEPENDENCIES = libgflags.la
+gflags_nothreads_unittest_DEPENDENCIES = libgflags_nothreads.la
 am_gflags_unittest_OBJECTS = $(am__objects_1) \
 	gflags_unittest-gflags_unittest.$(OBJEXT)
 gflags_unittest_OBJECTS = $(am_gflags_unittest_OBJECTS)
-gflags_unittest_DEPENDENCIES = libgflags.la $(am__DEPENDENCIES_1)
+gflags_unittest_DEPENDENCIES = libgflags.la
 am_gflags_unittest2_OBJECTS = $(am__objects_1) \
 	gflags_unittest-main.$(OBJEXT)
 gflags_unittest2_OBJECTS = $(am_gflags_unittest2_OBJECTS)
-gflags_unittest2_DEPENDENCIES = libgflags.la
+gflags_unittest2_DEPENDENCIES = libgflags_nothreads.la
 am_gflags_unittest3_OBJECTS = $(am__objects_1) \
 	gflags_unittest_main.$(OBJEXT)
 gflags_unittest3_OBJECTS = $(am_gflags_unittest3_OBJECTS)
-gflags_unittest3_DEPENDENCIES = libgflags.la
+gflags_unittest3_DEPENDENCIES = libgflags_nothreads.la
 binSCRIPT_INSTALL = $(INSTALL_SCRIPT)
 SCRIPTS = $(bin_SCRIPTS) $(noinst_SCRIPTS)
 DEFAULT_INCLUDES = -I. -I$(srcdir) -I$(top_builddir)/src
@@ -128,10 +135,12 @@ LTCOMPILE = $(LIBTOOL) --tag=CC --mode=compile $(CC) $(DEFS) \
 CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
-SOURCES = $(libgflags_la_SOURCES) $(gflags_nothreads_unittest_SOURCES) \
+SOURCES = $(libgflags_la_SOURCES) $(libgflags_nothreads_la_SOURCES) \
+	$(gflags_nothreads_unittest_SOURCES) \
 	$(gflags_unittest_SOURCES) $(gflags_unittest2_SOURCES) \
 	$(gflags_unittest3_SOURCES)
 DIST_SOURCES = $(libgflags_la_SOURCES) \
+	$(libgflags_nothreads_la_SOURCES) \
 	$(gflags_nothreads_unittest_SOURCES) \
 	$(gflags_unittest_SOURCES) $(gflags_unittest2_SOURCES) \
 	$(gflags_unittest3_SOURCES)
@@ -174,6 +183,7 @@ CXXFLAGS = @CXXFLAGS@
 CYGPATH_W = @CYGPATH_W@
 DEFS = @DEFS@
 DEPDIR = @DEPDIR@
+DSYMUTIL = @DSYMUTIL@
 ECHO = @ECHO@
 ECHO_C = @ECHO_C@
 ECHO_N = @ECHO_N@
@@ -184,6 +194,7 @@ F77 = @F77@
 FFLAGS = @FFLAGS@
 GCC_FALSE = @GCC_FALSE@
 GCC_TRUE = @GCC_TRUE@
+GREP = @GREP@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT = @INSTALL_SCRIPT@
@@ -191,11 +202,13 @@ INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LDFLAGS = @LDFLAGS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSTDCXX_LA_LINKER_FLAG = @LIBSTDCXX_LA_LINKER_FLAG@
 LIBTOOL = @LIBTOOL@
 LIBTOOL_DEPS = @LIBTOOL_DEPS@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAKEINFO = @MAKEINFO@
+NMEDIT = @NMEDIT@
 OBJEXT = @OBJEXT@
 PACKAGE = @PACKAGE@
 PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
@@ -208,16 +221,14 @@ PTHREAD_CC = @PTHREAD_CC@
 PTHREAD_CFLAGS = @PTHREAD_CFLAGS@
 PTHREAD_LIBS = @PTHREAD_LIBS@
 RANLIB = @RANLIB@
+SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-ac_ct_AR = @ac_ct_AR@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
 ac_ct_F77 = @ac_ct_F77@
-ac_ct_RANLIB = @ac_ct_RANLIB@
-ac_ct_STRIP = @ac_ct_STRIP@
 ac_cv___attribute__unused = @ac_cv___attribute__unused@
 ac_cv_have___int16 = @ac_cv_have___int16@
 ac_cv_have_inttypes_h = @ac_cv_have_inttypes_h@
@@ -245,23 +256,30 @@ build_cpu = @build_cpu@
 build_os = @build_os@
 build_vendor = @build_vendor@
 datadir = @datadir@
+datarootdir = @datarootdir@
+docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
+dvidir = @dvidir@
 exec_prefix = @exec_prefix@
 host = @host@
 host_alias = @host_alias@
 host_cpu = @host_cpu@
 host_os = @host_os@
 host_vendor = @host_vendor@
+htmldir = @htmldir@
 includedir = @includedir@
 infodir = @infodir@
 install_sh = @install_sh@
 libdir = @libdir@
 libexecdir = @libexecdir@
+localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
 oldincludedir = @oldincludedir@
+pdfdir = @pdfdir@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
+psdir = @psdir@
 sbindir = @sbindir@
 sharedstatedir = @sharedstatedir@
 sysconfdir = @sysconfdir@
@@ -275,6 +293,10 @@ AM_CPPFLAGS = -I$(top_srcdir)/src
 
 # This is mostly based on configure options
 AM_CXXFLAGS = $(am__append_1)
+
+# The -no-undefined flag allows libtool to generate shared libraries for
+# Cygwin and MinGW.  LIBSTDCXX_LA_LINKER_FLAG is used to fix a Solaris bug.
+AM_LDFLAGS = -no-undefined $(LIBSTDCXX_LA_LINKER_FLAG)
 gflagsincludedir = $(includedir)/gflags
 gflagsinclude_HEADERS = src/gflags/gflags.h src/gflags/gflags_completions.h
 
@@ -282,11 +304,10 @@ gflagsinclude_HEADERS = src/gflags/gflags.h src/gflags/gflags_completions.h
 googleincludedir = $(includedir)/google
 googleinclude_HEADERS = src/google/gflags.h src/google/gflags_completions.h
 bin_SCRIPTS = src/gflags_completions.sh
-docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
 dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
 	doc/designstyle.css doc/gflags.html
 
-lib_LTLIBRARIES = libgflags.la
+lib_LTLIBRARIES = libgflags.la libgflags_nothreads.la
 
 # Also make sure this works when we don't link in pthreads
 
@@ -305,39 +326,45 @@ check_SCRIPTS = gflags_unittest_sh
 noinst_SCRIPTS = src/gflags_unittest.sh
 # Used for auto-generated source files
 CLEANFILES = src/gflags_unittest-main.cc src/gflags_unittest_main.cc
-libgflags_la_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
-                       src/gflags.cc src/gflags_reporting.cc \
-                       src/gflags_completions.cc
+GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/config.h src/mutex.h \
+                 src/gflags.cc src/gflags_reporting.cc \
+                 src/gflags_completions.cc
 
+libgflags_la_SOURCES = $(GFLAGS_SOURCES)
 libgflags_la_CXXFLAGS = $(PTHREAD_CFLAGS) -DNDEBUG
 libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS)
 libgflags_la_LIBADD = $(PTHREAD_LIBS)
+libgflags_nothreads_la_SOURCES = $(GFLAGS_SOURCES)
+libgflags_nothreads_la_CXXFLAGS = -DNDEBUG -DNO_THREADS
 gflags_unittest_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
                           src/gflags_unittest.cc
 
 gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
-gflags_unittest_LDADD = libgflags.la $(PTHREAD_LIBS)
+gflags_unittest_LDADD = libgflags.la
 gflags_nothreads_unittest_SOURCES = $(gflags_unittest_SOURCES)
-gflags_nothreads_unittest_LDADD = libgflags.la
+gflags_nothreads_unittest_LDADD = libgflags_nothreads.la
 gflags_unittest2_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
                            src/gflags_unittest-main.cc
 
-gflags_unittest2_LDADD = libgflags.la
+gflags_unittest2_LDADD = libgflags_nothreads.la
 gflags_unittest3_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
 	                   src/gflags_unittest_main.cc
 
-gflags_unittest3_LDADD = libgflags.la
+gflags_unittest3_LDADD = libgflags_nothreads.la
 dist_noinst_DATA = src/gflags_unittest_flagfile
 
 # These aren't part of the c++ source, but we want them to be distributed
 PYTHON = python/setup.py \
          python/gflags.py \
          python/gflags2man.py \
-         python/gflags_unittest.py
+         python/gflags_unittest.py \
+         python/test_module_foo.py \
+         python/test_module_bar.py
 
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
-	libtool $(SCRIPTS) $(PYTHON)
+	libtool $(SCRIPTS) $(PYTHON) \
+        src/solaris/libstdc++.la
 
 all: all-am
 
@@ -426,6 +453,8 @@ clean-libLTLIBRARIES:
 	done
 libgflags.la: $(libgflags_la_OBJECTS) $(libgflags_la_DEPENDENCIES) 
 	$(CXXLINK) -rpath $(libdir) $(libgflags_la_LDFLAGS) $(libgflags_la_OBJECTS) $(libgflags_la_LIBADD) $(LIBS)
+libgflags_nothreads.la: $(libgflags_nothreads_la_OBJECTS) $(libgflags_nothreads_la_DEPENDENCIES) 
+	$(CXXLINK) -rpath $(libdir) $(libgflags_nothreads_la_LDFLAGS) $(libgflags_nothreads_la_OBJECTS) $(libgflags_nothreads_la_LIBADD) $(LIBS)
 
 clean-noinstPROGRAMS:
 	@list='$(noinst_PROGRAMS)'; for p in $$list; do \
@@ -478,6 +507,9 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_la-gflags.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_la-gflags_completions.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_la-gflags_reporting.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_nothreads_la-gflags.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_nothreads_la-gflags_completions.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgflags_nothreads_la-gflags_reporting.Plo@am__quote@
 
 .cc.o:
 @am__fastdepCXX_TRUE@	if $(CXXCOMPILE) -MT $@ -MD -MP -MF "$(DEPDIR)/$*.Tpo" -c -o $@ $<; \
@@ -520,6 +552,27 @@ libgflags_la-gflags_completions.lo: src/gflags_completions.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_completions.cc' object='libgflags_la-gflags_completions.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_la_CXXFLAGS) $(CXXFLAGS) -c -o libgflags_la-gflags_completions.lo `test -f 'src/gflags_completions.cc' || echo '$(srcdir)/'`src/gflags_completions.cc
+
+libgflags_nothreads_la-gflags.lo: src/gflags.cc
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_nothreads_la_CXXFLAGS) $(CXXFLAGS) -MT libgflags_nothreads_la-gflags.lo -MD -MP -MF "$(DEPDIR)/libgflags_nothreads_la-gflags.Tpo" -c -o libgflags_nothreads_la-gflags.lo `test -f 'src/gflags.cc' || echo '$(srcdir)/'`src/gflags.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libgflags_nothreads_la-gflags.Tpo" "$(DEPDIR)/libgflags_nothreads_la-gflags.Plo"; else rm -f "$(DEPDIR)/libgflags_nothreads_la-gflags.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags.cc' object='libgflags_nothreads_la-gflags.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_nothreads_la_CXXFLAGS) $(CXXFLAGS) -c -o libgflags_nothreads_la-gflags.lo `test -f 'src/gflags.cc' || echo '$(srcdir)/'`src/gflags.cc
+
+libgflags_nothreads_la-gflags_reporting.lo: src/gflags_reporting.cc
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_nothreads_la_CXXFLAGS) $(CXXFLAGS) -MT libgflags_nothreads_la-gflags_reporting.lo -MD -MP -MF "$(DEPDIR)/libgflags_nothreads_la-gflags_reporting.Tpo" -c -o libgflags_nothreads_la-gflags_reporting.lo `test -f 'src/gflags_reporting.cc' || echo '$(srcdir)/'`src/gflags_reporting.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libgflags_nothreads_la-gflags_reporting.Tpo" "$(DEPDIR)/libgflags_nothreads_la-gflags_reporting.Plo"; else rm -f "$(DEPDIR)/libgflags_nothreads_la-gflags_reporting.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_reporting.cc' object='libgflags_nothreads_la-gflags_reporting.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_nothreads_la_CXXFLAGS) $(CXXFLAGS) -c -o libgflags_nothreads_la-gflags_reporting.lo `test -f 'src/gflags_reporting.cc' || echo '$(srcdir)/'`src/gflags_reporting.cc
+
+libgflags_nothreads_la-gflags_completions.lo: src/gflags_completions.cc
+@am__fastdepCXX_TRUE@	if $(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_nothreads_la_CXXFLAGS) $(CXXFLAGS) -MT libgflags_nothreads_la-gflags_completions.lo -MD -MP -MF "$(DEPDIR)/libgflags_nothreads_la-gflags_completions.Tpo" -c -o libgflags_nothreads_la-gflags_completions.lo `test -f 'src/gflags_completions.cc' || echo '$(srcdir)/'`src/gflags_completions.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/libgflags_nothreads_la-gflags_completions.Tpo" "$(DEPDIR)/libgflags_nothreads_la-gflags_completions.Plo"; else rm -f "$(DEPDIR)/libgflags_nothreads_la-gflags_completions.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_completions.cc' object='libgflags_nothreads_la-gflags_completions.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(LIBTOOL) --tag=CXX --mode=compile $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgflags_nothreads_la_CXXFLAGS) $(CXXFLAGS) -c -o libgflags_nothreads_la-gflags_completions.lo `test -f 'src/gflags_completions.cc' || echo '$(srcdir)/'`src/gflags_completions.cc
 
 gflags_unittest.o: src/gflags_unittest.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -MT gflags_unittest.o -MD -MP -MF "$(DEPDIR)/gflags_unittest.Tpo" -c -o gflags_unittest.o `test -f 'src/gflags_unittest.cc' || echo '$(srcdir)/'`src/gflags_unittest.cc; \
@@ -762,7 +815,7 @@ check-TESTS: $(TESTS)
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/m4 $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/gflags $(distdir)/src/google
+	$(mkdir_p) $(distdir)/doc $(distdir)/m4 $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/gflags $(distdir)/src/google $(distdir)/src/solaris
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

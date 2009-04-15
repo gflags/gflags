@@ -1,3 +1,27 @@
+Tue Apr 14 12:35:25 2009  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.1
+	* Add both foo and nofoo for boolean flags, with --undefok (andychu)
+	* Better document how validators work (wojtekm)
+	* Improve binary-detection for bash-completion (mtamsky)
+	* Python: Add a concept of "key flags", used with --help (salcianu)
+	* Python: Robustify flag_values (salcianu)
+	* Python: Add a new DEFINE_bool alias (keir, andrewliu)
+	* Python: Do module introspection based on module name (dsturtevant)
+	* Fix autoconf a bit better, especially on windows and solaris (ajenjo)
+	* BUG FIX: gflags_nothreads was linking against the wrong lib (ajenjo)
+	* BUG FIX: threads-detection failed on FreeBSD; replace it (ajenjo)
+	* PORTABILITY: Quiet an internal compiler error with SUSE 10 (csilvers)
+	* PORTABILITY: Update deb.sh for more recenty debuilds (csilvers)
+	* PORTABILITY: #include more headers to satify new gcc's (csilvers)
+	* INSTALL: Updated to autoconf 2.61 and libtool 1.5.26 (csilvers)
+
+Fri Oct  3 15:16:46 2008  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.0
+	* Add a missing newline to an error string (bcmills)
+	* (otherwise exactly the same as gflags 1.0rc2)
+
 Thu Sep 18 12:58:05 2008  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.0rc2
