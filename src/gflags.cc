@@ -669,7 +669,7 @@ class FlagRegistry {
 };
 
 FlagRegistry* FlagRegistry::global_registry_ = NULL;
-Mutex FlagRegistry::global_registry_lock_;
+Mutex FlagRegistry::global_registry_lock_(Mutex::LINKER_INITIALIZED);
 
 FlagRegistry* FlagRegistry::GlobalRegistry() {
   MutexLock acquire_lock(&global_registry_lock_);
@@ -1037,6 +1037,25 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
         break;    // we treat this as an unrecoverable error
       } else {
         value = (*argv)[++i];                   // read next arg for value
+
+        // Heuristic to detect the case where someone treats a string arg
+        // like a bool:
+        // --my_string_var --foo=bar
+        // We look for a flag of string type, whose value begins with a
+        // dash, and where the flag-name and value are separated by a
+        // space rather than an '='.
+        // To avoid false positives, we also require the word "true"
+        // or "false" in the help string.  Without this, a valid usage
+        // "-lat -30.5" would trigger the warning.  The common cases we
+        // want to solve talk about true and false as values.
+        if (value[0] == '-'
+            && strcmp(flag->type_name(), "string") == 0
+            && (strstr(flag->help(), "true")
+                || strstr(flag->help(), "false"))) {
+          fprintf(stderr, "Did you really mean to set flag '%s'"
+                  " to the value '%s'?\n",
+                  flag->name(), value);
+        }
       }
     }
 
@@ -1343,15 +1362,6 @@ bool AddFlagValidator(const void* flag_ptr, ValidateFnProto validate_fn_proto) {
 //    values in a global destructor.
 // --------------------------------------------------------------------
 
-// TODO(csilvers): When we're ready to have this error be a fatal one,
-// change this to give a compilation error (via COMPILE_ASSERT(false)).
-bool FlagsTypeWarn(const char *name) {
-  cerr << "Flag " << name << " is of type bool, but its default"
-       << " value is not a boolean.  NOTE: This will soon be a"
-       << " compilations error!";
-  return false;
-}
-
 FlagRegisterer::FlagRegisterer(const char* name, const char* type,
                                const char* help, const char* filename,
                                void* current_storage, void* defvalue_storage) {
@@ -1530,7 +1540,7 @@ bool GetCommandLineFlagInfo(const char* name, CommandLineFlagInfo* OUTPUT) {
 CommandLineFlagInfo GetCommandLineFlagInfoOrDie(const char* name) {
   CommandLineFlagInfo info;
   if (!GetCommandLineFlagInfo(name, &info)) {
-    fprintf(stderr, "FATAL ERROR: flag name '%s' doesn't exit", name);
+    fprintf(stderr, "FATAL ERROR: flag name '%s' doesn't exist\n", name);
     commandlineflags_exitfunc(1);    // almost certainly exit()
   }
   return info;

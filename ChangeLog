@@ -1,3 +1,12 @@
+Thu Sep 10 12:53:04 2009  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.2
+	* PORTABILITY: can now build and run tests under mingw (csilvers)
+	* Using a string arg for a bool flag is a compile-time error (rbayardo)
+	* Add --helpxml to gflags.py (salcianu)
+	* Protect against a hypothetical global d'tor mutex problem (csilvers)
+	* BUGFIX: can now define a flag after 'using namespace google' (hamaji)
+
 Tue Apr 14 12:35:25 2009  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.1

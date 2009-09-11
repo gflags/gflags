@@ -415,7 +415,7 @@ class FlagRegisterer {
                  void* current_storage, void* defvalue_storage);
 };
 
-#ifndef SWIG  // In swig, ignore the main flag declarations
+extern bool FlagsTypeWarn(const char *name);
 
 // If your application #defines STRIP_FLAG_HELP to a non-zero value
 // before #including this file, we remove the help message from the
@@ -423,6 +423,10 @@ class FlagRegisterer {
 // somewhat, and may also be useful for security reasons.
 
 extern const char kStrippedFlagHelp[];
+
+@ac_google_end_namespace@
+
+#ifndef SWIG  // In swig, ignore the main flag declarations
 
 #if defined(STRIP_FLAG_HELP) && STRIP_FLAG_HELP > 0
 // Need this construct to avoid the 'defined but not used' warning.
@@ -459,26 +463,30 @@ extern const char kStrippedFlagHelp[];
   }                                             \
   using fL##shorttype::FLAGS_##name
 
-// For boolean flags, we want to do the extra check that the passed-in
+// For DEFINE_bool, we want to do the extra check that the passed-in
 // value is actually a bool, and not a string or something that can be
 // coerced to a bool.  These declarations (no definition needed!) will
-// help us do that, and never evaluate from, which is important.
-// We'll use 'sizeof(IsBool(val))' to distinguish.
+// help us do that, and never evaluate From, which is important.
+// We'll use 'sizeof(IsBool(val))' to distinguish. This code requires
+// that the compiler have different sizes for bool & double. Since
+// this is not guaranteed by the standard, we check it with a
+// compile-time assert (msg[-1] will give a compile-time error).
 namespace fLB {
+struct CompileAssert {};
+typedef CompileAssert expected_sizeof_double_neq_sizeof_bool[
+                      (sizeof(double) != sizeof(bool)) ? 1 : -1];
 template<typename From> double IsBoolFlag(const From& from);
 bool IsBoolFlag(bool from);
-}
-extern bool FlagsTypeWarn(const char *name);
+}  // namespace fLB
 
 #define DECLARE_bool(name)          DECLARE_VARIABLE(bool,B, name)
-// We have extra code here to make sure 'val' is actually a boolean.
-#define DEFINE_bool(name,val,txt)   namespace fLB { \
-                                      const bool FLAGS_nonono##name = \
-                                        (sizeof(@ac_google_namespace@::fLB::IsBoolFlag(val)) \
-                                        == sizeof(double)) \
-                                        ? @ac_google_namespace@::FlagsTypeWarn(#name) : true; \
-                                    } \
-                                    DEFINE_VARIABLE(bool,B, name, val, txt)
+#define DEFINE_bool(name,val,txt)                                         \
+  namespace fLB {                                                         \
+    typedef CompileAssert FLAG_##name##_value_is_not_a_bool[              \
+            (sizeof(::fLB::IsBoolFlag(val)) != sizeof(double)) ? 1 : -1]; \
+  }                                                                       \
+  DEFINE_VARIABLE(bool,B, name, val, txt)
+
 #define DECLARE_int32(name)         DECLARE_VARIABLE(@ac_google_namespace@::int32,I, name)
 #define DEFINE_int32(name,val,txt)  DEFINE_VARIABLE(@ac_google_namespace@::int32,I, name, val, txt)
 
@@ -521,7 +529,5 @@ extern bool FlagsTypeWarn(const char *name);
   using fLS::FLAGS_##name
 
 #endif  // SWIG
-
-@ac_google_end_namespace@
 
 #endif  // GOOGLE_GFLAGS_H_

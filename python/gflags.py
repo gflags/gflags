@@ -36,29 +36,28 @@
 #   Eric Veach, Laurence Gonsalves, Matthew Springer
 # Code reorganized a bit by Craig Silverstein
 
-"""
-This module is used to define and parse command line flags.
+"""This module is used to define and parse command line flags.
 
-This module defines a *distributed* flag-definition policy: rather
-than an application having to define all flags in or near main(), each
-python module defines flags that are useful to it.  When one python
-module imports another, it gains access to the other's flags.  (This
-is implemented by having all modules share a common, global registry
-object containing all the flag information.)
+This module defines a *distributed* flag-definition policy: rather than
+an application having to define all flags in or near main(), each python
+module defines flags that are useful to it.  When one python module
+imports another, it gains access to the other's flags.  (This is
+implemented by having all modules share a common, global registry object
+containing all the flag information.)
 
 Flags are defined through the use of one of the DEFINE_xxx functions.
 The specific function used determines how the flag is parsed, checked,
 and optionally type-converted, when it's seen on the command line.
 
 
-IMPLEMENTATION: DEFINE_* creates a 'Flag' object and registers it with
-a 'FlagValues' object (typically the global FlagValues FLAGS, defined
-here).  The 'FlagValues' object can scan the command line arguments
-and pass flag arguments to the corresponding 'Flag' objects for
+IMPLEMENTATION: DEFINE_* creates a 'Flag' object and registers it with a
+'FlagValues' object (typically the global FlagValues FLAGS, defined
+here).  The 'FlagValues' object can scan the command line arguments and
+pass flag arguments to the corresponding 'Flag' objects for
 value-checking and type conversion.  The converted flag values are
-available as members of the 'FlagValues' object.
+available as attributes of the 'FlagValues' object.
 
-Code can access the flag through a FlagValues object, for instancee
+Code can access the flag through a FlagValues object, for instance
 gflags.FLAGS.myflag.  Typically, the __main__ module passes the
 command line arguments to gflags.FLAGS for parsing.
 
@@ -70,10 +69,10 @@ Methods defined by the flag module will throw 'FlagsError' exceptions.
 The exception argument will be a human-readable string.
 
 
-FLAG TYPES:  This is a list of the DEFINE_*'s that you can do.  All
-flags take a name, default value, help-string, and optional 'short'
-name (one-letter name).  Some flags have other arguments, which are
-described with the flag.
+FLAG TYPES: This is a list of the DEFINE_*'s that you can do.  All flags
+take a name, default value, help-string, and optional 'short' name
+(one-letter name).  Some flags have other arguments, which are described
+with the flag.
 
 DEFINE_string: takes any input, and interprets it as a string.
 
@@ -85,9 +84,9 @@ DEFINE_boolean: typically does not take an argument: say --myflag to
                    --myflag=false or --myflag=f or --myflag=0
 
 DEFINE_float: takes an input and interprets it as a floating point
-              number.  Takes optional args lower_bound and
-              upper_bound; if the number specified on the command line
-              is out of range, it will raise a FlagError.
+              number.  Takes optional args lower_bound and upper_bound;
+              if the number specified on the command line is out of
+              range, it will raise a FlagError.
 
 DEFINE_integer: takes an input and interprets it as an integer.  Takes
                 optional args lower_bound and upper_bound as for floats.
@@ -101,6 +100,7 @@ DEFINE_list: Takes a comma-separated list of strings on the commandline.
 
 DEFINE_spaceseplist: Takes a space-separated list of strings on the
                      commandline.  Stores them in a python list object.
+                     Example: --myspacesepflag "foo bar baz"
 
 DEFINE_multistring: The same as DEFINE_string, except the flag can be
                     specified more than once on the commandline.  The
@@ -109,13 +109,18 @@ DEFINE_multistring: The same as DEFINE_string, except the flag can be
 
 DEFINE_multi_int: The same as DEFINE_integer, except the flag can be
                   specified more than once on the commandline.  The
-                  result is a python list object (list of ints),
-                  even if the flag is only on the command line once.
+                  result is a python list object (list of ints), even if
+                  the flag is only on the command line once.
 
 
 SPECIAL FLAGS: There are a few flags that have special meaning:
-   --help (or -?)  prints a list of all the flags in a human-readable fashion
-   --helpshort     prints a list of all the flags in the 'main' .py file only
+   --help          prints a list of all the flags in a human-readable fashion
+   --helpshort     prints a list of all key flags (see below).
+   --helpxml       prints a list of all flags, in XML format.  DO NOT parse
+                   the output of --help and --helpshort.  Instead, parse
+                   the output of --helpxml.  As we add new flags, we may
+                   add new XML elements.  Hence, make sure your parser
+                   does not crash when it encounters new XML elements.
    --flagfile=foo  read flags from foo.
    --undefok=f1,f2 ignore unrecognized option errors for f1,f2.
                    For boolean flags, you should use --undefok=boolflag, and
@@ -129,14 +134,14 @@ NOTE ON --flagfile:
 Flags may be loaded from text files in addition to being specified on
 the commandline.
 
-Any flags you don't feel like typing, throw them in a file, one flag
-per line, for instance:
+Any flags you don't feel like typing, throw them in a file, one flag per
+line, for instance:
    --myflag=myvalue
    --nomyboolean_flag
-You then specify your file with the special flag
-'--flagfile=somefile'.  You CAN recursively nest flagfile= tokens OR
-use multiple files on the command line.  Lines beginning with a single
-hash '#' or a double slash '//' are comments in your flagfile.
+You then specify your file with the special flag '--flagfile=somefile'.
+You CAN recursively nest flagfile= tokens OR use multiple files on the
+command line.  Lines beginning with a single hash '#' or a double slash
+'//' are comments in your flagfile.
 
 Any flagfile=<file> will be interpreted as having a relative path from
 the current working directory rather than from the place the file was
@@ -147,10 +152,10 @@ If somefile.cfg includes further --flagfile= directives, these will be
 referenced relative to the original CWD, not from the directory the
 including flagfile was found in!
 
-The caveat applies to people who are including a series of nested
-files in a different dir than they are executing out of.  Relative
-path names are always from CWD, not from the directory of the parent
-include flagfile. We do now support '~' expanded directory names.
+The caveat applies to people who are including a series of nested files
+in a different dir than they are executing out of.  Relative path names
+are always from CWD, not from the directory of the parent include
+flagfile. We do now support '~' expanded directory names.
 
 Absolute path names ALWAYS work!
 
@@ -165,7 +170,7 @@ EXAMPLE USAGE:
   # If there is a conflict, we'll get an error at import time.
   gflags.DEFINE_string('name', 'Mr. President', 'your name')
   gflags.DEFINE_integer('age', None, 'your age in years', lower_bound=0)
-  gflags.DEFINE_boolean('debug', 0, 'produces debugging output')
+  gflags.DEFINE_boolean('debug', False, 'produces debugging output')
   gflags.DEFINE_enum('gender', 'male', ['male', 'female'], 'your gender')
 
   def main(argv):
@@ -196,16 +201,14 @@ potential user: which flags would you really like to mention first?
 
 We'll describe shortly how to declare which flags are key to a module.
 For the moment, assume we know the set of key flags for each module.
-Assume we are using the special flags --help and --helpshort to get
-information on the available flags:
+Then, if you use the app.py module, you can use the --helpshort flag to
+print only the help for the flags that are key to the main module, in a
+human-readable format.
 
-  --help prints the help for all flags (those declared in the main
-  module and those declared in the transitively imported modules).
-  Hence, --help generates complete but usually overly-verbose flag
-  information.
-
-  --helpshort prints only the help for the flags that are key to the
-  main module.
+NOTE: If you need to parse the flag help, do NOT use the output of
+--help / --helpshort.  That output is meant for human consumption, and
+may be changed in the future.  Instead, use --helpxml; flags that are
+key for the main module are marked there with a <key>yes</key> element.
 
 The set of key flags for a module M is composed of:
 
@@ -219,24 +222,24 @@ The set of key flags for a module M is composed of:
 
      ADOPT_module_key_flags(<other_module>)
 
-   This is a "bulk" declaration of key flags: each flag that is key
-   for <other_module> becomes key for the current module too.
+   This is a "bulk" declaration of key flags: each flag that is key for
+   <other_module> becomes key for the current module too.
 
-Notice that if you do not use the functions described at points 2 and
-3 above, then --helpshort prints information only about the flags
-defined by the main module of our script.  In many cases, this
-behavior is good enough.  But if you move part of the main module code
-(together with the related flags) into a different module, then it is
-nice to use DECLARE_key_flag / ADOPT_module_key_flags and make sure
---helpshort lists all relevant flags (otherwise, your code refactoring
-may confuse your users).
+Notice that if you do not use the functions described at points 2 and 3
+above, then --helpshort prints information only about the flags defined
+by the main module of our script.  In many cases, this behavior is good
+enough.  But if you move part of the main module code (together with the
+related flags) into a different module, then it is nice to use
+DECLARE_key_flag / ADOPT_module_key_flags and make sure --helpshort
+lists all relevant flags (otherwise, your code refactoring may confuse
+your users).
 
 Note: each of DECLARE_key_flag / ADOPT_module_key_flags has its own
 pluses and minuses: DECLARE_key_flag is more targeted and may lead a
-more focused --helpshort documentation.  ADOPT_module_key_flags is
-good for cases when an entire module is considered key to the current
-script.  Also, it does not require updates to client scripts when a
-new flag is added to the module.
+more focused --helpshort documentation.  ADOPT_module_key_flags is good
+for cases when an entire module is considered key to the current script.
+Also, it does not require updates to client scripts when a new flag is
+added to the module.
 
 
 EXAMPLE USAGE 2 (WITH KEY FLAGS):
@@ -284,7 +287,6 @@ File myscript.py:
 
   ... some code ...
 
-
 When myscript is invoked with the flag --helpshort, the resulted help
 message lists information about all the key flags for myscript:
 --num_iterations, --num_replicas, --rpc2, and --bar_gfs_path (in
@@ -293,13 +295,15 @@ addition to the special flags --help and --helpshort).
 Of course, myscript uses all the flags declared by it (in this case,
 just --num_replicas) or by any of the modules it transitively imports
 (e.g., the modules libfoo, libbar).  E.g., it can access the value of
-FLAGS.bar_risky_hack, even if --bar_risky_hack is not declared as a
-key flag for myscript.
+FLAGS.bar_risky_hack, even if --bar_risky_hack is not declared as a key
+flag for myscript.
 """
 
+import cgi
 import getopt
 import os
 import re
+import string
 import sys
 
 # Are we running at least python 2.2?                                           
@@ -327,9 +331,10 @@ _RUNNING_PYCHECKER = 'pychecker.python' in sys.modules
 
 
 def _GetCallingModule():
-  """
-  Get the name of the module that's calling into this module; e.g.,
-  the module calling a DEFINE_foo... function.
+  """Returns the name of the module that's calling into this module.
+
+  We generally use this function to get the name of the module calling a
+  DEFINE_foo... function.
   """
   # Walk down the stack to find the first globals dict that's not ours.
   for depth in range(1, sys.getrecursionlimit()):
@@ -337,46 +342,57 @@ def _GetCallingModule():
       module_name = __GetModuleName(sys._getframe(depth).f_globals)
       if module_name is not None:
         return module_name
-  raise AssertionError, "No module was found"
+  raise AssertionError("No module was found")
 
 
 # module exceptions:
 class FlagsError(Exception):
-  """The base class for all flags errors"""
+  """The base class for all flags errors."""
+  pass
+
 
 class DuplicateFlag(FlagsError):
-  """Raised if there is a flag naming conflict"""
+  """Raised if there is a flag naming conflict."""
+  pass
 
-# A DuplicateFlagError conveys more information than
-# a DuplicateFlag. Since there are external modules
-# that create DuplicateFlags, the interface to
-# DuplicateFlag shouldn't change.
+
+# A DuplicateFlagError conveys more information than a
+# DuplicateFlag. Since there are external modules that create
+# DuplicateFlags, the interface to DuplicateFlag shouldn't change.
 class DuplicateFlagError(DuplicateFlag):
+
   def __init__(self, flagname, flag_values):
     self.flagname = flagname
     message = "The flag '%s' is defined twice." % self.flagname
     flags_by_module = flag_values.FlagsByModuleDict()
     for module in flags_by_module:
       for flag in flags_by_module[module]:
-        if flag.name == flagname:
+        if flag.name == flagname or flag.short_name == flagname:
           message = message + " First from " + module + ","
           break
     message = message + " Second from " + _GetCallingModule()
-    Exception.__init__(self, message)
+    DuplicateFlag.__init__(self, message)
 
-class IllegalFlagValue(FlagsError): "The flag command line argument is illegal"
+
+class IllegalFlagValue(FlagsError):
+  """The flag command line argument is illegal."""
+  pass
+
 
 class UnrecognizedFlag(FlagsError):
-  """Raised if a flag is unrecognized"""
+  """Raised if a flag is unrecognized."""
+  pass
 
-# An UnrecognizedFlagError conveys more information than
-# an UnrecognizedFlag. Since there are external modules
-# that create DuplicateFlags, the interface to
-# DuplicateFlag shouldn't change.
+
+# An UnrecognizedFlagError conveys more information than an
+# UnrecognizedFlag. Since there are external modules that create
+# DuplicateFlags, the interface to DuplicateFlag shouldn't change.
 class UnrecognizedFlagError(UnrecognizedFlag):
   def __init__(self, flagname):
     self.flagname = flagname
-    Exception.__init__(self, "Unknown command line flag '%s'" % flagname)
+    UnrecognizedFlag.__init__(
+        self, "Unknown command line flag '%s'" % flagname)
+
 
 # Global variable used by expvar
 _exported_flags = {}
@@ -384,27 +400,27 @@ _help_width = 80  # width of help output
 
 
 def GetHelpWidth():
-  """
-  Length of help to be used in TextWrap
-  """
-  global _help_width
+  """Returns: an integer, the width of help lines that is used in TextWrap."""
   return _help_width
 
 
 def CutCommonSpacePrefix(text):
-  """
-  Cut out a common space prefix. If the first line does not start with a space
-  it is left as is and only in the remaining lines a common space prefix is
-  being searched for. That means the first line will stay untouched. This is
-  especially useful to turn doc strings into help texts. This is because some
-  people prefer to have the doc comment start already after the apostrophy and
-  then align the following lines while others have the apostrophies on a
-  seperately line. The function also drops trailing empty lines and ignores
-  empty lines following the initial content line while calculating the initial
+  """Removes a common space prefix from the lines of a multiline text.
+
+  If the first line does not start with a space, it is left as it is and
+  only in the remaining lines a common space prefix is being searched
+  for. That means the first line will stay untouched. This is especially
+  useful to turn doc strings into help texts. This is because some
+  people prefer to have the doc comment start already after the
+  apostrophy and then align the following lines while others have the
+  apostrophies on a seperately line.
+
+  The function also drops trailing empty lines and ignores empty lines
+  following the initial content line while calculating the initial
   common whitespace.
 
   Args:
-    text:  text to work on
+    text: text to work on
 
   Returns:
     the resulting text
@@ -432,18 +448,17 @@ def CutCommonSpacePrefix(text):
 
 
 def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
-  """
-  Wrap a given text to a maximum line length and return it.
-  We turn lines that only contain whitespace into empty lines.
-  We keep new lines.
-  We also keep tabs (e.g. we do not treat tabs as spaces).
+  """Wraps a given text to a maximum line length and returns it.
+
+  We turn lines that only contain whitespaces into empty lines.  We keep
+  new lines and tabs (e.g., we do not treat tabs as spaces).
 
   Args:
     text:             text to wrap
     length:           maximum length of a line, includes indentation
                       if this is None then use GetHelpWidth()
     indent:           indent for all but first line
-    firstline_indent: indent for first line, if None then fall back to indent
+    firstline_indent: indent for first line; if None, fall back to indent
     tabs:             replacement for tabs
 
   Returns:
@@ -460,8 +475,9 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
     indent = ''
   if len(indent) >= length:
     raise FlagsError('Indent must be shorter than length')
-  # In line we will be holding the current line which is to be started with
-  # indent (or firstline_indent if available) and then appended with words.
+  # In line we will be holding the current line which is to be started
+  # with indent (or firstline_indent if available) and then appended
+  # with words.
   if firstline_indent is None:
     firstline_indent = ''
     line = indent
@@ -470,8 +486,9 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
     if len(firstline_indent) >= length:
       raise FlagsError('First iline indent must be shorter than length')
 
-  # If the callee does not care about tabs we simply convert them to spaces
-  # If callee wanted tabs to be single space then we do that already here.
+  # If the callee does not care about tabs we simply convert them to
+  # spaces If callee wanted tabs to be single space then we do that
+  # already here.
   if not tabs or tabs == ' ':
     text = text.replace('\t', ' ')
   else:
@@ -479,13 +496,13 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
 
   line_regex = re.compile('([ ]*)(\t*)([^ \t]+)', re.MULTILINE)
 
-  # Split the text into lines and the lines with the regex above. The resulting
-  # lines are collected in result[]. For each split we get the spaces, the tabs
-  # and the next non white space (e.g. next word).
+  # Split the text into lines and the lines with the regex above. The
+  # resulting lines are collected in result[]. For each split we get the
+  # spaces, the tabs and the next non white space (e.g. next word).
   result = []
   for text_line in text.splitlines():
-    # Store result length so we can find out whether processing the next line
-    # gave any new content
+    # Store result length so we can find out whether processing the next
+    # line gave any new content
     old_result_len = len(result)
     # Process next line with line_regex. For optimization we do an rstrip().
     # - process tabs (changes either line or word, see below)
@@ -495,13 +512,14 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
     for spaces, current_tabs, word in line_regex.findall(text_line.rstrip()):
       # If tabs weren't converted to spaces, handle them now
       if current_tabs:
-        # If the last thing we added was a space anyway then drop it. But
-        # let's not get rid of the indentation.
+        # If the last thing we added was a space anyway then drop
+        # it. But let's not get rid of the indentation.
         if (((result and line != indent) or
-            (not result and line != firstline_indent)) and line[-1] == ' '):
+             (not result and line != firstline_indent)) and line[-1] == ' '):
           line = line[:-1]
-        # Add the tabs, if that means adding whitespace, just add it at the
-        # line, the rstrip() code while shorten the line down if necessary
+        # Add the tabs, if that means adding whitespace, just add it at
+        # the line, the rstrip() code while shorten the line down if
+        # necessary
         if tabs_are_whitespace:
           line += tabs * len(current_tabs)
         else:
@@ -518,10 +536,10 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
           line = indent
         else:
           line += ' '
-      # Add word and shorten it up to allowed line length. Restart next line
-      # with indent and repeat, or add a space if we're done (word finished)
-      # This deals with words that caanot fit on one line (e.g. indent + word
-      # longer than allowed line length).
+      # Add word and shorten it up to allowed line length. Restart next
+      # line with indent and repeat, or add a space if we're done (word
+      # finished) This deals with words that caanot fit on one line
+      # (e.g. indent + word longer than allowed line length).
       while len(line) + len(word) >= length:
         line += word
         result.append(line[:length])
@@ -543,11 +561,11 @@ def TextWrap(text, length=None, indent='', firstline_indent=None, tabs='    '):
 
 
 def DocToHelp(doc):
-  """
-  Takes a __doc__ string and reformats it as help.
-  """
-  # Get rid of starting and ending white space. Using lstrip() or even strip()
-  # could drop more than maximum of first line and right space of last line.
+  """Takes a __doc__ string and reformats it as help."""
+
+  # Get rid of starting and ending white space. Using lstrip() or even
+  # strip() could drop more than maximum of first line and right space
+  # of last line.
   doc = doc.strip()
 
   # Get rid of all empty lines
@@ -572,8 +590,8 @@ def __GetModuleName(globals_dict):
   """Given a globals dict, returns the name of the module that defines it.
 
   Args:
-    globals_dict: A dictionary that should correspond to an
-      environment providing the values of the globals.
+    globals_dict: A dictionary that should correspond to an environment
+      providing the values of the globals.
 
   Returns:
     A string (the name of the module) or None (if the module could not
@@ -588,32 +606,31 @@ def __GetModuleName(globals_dict):
 
 
 def _GetMainModule():
-  """Get the module name from which execution started."""
+  """Returns the name of the module from which execution started."""
   for depth in range(1, sys.getrecursionlimit()):
     try:
       globals_of_main = sys._getframe(depth).f_globals
     except ValueError:
       return __GetModuleName(globals_of_main)
-  raise AssertionError, "No module was found"
+  raise AssertionError("No module was found")
 
 
 class FlagValues:
-  """
-  Used as a registry for 'Flag' objects.
+  """Registry of 'Flag' objects.
 
   A 'FlagValues' can then scan command line arguments, passing flag
   arguments through to the 'Flag' objects that it owns.  It also
   provides easy access to the flag values.  Typically only one
-  'FlagValues' object is needed by an application:  gflags.FLAGS
+  'FlagValues' object is needed by an application: gflags.FLAGS
 
   This class is heavily overloaded:
 
   'Flag' objects are registered via __setitem__:
        FLAGS['longname'] = x   # register a new flag
 
-  The .value member of the registered 'Flag' objects can be accessed as
-  members of this 'FlagValues' object, through __getattr__.  Both the
-  long and short name of the original 'Flag' objects can be used to
+  The .value attribute of the registered 'Flag' objects can be accessed
+  as attributes of this 'FlagValues' object, through __getattr__.  Both
+  the long and short name of the original 'Flag' objects can be used to
   access its value:
        FLAGS.longname          # parsed flag value
        FLAGS.x                 # parsed flag value (short name)
@@ -632,17 +649,16 @@ class FlagValues:
   """
 
   def __init__(self):
-    # Since everything in this class is so heavily overloaded,
-    # the only way of defining and using fields is to access __dict__
-    # directly.
+    # Since everything in this class is so heavily overloaded, the only
+    # way of defining and using fields is to access __dict__ directly.
 
     # Dictionary: flag name (string) -> Flag object.
     self.__dict__['__flags'] = {}
-    # Dictionary: module name (string) -> list of Flag objects that
-    # are defined by that module.
+    # Dictionary: module name (string) -> list of Flag objects that are defined
+    # by that module.
     self.__dict__['__flags_by_module'] = {}
-    # Dictionary: module name (string) -> list of Flag objects that
-    # are key for that module.
+    # Dictionary: module name (string) -> list of Flag objects that are
+    # key for that module.
     self.__dict__['__key_flags_by_module'] = {}
 
   def FlagDict(self):
@@ -667,10 +683,10 @@ class FlagValues:
     return self.__dict__['__key_flags_by_module']
 
   def _RegisterFlagByModule(self, module_name, flag):
-    """Record the module that defines a specific flag.
+    """Records the module that defines a specific flag.
 
-    We keep track of which flag is defined by which module so that
-    we can later sort the flags by module.
+    We keep track of which flag is defined by which module so that we
+    can later sort the flags by module.
 
     Args:
       module_name: A string, the name of a Python module.
@@ -680,7 +696,7 @@ class FlagValues:
     flags_by_module.setdefault(module_name, []).append(flag)
 
   def _RegisterKeyFlagForModule(self, module_name, flag):
-    """Specify that a flag is a key flag for a module.
+    """Specifies that a flag is a key flag for a module.
 
     Args:
       module_name: A string, the name of a Python module.
@@ -700,9 +716,9 @@ class FlagValues:
       module: A module object or a module name (a string).
 
     Returns:
-      A fresh list of Flag objects.  The caller may update this list
-        as he wishes: none of these changes will affect the internals
-        of this FlagValue object.
+      A new list of Flag objects.  Caller may update this list as he
+      wishes: none of those changes will affect the internals of this
+      FlagValue object.
     """
     if not isinstance(module, str):
       module = module.__name__
@@ -716,17 +732,16 @@ class FlagValues:
       module: A module object or a module name (a string)
 
     Returns:
-      A list of Flag objects.  This is a new list, disjoint from the
-        internals of this FlagValue object.  Hence, the caller may
-        mutate this list as he wishes: none of these changes will
-        affect this FlagValue object.
+      A new list of Flag objects.  Caller may update this list as he
+      wishes: none of those changes will affect the internals of this
+      FlagValue object.
     """
     if not isinstance(module, str):
       module = module.__name__
 
     # Any flag is a key flag for the module that defined it.  NOTE:
-    # key_flags is a fresh list: we can update it without affecting
-    # the internals of this FlagValues object.
+    # key_flags is a fresh list: we can update it without affecting the
+    # internals of this FlagValues object.
     key_flags = self._GetFlagsDefinedByModule(module)
 
     # Take into account flags explicitly declared as key for a module.
@@ -736,33 +751,31 @@ class FlagValues:
     return key_flags
 
   def AppendFlagValues(self, flag_values):
-    """Append flags registered in another FlagValues instance.
+    """Appends flags registered in another FlagValues instance.
 
     Args:
       flag_values: registry to copy from
     """
     for flag_name, flag in flag_values.FlagDict().iteritems():
-      # Flags with shortnames will appear here twice (once with under
-      # its normal name, and again with its short name).  To prevent
-      # problems (DuplicateFlagError) that occur when doubly
-      # registering flags, we perform a check to make sure that the
-      # entry we're looking at is for its normal name.
+      # Each flags with shortname appears here twice (once under its
+      # normal name, and again with its short name).  To prevent
+      # problems (DuplicateFlagError) with double flag registration, we
+      # perform a check to make sure that the entry we're looking at is
+      # for its normal name.
       if flag_name == flag.name:
         self[flag_name] = flag
 
   def __setitem__(self, name, flag):
-    """
-    Register a new flag variable.
-    """
+    """Registers a new flag variable."""
     fl = self.FlagDict()
     if not isinstance(flag, Flag):
-      raise IllegalFlagValue, flag
+      raise IllegalFlagValue(flag)
     if not isinstance(name, type("")):
-      raise FlagsError, "Flag name must be a string"
+      raise FlagsError("Flag name must be a string")
     if len(name) == 0:
-      raise FlagsError, "Flag name cannot be empty"
-    # If running under pychecker, duplicate keys are likely to be defined.
-    # Disable check for duplicate keys when pycheck'ing.
+      raise FlagsError("Flag name cannot be empty")
+    # If running under pychecker, duplicate keys are likely to be
+    # defined.  Disable check for duplicate keys when pycheck'ing.
     if (fl.has_key(name) and not flag.allow_override and
         not fl[name].allow_override and not _RUNNING_PYCHECKER):
       raise DuplicateFlagError(name, self)
@@ -777,24 +790,18 @@ class FlagValues:
     _exported_flags[name] = flag
 
   def __getitem__(self, name):
-    """
-    Retrieve the flag object.
-    """
+    """Retrieves the Flag object for the flag --name."""
     return self.FlagDict()[name]
 
   def __getattr__(self, name):
-    """
-    Retrieve the .value member of a flag object.
-    """
+    """Retrieves the 'value' attribute of the flag --name."""
     fl = self.FlagDict()
     if not fl.has_key(name):
-      raise AttributeError, name
+      raise AttributeError(name)
     return fl[name].value
 
   def __setattr__(self, name, value):
-    """
-    Set the .value member of a flag object.
-    """
+    """Sets the 'value' attribute of the flag --name."""
     fl = self.FlagDict()
     fl[name].value = value
     return value
@@ -802,12 +809,11 @@ class FlagValues:
   def _FlagIsRegistered(self, flag_obj):
     """Checks whether a Flag object is registered under some name.
 
-    Note: this is not as trivial as it seems: in addition to its
-    normal name, a flag may have a short name too.  In
-    self.FlagDict(), both the normal and the short name are mapped to
-    the same flag object.  E.g., calling only "del FLAGS.short_name"
-    is not unregistering the corresponding Flag object (it is still
-    registered under the longer name).
+    Note: this is non trivial: in addition to its normal name, a flag
+    may have a short name too.  In self.FlagDict(), both the normal and
+    the short name are mapped to the same flag object.  E.g., calling
+    only "del FLAGS.short_name" is not unregistering the corresponding
+    Flag object (it is still registered under the longer name).
 
     Args:
       flag_obj: A Flag object.
@@ -830,7 +836,7 @@ class FlagValues:
     return False
 
   def __delattr__(self, flag_name):
-    """Delete a previously-defined flag from a flag object.
+    """Deletes a previously-defined flag from a flag object.
 
     This method makes sure we can delete a flag by using
 
@@ -856,9 +862,9 @@ class FlagValues:
 
     if not self._FlagIsRegistered(flag_obj):
       # If the Flag object indicated by flag_name is no longer
-      # registered (please see the docstring of _FlagIsRegistered),
-      # then we delete the occurences of the flag object in all our
-      # internal dictionaries.
+      # registered (please see the docstring of _FlagIsRegistered), then
+      # we delete the occurences of the flag object in all our internal
+      # dictionaries.
       self.__RemoveFlagFromDictByModule(self.FlagsByModuleDict(), flag_obj)
       self.__RemoveFlagFromDictByModule(self.KeyFlagsByModuleDict(), flag_obj)
 
@@ -866,29 +872,25 @@ class FlagValues:
     """Removes a flag object from a module -> list of flags dictionary.
 
     Args:
-      flags_by_module_dict: A dictionary that maps module names to
-        lists of flags.
+      flags_by_module_dict: A dictionary that maps module names to lists of
+        flags.
       flag_obj: A flag object.
     """
     for unused_module, flags_in_module in flags_by_module_dict.iteritems():
-      # while (as opposed to if) takes care of multiple occurences
-      # of a flag in the list for the same module.
+      # while (as opposed to if) takes care of multiple occurences of a
+      # flag in the list for the same module.
       while flag_obj in flags_in_module:
         flags_in_module.remove(flag_obj)
 
   def SetDefault(self, name, value):
-    """
-    Change the default value of the named flag object.
-    """
+    """Changes the default value of the named flag object."""
     fl = self.FlagDict()
     if not fl.has_key(name):
-      raise AttributeError, name
+      raise AttributeError(name)
     fl[name].SetDefault(value)
 
   def __contains__(self, name):
-    """
-    Return True if name is a value (flag) in the dict.
-    """
+    """Returns True if name is a value (flag) in the dict."""
     return name in self.FlagDict()
 
   has_key = __contains__  # a synonym for __contains__()
@@ -897,11 +899,10 @@ class FlagValues:
     return self.FlagDict().iterkeys()
 
   def __call__(self, argv):
-    """
-    Searches argv for flag arguments, parses them and then sets the flag
-    values as attributes of this FlagValues object.  All unparsed
-    arguments are returned.  Flags are parsed using the GNU Program
-    Argument Syntax Conventions, using getopt:
+    """Parses flags from argv; stores parsed flags into this FlagValues object.
+
+    All unparsed arguments are returned.  Flags are parsed using the GNU
+    Program Argument Syntax Conventions, using getopt:
 
     http://www.gnu.org/software/libc/manual/html_mono/libc.html#Getopt
 
@@ -952,11 +953,11 @@ class FlagValues:
         elif arg.startswith('--'+no_prefix) and ('--'+no_name).startswith(arg):
           argv[arg_idx] = ('--%s=false' % name)
 
-    # Loop over all of the flags, building up the lists of short options and
-    # long options that will be passed to getopt.  Short options are
-    # specified as a string of letters, each letter followed by a colon if it
-    # takes an argument.  Long options are stored in an array of strings.
-    # Each string ends with an '=' if it takes an argument.
+    # Loop over all of the flags, building up the lists of short options
+    # and long options that will be passed to getopt.  Short options are
+    # specified as a string of letters, each letter followed by a colon
+    # if it takes an argument.  Long options are stored in an array of
+    # strings.  Each string ends with an '=' if it takes an argument.
     for name, flag in fl.items():
       longopts.append(name + "=")
       if len(name) == 1:  # one-letter option: allow short flag type also
@@ -1036,24 +1037,16 @@ class FlagValues:
       return argv[:1]
 
   def Reset(self):
-    """
-    Reset the values to the point before FLAGS(argv) was called.
-    """
+    """Resets the values to the point before FLAGS(argv) was called."""
     for f in self.FlagDict().values():
       f.Unparse()
 
   def RegisteredFlags(self):
-    """Return a list of the names of all registered flags.
-
-    Returns:
-      A list of all names and short names which flags are registered under.
-    """
+    """Returns: a list of the names and short names of all registered flags."""
     return self.FlagDict().keys()
 
   def FlagValuesDict(self):
-    """
-    Return a dictionary with flag names as keys and flag values as values.
-    """
+    """Returns: a dictionary that maps flag names to flag values."""
     flag_values = {}
 
     for flag_name in self.RegisteredFlags():
@@ -1063,15 +1056,11 @@ class FlagValues:
     return flag_values
 
   def __str__(self):
-    """
-    Generate a help string for all known flags.
-    """
+    """Generates a help string for all known flags."""
     return self.GetHelp()
 
-  def GetHelp(self, prefix=""):
-    """
-    Generate a help string for all known flags.
-    """
+  def GetHelp(self, prefix=''):
+    """Generates a help string for all known flags."""
     helplist = []
 
     flags_by_module = self.FlagsByModuleDict()
@@ -1084,7 +1073,7 @@ class FlagValues:
       main_module = _GetMainModule()
       if main_module in modules:
         modules.remove(main_module)
-        modules = [ main_module ] + modules
+        modules = [main_module] + modules
 
       for module in modules:
         self.__RenderOurModuleFlags(module, helplist)
@@ -1102,22 +1091,18 @@ class FlagValues:
     return '\n'.join(helplist)
 
   def __RenderModuleFlags(self, module, flags, output_lines, prefix=""):
-    """
-    Generate a help string for a given module.
-    """
+    """Generates a help string for a given module."""
     output_lines.append('\n%s%s:' % (prefix, module))
     self.__RenderFlagList(flags, output_lines, prefix + "  ")
 
   def __RenderOurModuleFlags(self, module, output_lines, prefix=""):
-    """
-    Generate a help string for a given module.
-    """
+    """Generates a help string for a given module."""
     flags = self._GetFlagsDefinedByModule(module)
     if flags:
       self.__RenderModuleFlags(module, flags, output_lines, prefix)
 
   def __RenderOurModuleKeyFlags(self, module, output_lines, prefix=""):
-    """Generate a help string for the key flags of a given module.
+    """Generates a help string for the key flags of a given module.
 
     Args:
       module: A module object or a module name (a string).
@@ -1173,20 +1158,21 @@ class FlagValues:
       output_lines.append(flaghelp)
 
   def get(self, name, default):
-    """
-    Retrieve the .value member of a flag object, or default if .value is None
+    """Returns the value of a flag (if not None) or a default value.
+
+    Args:
+      name: A string, the name of a flag.
+      default: Default value to use if the flag value is None.
     """
 
     value = self.__getattr__(name)
-    if value is not None: # Can't do if not value, b/c value might be '0' or ""
+    if value is not None:  # Can't do if not value, b/c value might be '0' or ""
       return value
     else:
       return default
 
   def ShortestUniquePrefixes(self, fl):
-    """
-    Returns a dictionary mapping flag names to their shortest unique prefix.
-    """
+    """Returns: dictionary; maps flag names to their shortest unique prefix."""
     # Sort the list of flag names
     sorted_flags = []
     for name, flag in fl.items():
@@ -1195,9 +1181,9 @@ class FlagValues:
         sorted_flags.append('no%s' % name)
     sorted_flags.sort()
 
-    # For each name in the sorted list, determine the shortest unique prefix
-    # by comparing itself to the next name and to the previous name (the latter
-    # check uses cached info from the previous loop).
+    # For each name in the sorted list, determine the shortest unique
+    # prefix by comparing itself to the next name and to the previous
+    # name (the latter check uses cached info from the previous loop).
     shortest_matches = {}
     prev_idx = 0
     for flag_idx in range(len(sorted_flags)):
@@ -1218,14 +1204,11 @@ class FlagValues:
       else:
         # curr shorter than (or equal to) next
         shortest_matches[curr] = curr
-        prev_idx = curr_idx + 1 # next will need at least one more char
+        prev_idx = curr_idx + 1  # next will need at least one more char
     return shortest_matches
 
   def __IsFlagFileDirective(self, flag_string):
-    """ Detects the --flagfile= token.
-    Takes a string which might contain a '--flagfile=<foo>' directive.
-    Returns a Boolean.
-    """
+    """Checks whether flag_string contain a --flagfile=<foo> directive."""
     if isinstance(flag_string, type("")):
       if flag_string.startswith('--flagfile='):
         return 1
@@ -1240,11 +1223,11 @@ class FlagValues:
     return 0
 
   def ExtractFilename(self, flagfile_str):
-    """Function to remove the --flagfile= (or variant) and return just the
-      filename part.  We can get strings that look like:
-        --flagfile=foo, -flagfile=foo.
-      The case of --flagfile foo and  -flagfile foo shouldn't be hitting this
-      function, as they are dealt with in the level above this funciton.
+    """Returns filename from a flagfile_str of form -[-]flagfile=filename.
+
+    The cases of --flagfile foo and -flagfile foo shouldn't be hitting
+    this function, as they are dealt with in the level above this
+    function.
     """
     if flagfile_str.startswith('--flagfile='):
       return os.path.expanduser((flagfile_str[(len('--flagfile=')):]).strip())
@@ -1252,20 +1235,21 @@ class FlagValues:
       return os.path.expanduser((flagfile_str[(len('-flagfile=')):]).strip())
     else:
       raise FlagsError('Hit illegal --flagfile type: %s' % flagfile_str)
-      return ''
-
 
   def __GetFlagFileLines(self, filename, parsed_file_list):
-    """Function to open a flag file, return its useful (!=comments,etc) lines.
-    Takes:
-        A filename to open and read
-        A list of files we have already read THAT WILL BE CHANGED
+    """Returns the useful (!=comments, etc) lines from a file with flags.
+
+    Args:
+      filename: A string, the name of the flag file.
+      parsed_file_list: A list of the names of the files we have
+        already read.  MUTATED BY THIS FUNCTION.
+
     Returns:
-        List of strings. See the note below.
+      List of strings. See the note below.
 
     NOTE(springer): This function checks for a nested --flagfile=<foo>
-    tag and handles the lower file recursively. It returns a list off
-    all the lines that _could_ contain command flags.  This is
+    tag and handles the lower file recursively. It returns a list of
+    all the lines that _could_ contain command flags. This is
     EVERYTHING except whitespace lines and comments (lines starting
     with '#' or '//').
     """
@@ -1287,7 +1271,7 @@ class FlagValues:
       if line.isspace():
         pass
       # Checks for comment (a line that starts with '#').
-      elif (line.startswith('#') or line.startswith('//')):
+      elif line.startswith('#') or line.startswith('//'):
         pass
       # Checks for a nested "--flagfile=<bar>" flag in the current file.
       # If we find one, recursively parse down into that file.
@@ -1295,44 +1279,48 @@ class FlagValues:
         sub_filename = self.ExtractFilename(line)
         # We do a little safety check for reparsing a file we've already done.
         if not sub_filename in parsed_file_list:
-          included_flags = self.__GetFlagFileLines(sub_filename, parsed_file_list)
+          included_flags = self.__GetFlagFileLines(sub_filename,
+                                                   parsed_file_list)
           flag_line_list.extend(included_flags)
-        else: # Case of hitting a circularly included file.
+        else:  # Case of hitting a circularly included file.
           print >>sys.stderr, ('Warning: Hit circular flagfile dependency: %s'
-                                                                 % sub_filename)
+                               % sub_filename)
       else:
-        # Any line that's not a comment or a nested flagfile should
-        # get copied into 2nd position, this leaves earlier arguements
-        # further back in the list, which makes them have higher priority.
+        # Any line that's not a comment or a nested flagfile should get
+        # copied into 2nd position.  This leaves earlier arguements
+        # further back in the list, thus giving them higher priority.
         flag_line_list.append(line.strip())
     return flag_line_list
 
   def ReadFlagsFromFiles(self, argv):
-    """Process command line args, but also allow args to be read from file
-    Usage:
-      Takes: a list of strings, usually sys.argv, which may contain one or more
-            flagfile directives of the form --flagfile="./filename"
-      References: Global gflags.FLAG class instance
-      Returns: a new list which has the original list combined with what we
-                 read from any flagfile(s).
+    """Processes command line args, but also allow args to be read from file.
+    Args:
+      argv: A list of strings, usually sys.argv, which may contain one
+        or more flagfile directives of the form --flagfile="./filename".
 
-      This function should be called  before the normal FLAGS(argv) call.
-      This function simply scans the input list for a flag that looks like:
-         --flagfile=<somefile>
-      Then it opens <somefile>, reads all valid key and value pairs and inserts
-      them into the input list between the first item of the list and any
-      subsequent items in the list.
-      Note that your application's flags are still defined the usual way using
-      gflags DEFINE_flag() type functions.
+    Returns:
 
-      Notes (assuming we're getting a commandline of some sort as our input):
-      --> Any flags on the command line we were passed in _should_ always take
-              precedence!!!
-      --> a further "--flagfile=<otherfile.cfg>" CAN be nested in a flagfile.
-              It will be processed after the parent flag file is done.
-      --> For duplicate flags, first one we hit should "win".
-      --> In a flagfile, a line beginning with # or // is a comment
-      --> Entirely blank lines _should_ be ignored
+      A new list which has the original list combined with what we read
+      from any flagfile(s).
+
+    References: Global gflags.FLAG class instance.
+
+    This function should be called before the normal FLAGS(argv) call.
+    This function scans the input list for a flag that looks like:
+    --flagfile=<somefile>. Then it opens <somefile>, reads all valid key
+    and value pairs and inserts them into the input list between the
+    first item of the list and any subsequent items in the list.
+
+    Note that your application's flags are still defined the usual way
+    using gflags DEFINE_flag() type functions.
+
+    Notes (assuming we're getting a commandline of some sort as our input):
+    --> Flags from the command line argv _should_ always take precedence!
+    --> A further "--flagfile=<otherfile.cfg>" CAN be nested in a flagfile.
+        It will be processed after the parent flag file is done.
+    --> For duplicate flags, first one we hit should "win".
+    --> In a flagfile, a line beginning with # or // is a comment.
+    --> Entirely blank lines _should_ be ignored.
     """
     parsed_file_list = []
     rest_of_args = argv
@@ -1341,30 +1329,32 @@ class FlagValues:
       current_arg = rest_of_args[0]
       rest_of_args = rest_of_args[1:]
       if self.__IsFlagFileDirective(current_arg):
-        # This handles the case of -(-)flagfile foo.  Inthis case the next arg
-        # really is part of this one.
-        if current_arg == '--flagfile' or current_arg =='-flagfile':
+        # This handles the case of -(-)flagfile foo.  In this case the
+        # next arg really is part of this one.
+        if current_arg == '--flagfile' or current_arg == '-flagfile':
           if not rest_of_args:
-            raise IllegalFlagValue, '--flagfile with no argument'
+            raise IllegalFlagValue('--flagfile with no argument')
           flag_filename = os.path.expanduser(rest_of_args[0])
           rest_of_args = rest_of_args[1:]
         else:
           # This handles the case of (-)-flagfile=foo.
           flag_filename = self.ExtractFilename(current_arg)
         new_argv = (new_argv[:1] +
-                self.__GetFlagFileLines(flag_filename, parsed_file_list) +
-                new_argv[1:])
+                    self.__GetFlagFileLines(flag_filename, parsed_file_list) +
+                    new_argv[1:])
       else:
         new_argv.append(current_arg)
 
     return new_argv
 
   def FlagsIntoString(self):
-    """
-    Retrieve a string version of all the flags with assignments stored
-    in this FlagValues object.  Should mirror the behavior of the c++
-    version of FlagsIntoString.  Each flag assignment is seperated by
-    a newline.
+    """Returns a string with the flags assignments from this FlagValues object.
+
+    This function ignores flags whose value is None.  Each flag
+    assignment is separated by a newline.
+
+    NOTE: MUST mirror the behavior of the C++ function
+    CommandlineFlagsIntoString from google3/base/commandlineflags.cc.
     """
     s = ''
     for flag in self.FlagDict().values():
@@ -1373,23 +1363,102 @@ class FlagValues:
     return s
 
   def AppendFlagsIntoFile(self, filename):
-    """
-    Appends all flags found in this FlagInfo object to the file
-    specified.  Output will be in the format of a flagfile.  This
-    should mirror the behavior of the c++ version of
-    AppendFlagsIntoFile.
+    """Appends all flags assignments from this FlagInfo object to a file.
+
+    Output will be in the format of a flagfile.
+
+    NOTE: MUST mirror the behavior of the C++ version of
+    AppendFlagsIntoFile from google3/base/commandlineflags.cc.
     """
     out_file = open(filename, 'a')
     out_file.write(self.FlagsIntoString())
     out_file.close()
+
+  def WriteHelpInXMLFormat(self, outfile=None):
+    """Outputs flag documentation in XML format.
+
+    NOTE: We use element names that are consistent with those used by
+    the C++ command-line flag library, from
+    google3/base/commandlineflags_reporting.cc.  We also use a few new
+    elements (e.g., <key>), but we do not interfere / overlap with
+    existing XML elements used by the C++ library.  Please maintain this
+    consistency.
+
+    Args:
+      outfile: File object we write to.  Default None means sys.stdout.
+    """
+    outfile = outfile or sys.stdout
+
+    outfile.write('<?xml version=\"1.0\"?>\n')
+    outfile.write('<AllFlags>\n')
+    indent = '  '
+    _WriteSimpleXMLElement(outfile, 'program', os.path.basename(sys.argv[0]),
+                           indent)
+
+    usage_doc = sys.modules['__main__'].__doc__
+    if not usage_doc:
+      usage_doc = '\nUSAGE: %s [flags]\n' % sys.argv[0]
+    else:
+      usage_doc = usage_doc.replace('%s', sys.argv[0])
+    _WriteSimpleXMLElement(outfile, 'usage', usage_doc, indent)
+
+    # Get list of key flags for the main module.
+    key_flags = self._GetKeyFlagsForModule(_GetMainModule())
+
+    # Sort flags by declaring module name and next by flag name.
+    flags_by_module = self.FlagsByModuleDict()
+    all_module_names = list(flags_by_module.keys())
+    all_module_names.sort()
+    for module_name in all_module_names:
+      flag_list = [(f.name, f) for f in flags_by_module[module_name]]
+      flag_list.sort()
+      for unused_flag_name, flag in flag_list:
+        is_key = flag in key_flags
+        flag.WriteInfoInXMLFormat(outfile, module_name,
+                                  is_key=is_key, indent=indent)
+
+    outfile.write('</AllFlags>\n')
+    outfile.flush()
 # end of FlagValues definition
+
 
 # The global FlagValues instance
 FLAGS = FlagValues()
 
 
-class Flag:
+def _MakeXMLSafe(s):
+  """Escapes <, >, and & from s, and removes XML 1.0-illegal chars."""
+  s = cgi.escape(s)  # Escape <, >, and &
+  # Remove characters that cannot appear in an XML 1.0 document
+  # (http://www.w3.org/TR/REC-xml/#charsets).
+  #
+  # NOTE: if there are problems with current solution, one may move to
+  # XML 1.1, which allows such chars, if they're entity-escaped (&#xHH;).
+  s = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f]', '', s)
+  return s
+
+
+def _WriteSimpleXMLElement(outfile, name, value, indent):
+  """Writes a simple XML element.
+
+  Args:
+    outfile: File object we write the XML element to.
+    name: A string, the name of XML element.
+    value: A Python object, whose string representation will be used
+      as the value of the XML element.
+    indent: A string, prepended to each line of generated output.
   """
+  value_str = str(value)
+  if isinstance(value, bool):
+    # Display boolean values as the C++ flag library does: no caps.
+    value_str = value_str.lower()
+  outfile.write('%s<%s>%s</%s>\n' %
+                (indent, name, _MakeXMLSafe(value_str), name))
+
+
+class Flag:
+  """Information about a command-line flag.
+
   'Flag' objects define the following fields:
     .name  - the name for this flag
     .default - the default value for this flag
@@ -1406,19 +1475,21 @@ class Flag:
   The only public method of a 'Flag' object is Parse(), but it is
   typically only called by a 'FlagValues' object.  The Parse() method is
   a thin wrapper around the 'ArgumentParser' Parse() method.  The parsed
-  value is saved in .value, and the .present member is updated.  If this
-  flag was already present, a FlagsError is raised.
+  value is saved in .value, and the .present attribute is updated.  If
+  this flag was already present, a FlagsError is raised.
 
   Parse() is also called during __init__ to parse the default value and
-  initialize the .value member.  This enables other python modules to
+  initialize the .value attribute.  This enables other python modules to
   safely use flags even if the __main__ module neglects to parse the
-  command line arguments.  The .present member is cleared after __init__
-  parsing.  If the default value is set to None, then the __init__
-  parsing step is skipped and the .value member is initialized to None.
+  command line arguments.  The .present attribute is cleared after
+  __init__ parsing.  If the default value is set to None, then the
+  __init__ parsing step is skipped and the .value attribute is
+  initialized to None.
 
   Note: The default value is also presented to the user in the help
   string, so it is important that it be a legal value for this flag.
   """
+
   def __init__(self, parser, serializer, name, default, help_string,
                short_name=None, boolean=0, allow_override=0):
     self.name = name
@@ -1453,7 +1524,7 @@ class Flag:
     try:
       self.value = self.parser.Parse(argument)
     except ValueError, e:  # recast ValueError as IllegalFlagValue
-      raise IllegalFlagValue, ("flag --%s: " % self.name) + str(e)
+      raise IllegalFlagValue("flag --%s: %s" % (self.name, e))
     self.present += 1
 
   def Unparse(self):
@@ -1473,29 +1544,81 @@ class Flag:
         return "--no%s" % self.name
     else:
       if not self.serializer:
-        raise FlagsError, "Serializer not present for flag %s" % self.name
+        raise FlagsError("Serializer not present for flag %s" % self.name)
       return "--%s=%s" % (self.name, self.serializer.Serialize(self.value))
 
   def SetDefault(self, value):
-    """
-    Change the default value, and current value, of this flag object
-    """
+    """Changes the default value (and current value too) for this Flag."""
     # We can't allow a None override because it may end up not being
     # passed to C++ code when we're overriding C++ flags.  So we
     # cowardly bail out until someone fixes the semantics of trying to
     # pass None to a C++ flag.  See swig_flags.Init() for details on
     # this behavior.
     if value is None and self.allow_override:
-      raise DuplicateFlag, self.name
+      raise DuplicateFlag(self.name)
 
     self.default = value
     self.Unparse()
     self.default_as_str = self.__GetParsedValueAsString(self.value)
+
+  def Type(self):
+    """Returns: a string that describes the type of this Flag."""
+    # NOTE: we use strings, and not the types.*Type constants because
+    # our flags can have more exotic types, e.g., 'comma separated list
+    # of strings', 'whitespace separated list of strings', etc.
+    return self.parser.Type()
+
+  def WriteInfoInXMLFormat(self, outfile, module_name, is_key=False, indent=''):
+    """Writes common info about this flag, in XML format.
+
+    This is information that is relevant to all flags (e.g., name,
+    meaning, etc.).  If you defined a flag that has some other pieces of
+    info, then please override _WriteCustomInfoInXMLFormat.
+
+    Please do NOT override this method.
+
+    Args:
+      outfile: File object we write to.
+      module_name: A string, the name of the module that defines this flag.
+      is_key: A boolean, True iff this flag is key for main module.
+      indent: A string that is prepended to each generated line.
+    """
+    outfile.write(indent + '<flag>\n')
+    inner_indent = indent + '  '
+    if is_key:
+      _WriteSimpleXMLElement(outfile, 'key', 'yes', inner_indent)
+    _WriteSimpleXMLElement(outfile, 'file', module_name, inner_indent)
+    # Print flag features that are relevant for all flags.
+    _WriteSimpleXMLElement(outfile, 'name', self.name, inner_indent)
+    if self.short_name:
+      _WriteSimpleXMLElement(outfile, 'short_name', self.short_name,
+                             inner_indent)
+    if self.help:
+      _WriteSimpleXMLElement(outfile, 'meaning', self.help, inner_indent)
+    _WriteSimpleXMLElement(outfile, 'default', self.default, inner_indent)
+    _WriteSimpleXMLElement(outfile, 'current', self.value, inner_indent)
+    _WriteSimpleXMLElement(outfile, 'type', self.Type(), inner_indent)
+    # Print extra flag features this flag may have.
+    self._WriteCustomInfoInXMLFormat(outfile, inner_indent)
+    outfile.write(indent + '</flag>\n')
+
+  def _WriteCustomInfoInXMLFormat(self, outfile, indent):
+    """Writes extra info about this flag, in XML format.
+
+    "Extra" means "not already printed by WriteInfoInXMLFormat above."
+
+    Args:
+      outfile: File object we write to.
+      indent: A string that is prepended to each generated line.
+    """
+    # Usually, the parser knows the extra details about the flag, so
+    # we just forward the call to it.
+    self.parser.WriteCustomInfoInXMLFormat(outfile, indent)
 # End of Flag definition
 
+
 class ArgumentParser:
-  """
-  This is a base class used to parse and convert arguments.
+  """Base class used to parse and convert arguments.
 
   The Parse() method checks to make sure that the string argument is a
   legal value and convert it to a native type.  If the value cannot be
@@ -1506,22 +1629,27 @@ class ArgumentParser:
   presented to the user to describe the form of the legal values.
   """
   syntactic_help = ""
+
   def Parse(self, argument):
-    """
-    The default implementation of Parse() accepts any value of argument,
-    simply returning it unmodified.
-    """
+    """Default implementation: always returns its argument unmodified."""
     return argument
 
+  def Type(self):
+    return 'string'
+
+  def WriteCustomInfoInXMLFormat(self, outfile, indent):
+    pass
+
+
 class ArgumentSerializer:
-  """
-  This is the base class for generating string representations of a
-  flag value
-  """
+  """Base class for generating string representations of a flag value."""
+
   def Serialize(self, value):
     return str(value)
 
+
 class ListSerializer(ArgumentSerializer):
+
   def __init__(self, list_sep):
     self.list_sep = list_sep
 
@@ -1529,32 +1657,42 @@ class ListSerializer(ArgumentSerializer):
     return self.list_sep.join([str(x) for x in value])
 
 
-# The DEFINE functions are explained in the module doc string.
+# The DEFINE functions are explained in mode details in the module doc string.
+
 
 def DEFINE(parser, name, default, help, flag_values=FLAGS, serializer=None,
            **args):
-  """
-  This creates a generic 'Flag' object that parses its arguments with a
-  'Parser' and registers it with a 'FlagValues' object.
+  """Registers a generic Flag object.
 
-  Developers who need to create their own 'Parser' classes should call
-  this module function. to register their flags.  For example:
+  NOTE: in the docstrings of all DEFINE* functions, "registers" is short
+  for "creates a new flag and registers it".
 
-  DEFINE(DatabaseSpec(), "dbspec", "mysql:db0:readonly:hr",
-         "The primary database")
+  Auxiliary function: clients should use the specialized DEFINE_<type>
+  function instead.
+
+  Args:
+    parser: ArgumentParser that is used to parse the flag arguments.
+    name: A string, the flag name.
+    default: The default value of the flag.
+    help: A help string.
+    flag_values: FlagValues object the flag will be registered with.
+    serializer: ArgumentSerializer that serializes the flag value.
+    args: Dictionary with extra keyword args that are passes to the
+      Flag __init__.
   """
   DEFINE_flag(Flag(parser, serializer, name, default, help, **args),
               flag_values)
 
+
 def DEFINE_flag(flag, flag_values=FLAGS):
-  """
-  This registers a 'Flag' object with a 'FlagValues' object.  By
-  default, the global FLAGS 'FlagValue' object is used.
+  """Registers a 'Flag' object with a 'FlagValues' object.
+
+  By default, the global FLAGS 'FlagValue' object is used.
 
   Typical users will use one of the more specialized DEFINE_xxx
   functions, such as DEFINE_string or DEFINE_integer.  But developers
-  who need to create Flag objects themselves should use this function to
-  register their flags.
+  who need to create Flag objects themselves should use this function
+  to register their flags.
   """
   # copying the reference to flag_values prevents pychecker warnings
   fv = flag_values
@@ -1571,7 +1709,7 @@ def DEFINE_flag(flag, flag_values=FLAGS):
 
 
 def _InternalDeclareKeyFlags(flag_names, flag_values=FLAGS):
-  """Declare a flag as key for the calling module.
+  """Declares a flag as key for the calling module.
 
   Internal function.  User code should call DECLARE_key_flag or
   ADOPT_module_key_flags instead.
@@ -1596,12 +1734,12 @@ def _InternalDeclareKeyFlags(flag_names, flag_values=FLAGS):
 
 
 def DECLARE_key_flag(flag_name, flag_values=FLAGS):
-  """Declare one flag as key to the current module.
+  """Declares one flag as key to the current module.
 
   Key flags are flags that are deemed really important for a module.
   They are important when listing help messages; e.g., if the
-  --helpshort command-line flag is used, then only the key flags of
-  the main module are listed (instead of all flags, as in the case of
+  --helpshort command-line flag is used, then only the key flags of the
+  main module are listed (instead of all flags, as in the case of
   --help).
 
   Sample usage:
@@ -1619,7 +1757,7 @@ def DECLARE_key_flag(flag_name, flag_values=FLAGS):
 
 
 def ADOPT_module_key_flags(module, flag_values=FLAGS):
-  """Declare that all flags key to a module are key to the current module.
+  """Declares that all flags key to a module are key to the current module.
 
   Args:
     module: A module object.
@@ -1641,34 +1779,28 @@ def ADOPT_module_key_flags(module, flag_values=FLAGS):
       flag_values=flag_values)
 
 
-###############################
-#################  STRING FLAGS
-###############################
+#
+# STRING FLAGS
+#
+
 
 def DEFINE_string(name, default, help, flag_values=FLAGS, **args):
-  """
-  This registers a flag whose value can be any string.
-  """
+  """Registers a flag whose value can be any string."""
   parser = ArgumentParser()
   serializer = ArgumentSerializer()
   DEFINE(parser, name, default, help, flag_values, serializer, **args)
 
 
-###############################
-################  BOOLEAN FLAGS
-###############################
-####  and the special HELP flag
-###############################
+#
+# BOOLEAN FLAGS
+#
+# and the special HELP flags.
 
 class BooleanParser(ArgumentParser):
-  """
-  A boolean value
-  """
+  """Parser of boolean values."""
 
   def Convert(self, argument):
-    """
-    convert the argument to a boolean; raise ValueError on errors
-    """
+    """Converts the argument to a boolean; raise ValueError on errors."""
     if type(argument) == str:
       if argument.lower() in ['true', 't', '1']:
         return True
@@ -1687,30 +1819,38 @@ class BooleanParser(ArgumentParser):
     val = self.Convert(argument)
     return val
 
-class BooleanFlag(Flag):
-  """
-  A basic boolean flag.  Boolean flags do not take any arguments, and
-  their value is either True (1) or False (0).  The false value is
-  specified on the command line by prepending the word 'no' to either
-  the long or short flag name.
+  def Type(self):
+    return 'bool'
 
-  For example, if a Boolean flag was created whose long name was 'update'
-  and whose short name was 'x', then this flag could be explicitly unset
-  through either --noupdate or --nox.
+
+class BooleanFlag(Flag):
+  """Basic boolean flag.
+
+  Boolean flags do not take any arguments, and their value is either
+  True (1) or False (0).  The false value is specified on the command
+  line by prepending the word 'no' to either the long or the short flag
+  name.
+
+  For example, if a Boolean flag was created whose long name was
+  'update' and whose short name was 'x', then this flag could be
+  explicitly unset through either --noupdate or --nox.
   """
+
   def __init__(self, name, default, help, short_name=None, **args):
     p = BooleanParser()
     Flag.__init__(self, p, None, name, default, help, short_name, 1, **args)
     if not self.help: self.help = "a boolean value"
 
-def DEFINE_boolean(name, default, help, flag_values=FLAGS, **args):
-  """
-  This registers a boolean flag - one that does not take an argument.
-  If a user wants to specify a false value explicitly, the long option
-  beginning with 'no' must be used: i.e. --noflag
 
-  This flag will have a value of None, True or False.  None is possible if
-  default=None and the user does not specify the flag on the command
+def DEFINE_boolean(name, default, help, flag_values=FLAGS, **args):
+  """Registers a boolean flag.
+
+  Such a boolean flag does not take an argument.  If a user wants to
+  specify a false value explicitly, the long option beginning with 'no'
+  must be used: i.e. --noflag
+
+  This flag will have a value of None, True or False.  None is possible
+  if default=None and the user does not specify the flag on the command
   line.
   """
   DEFINE_flag(BooleanFlag(name, default, help, **args), flag_values)
@@ -1738,6 +1878,21 @@ class HelpFlag(BooleanFlag):
         print flags
       sys.exit(1)
 
+
+class HelpXMLFlag(BooleanFlag):
+  """Similar to HelpFlag, but generates output in XML format."""
+
+  def __init__(self):
+    BooleanFlag.__init__(self, 'helpxml', False,
+                         'like --help, but generates XML output',
+                         allow_override=1)
+
+  def Parse(self, arg):
+    if arg:
+      FLAGS.WriteHelpInXMLFormat(sys.stdout)
+      sys.exit(1)
+
+
 class HelpshortFlag(BooleanFlag):
   """
   HelpshortFlag is a special boolean flag that prints usage
@@ -1760,14 +1915,14 @@ class HelpshortFlag(BooleanFlag):
       sys.exit(1)
 
 
-###############################
-##################  FLOAT FLAGS
-###############################
+#
+# FLOAT FLAGS
+#
 
 class FloatParser(ArgumentParser):
-  """
-  A floating point value; optionally bounded to a given upper and lower
-  bound.
+  """Parser of floating point values.
+
+  Parsed value may be bounded to a given upper and lower bound.
   """
   number_article = "a"
   number_name = "number"
@@ -1792,46 +1947,59 @@ class FloatParser(ArgumentParser):
     self.syntactic_help = sh
 
   def Convert(self, argument):
-    """
-    convert the argument to a float; raise ValueError on errors
-    """
+    """Converts argument to a float; raises ValueError on errors."""
     return float(argument)
 
   def Parse(self, argument):
     val = self.Convert(argument)
     if ((self.lower_bound != None and val < self.lower_bound) or
         (self.upper_bound != None and val > self.upper_bound)):
-      raise ValueError, "%s is not %s" % (val, self.syntactic_help)
+      raise ValueError("%s is not %s" % (val, self.syntactic_help))
     return val
 
+  def Type(self):
+    return 'float'
+
+  def WriteCustomInfoInXMLFormat(self, outfile, indent):
+    if self.lower_bound is not None:
+      _WriteSimpleXMLElement(outfile, 'lower_bound', self.lower_bound, indent)
+    if self.upper_bound is not None:
+      _WriteSimpleXMLElement(outfile, 'upper_bound', self.upper_bound, indent)
+# End of FloatParser
+
+
 def DEFINE_float(name, default, help, lower_bound=None, upper_bound=None,
-                 flag_values = FLAGS, **args):
-  """
-  This registers a flag whose value must be a float.  If lower_bound,
-  or upper_bound are set, then this flag must be within the given range.
+                 flag_values=FLAGS, **args):
+  """Registers a flag whose value must be a float.
+
+  If lower_bound or upper_bound are set, then this flag must be
+  within the given range.
   """
   parser = FloatParser(lower_bound, upper_bound)
   serializer = ArgumentSerializer()
   DEFINE(parser, name, default, help, flag_values, serializer, **args)
 
 
-###############################
-################  INTEGER FLAGS
-###############################
+#
+# INTEGER FLAGS
+#
+
 
 class IntegerParser(FloatParser):
-  """
-  An integer value; optionally bounded to a given upper or lower bound.
+  """Parser of an integer value.
+
+  Parsed value may be bounded to a given upper and lower bound.
   """
   number_article = "an"
   number_name = "integer"
   syntactic_help = " ".join((number_article, number_name))
+
   def Convert(self, argument):
     __pychecker__ = 'no-returnvalues'
     if type(argument) == str:
       base = 10
       if len(argument) > 2 and argument[0] == "0" and argument[1] == "x":
-        base=16
+        base = 16
       try:
         return int(argument, base)
       # ValueError is thrown when argument is a string, and overflows an int.
@@ -1844,74 +2012,84 @@ class IntegerParser(FloatParser):
       except OverflowError:
         return long(argument)
 
+  def Type(self):
+    return 'int'
+
+
 def DEFINE_integer(name, default, help, lower_bound=None, upper_bound=None,
-                   flag_values = FLAGS, **args):
-  """
-  This registers a flag whose value must be an integer.  If lower_bound,
-  or upper_bound are set, then this flag must be within the given range.
+                   flag_values=FLAGS, **args):
+  """Registers a flag whose value must be an integer.
+
+  If lower_bound, or upper_bound are set, then this flag must be
+  within the given range.
   """
   parser = IntegerParser(lower_bound, upper_bound)
   serializer = ArgumentSerializer()
   DEFINE(parser, name, default, help, flag_values, serializer, **args)
 
 
-###############################
-###################  ENUM FLAGS
-###############################
+#
+# ENUM FLAGS
+#
+
 
 class EnumParser(ArgumentParser):
-  """
-  A string enum value
+  """Parser of a string enum value (a string value from a given set).
+
+  If enum_values (see below) is not specified, any string is allowed.
   """
 
   def __init__(self, enum_values=None):
     self.enum_values = enum_values
 
   def Parse(self, argument):
-    """
-    If enum_values is not specified, any string is allowed
-    """
     if self.enum_values and argument not in self.enum_values:
-      raise ValueError, ("value should be one of <%s>"
-                         % "|".join(self.enum_values))
+      raise ValueError("value should be one of <%s>" %
+                       "|".join(self.enum_values))
     return argument
 
+  def Type(self):
+    return 'string enum'
+
+
 class EnumFlag(Flag):
-  """
-  A basic enum flag. The flag's value can be any string from the list
-  of enum_values.
-  """
-  def __init__(self, name, default, help, enum_values=[],
+  """Basic enum flag; its value can be any string from list of enum_values."""
+
+  def __init__(self, name, default, help, enum_values=None,
                short_name=None, **args):
+    enum_values = enum_values or []
     p = EnumParser(enum_values)
     g = ArgumentSerializer()
     Flag.__init__(self, p, g, name, default, help, short_name, **args)
     if not self.help: self.help = "an enum string"
     self.help = "<%s>: %s" % ("|".join(enum_values), self.help)
 
+  def _WriteCustomInfoInXMLFormat(self, outfile, indent):
+    for enum_value in self.parser.enum_values:
+      _WriteSimpleXMLElement(outfile, 'enum_value', enum_value, indent)
+
+
 def DEFINE_enum(name, default, enum_values, help, flag_values=FLAGS,
                 **args):
-  """
-  This registers a flag whose value can be a string from a set of
-  specified values.
-  """
+  """Registers a flag whose value can be any string from enum_values."""
   DEFINE_flag(EnumFlag(name, default, help, enum_values, ** args),
               flag_values)
 
 
-###############################
-###################  LIST FLAGS
-###############################
+#
+# LIST FLAGS
+#
+
 
 class BaseListParser(ArgumentParser):
-  """
-  A base class for a string list parser.
-  To extend, inherit from this class, and call
+  """Base class for a parser of lists of strings.
 
-  BaseListParser.__init__(self, token, name)
+  To extend, inherit from this class; from the subclass __init__, call
 
-  where token is a character used to tokenize, and
-  name is a description of the separator
+    BaseListParser.__init__(self, token, name)
+
+  where token is a character used to tokenize, and name is a description
+  of the separator.
   """
 
   def __init__(self, token=None, name=None):
@@ -1926,77 +2104,91 @@ class BaseListParser(ArgumentParser):
     else:
       return [s.strip() for s in argument.split(self._token)]
 
+  def Type(self):
+    return '%s separated list of strings' % self._name
+
 
 class ListParser(BaseListParser):
-  """
-  A string list parser (comma-separated)
-  """
+  """Parser for a comma-separated list of strings."""
 
   def __init__(self):
     BaseListParser.__init__(self, ',', 'comma')
 
+  def WriteCustomInfoInXMLFormat(self, outfile, indent):
+    BaseListParser.WriteCustomInfoInXMLFormat(self, outfile, indent)
+    _WriteSimpleXMLElement(outfile, 'list_separator', repr(','), indent)
+
+
 class WhitespaceSeparatedListParser(BaseListParser):
-  """
-  A string list parser (whitespace-separated)
-  """
+  """Parser for a whitespace-separated list of strings."""
 
   def __init__(self):
     BaseListParser.__init__(self, None, 'whitespace')
 
+  def WriteCustomInfoInXMLFormat(self, outfile, indent):
+    BaseListParser.WriteCustomInfoInXMLFormat(self, outfile, indent)
+    separators = list(string.whitespace)
+    separators.sort()
+    for ws_char in string.whitespace:
+      _WriteSimpleXMLElement(outfile, 'list_separator', repr(ws_char), indent)
+
 
 def DEFINE_list(name, default, help, flag_values=FLAGS, **args):
-  """
-  This registers a flag whose value is a list of strings, separated by commas
-  """
+  """Registers a flag whose value is a comma-separated list of strings."""
   parser = ListParser()
   serializer = ListSerializer(',')
   DEFINE(parser, name, default, help, flag_values, serializer, **args)
 
+
 def DEFINE_spaceseplist(name, default, help, flag_values=FLAGS, **args):
-  """
-  This registers a flag whose value is a list of strings, separated by any
-  whitespace
+  """Registers a flag whose value is a whitespace-separated list of strings.
+
+  Any whitespace can be used as a separator.
   """
   parser = WhitespaceSeparatedListParser()
   serializer = ListSerializer(' ')
   DEFINE(parser, name, default, help, flag_values, serializer, **args)
 
 
-###############################
-##################  MULTI FLAGS
-###############################
+#
+# MULTI FLAGS
+#
+
 
 class MultiFlag(Flag):
-  """
-  MultiFlag is a specialized subclass of Flag that accumulates
-  multiple values in a list when a command-line option appears
-  multiple times.
+  """A flag that can appear multiple time on the command-line.
+
+  The value of such a flag is a list that contains the individual values
+  from all the appearances of that flag on the command-line.
 
   See the __doc__ for Flag for most behavior of this class.  Only
   differences in behavior are described here:
-   * the default value may be a single value -OR- a list of values
-   * the value of the flag is always a list, even if the option was only
-     supplied once, and even if the default value is a single value
+
+    * The default value may be either a single value or a list of values.
+      A single value is interpreted as the [value] singleton list.
+
+    * The value of the flag is always a list, even if the option was
+      only supplied once, and even if the default value is a single
+      value
   """
+
   def __init__(self, *args, **kwargs):
     Flag.__init__(self, *args, **kwargs)
-
-    self.help = (self.help +
-                 ';\n    repeat this option to specify a list of values')
+    self.help += ';\n    repeat this option to specify a list of values'
 
   def Parse(self, arguments):
-    """Parse one or more arguments with the installed parser.
+    """Parses one or more arguments with the installed parser.
 
-    Arguments:
-      arguments:  a single argument or a list of arguments (typically a list
-        of default values); single arguments will be converted internally into
-        a list containing one item
+    Args:
+      arguments: a single argument or a list of arguments (typically a
+        list of default values); a single argument is converted
+        internally into a list containing one item.
     """
     if not isinstance(arguments, list):
-      # Default value may be a list of values.  Most other arguments will not
-      # be, so convert them into a single-item list to make processing simpler
-      # below.
-      arguments = [ arguments ]
+      # Default value may be a list of values.  Most other arguments
+      # will not be, so convert them into a single-item list to make
+      # processing simpler below.
+      arguments = [arguments]
 
     if self.present:
       # keep a backup reference to list of previously supplied option values
@@ -2010,12 +2202,12 @@ class MultiFlag(Flag):
       Flag.Parse(self, item)  # also increments self.present
       values.append(self.value)
 
-    # put list of option values back in member variable
+    # put list of option values back in the 'value' attribute
     self.value = values
 
   def Serialize(self):
     if not self.serializer:
-      raise FlagsError, "Serializer not present for flag %s" % self.name
+      raise FlagsError("Serializer not present for flag %s" % self.name)
     if self.value is None:
       return ''
 
@@ -2031,37 +2223,45 @@ class MultiFlag(Flag):
 
     return s
 
+  def Type(self):
+    return 'multi ' + self.parser.Type()
+
 
 def DEFINE_multi(parser, serializer, name, default, help, flag_values=FLAGS,
                  **args):
-  """
-  This creates a generic 'MultiFlag' object that parses its arguments with a
-  'Parser' and registers it with a 'FlagValues' object.
+  """Registers a generic MultiFlag that parses its args with a given parser.
 
-  Developers who need to create their own 'Parser' classes for options which
-  can appear multiple times can call this module function to register their
-  flags.
+  Auxiliary function.  Normal users should NOT use it directly.
+
+  Developers who need to create their own 'Parser' classes for options
+  which can appear multiple times can call this module function to
+  register their flags.
   """
-  DEFINE_flag(MultiFlag(parser, serializer, name, default, help, **args), flag_values)
+  DEFINE_flag(MultiFlag(parser, serializer, name, default, help, **args),
+              flag_values)
+
 
 def DEFINE_multistring(name, default, help, flag_values=FLAGS, **args):
-  """
-  This registers a flag whose value can be a list of any strings.  Use the flag
-  on the command line multiple times to place multiple string values into the
-  list.  The 'default' may be a single string (which will be converted into a
-  single-element list) or a list of strings.
+  """Registers a flag whose value can be a list of any strings.
+
+  Use the flag on the command line multiple times to place multiple
+  string values into the list.  The 'default' may be a single string
+  (which will be converted into a single-element list) or a list of
+  strings.
   """
   parser = ArgumentParser()
   serializer = ArgumentSerializer()
   DEFINE_multi(parser, serializer, name, default, help, flag_values, **args)
 
+
 def DEFINE_multi_int(name, default, help, lower_bound=None, upper_bound=None,
                      flag_values=FLAGS, **args):
-  """
-  This registers a flag whose value can be a list of any integers.  Use the
-  flag on the command line multiple times to place multiple integer values
-  into the list.  The 'default' may be a single integer (which will be
-  converted into a single-element list) or a list of integers.
+  """Registers a flag whose value can be a list of arbitrary integers.
+
+  Use the flag on the command line multiple times to place multiple
+  integer values into the list.  The 'default' may be a single integer
+  (which will be converted into a single-element list) or a list of
+  integers.
   """
   parser = IntegerParser(lower_bound, upper_bound)
   serializer = ArgumentSerializer()
@@ -2073,9 +2273,11 @@ def DEFINE_multi_int(name, default, help, lower_bound=None, upper_bound=None,
 # these flagnames for their own purposes, if they want.
 DEFINE_flag(HelpFlag())
 DEFINE_flag(HelpshortFlag())
+DEFINE_flag(HelpXMLFlag())
 
 # Define special flags here so that help may be generated for them.
 _SPECIAL_FLAGS = FlagValues()
+
 
 DEFINE_string(
     'flagfile', "",

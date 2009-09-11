@@ -4,11 +4,11 @@
 # make sure we're interpreted by some minimal autoconf
 AC_PREREQ(2.57)
 
-AC_INIT(gflags, 1.1, opensource@google.com)
+AC_INIT(gflags, 1.2, opensource@google.com)
 # The argument here is just something that should be in the current directory
 # (for sanity checking)
 AC_CONFIG_SRCDIR(README)
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([dist-zip])
 AM_CONFIG_HEADER(src/config.h)
 
 # Checks for programs.
@@ -27,11 +27,15 @@ case $host_os in
     # MinGW.  Using this option means an extra link step is executed during
     # "make install".
     AC_DISABLE_FAST_INSTALL
+    # /tmp is a mount-point in mingw, and hard to use.  use cwd instead
+    TMPDIR=gflags_testdir
     ;;
     *)
     AC_ENABLE_FAST_INSTALL
+    TMPDIR=/tmp/gflags
     ;;
 esac
+AC_SUBST(TMPDIR)
 
 # Uncomment this if you'll be exporting libraries (.so's)
 AC_PROG_LIBTOOL
@@ -53,6 +57,7 @@ AC_CHECK_TYPE(u_int16_t, ac_cv_have_u_int16_t=1, ac_cv_have_u_int16_t=0)
 AC_CHECK_TYPE(__int16, ac_cv_have___int16=1, ac_cv_have___int16=0)
 
 AC_CHECK_FUNCS([strtoll strtoq])
+AC_CHECK_FUNCS([setenv putenv])    # MinGW has putenv but not setenv
 
 AX_C___ATTRIBUTE__
 # We only care about __attribute__ ((unused))

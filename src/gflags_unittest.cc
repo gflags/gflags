@@ -57,6 +57,28 @@ using GOOGLE_NAMESPACE::FlagRegisterer;
 // Returns the number of elements in an array.
 #define GET_ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*(arr)))
 
+#if !defined(HAVE_SETENV) && defined(HAVE_PUTENV)   // mingw, at least
+void setenv(const char* name, const char* value, int) {
+  // In windows, it's impossible to set a variable to the empty string.
+  // We handle this by setting it to "0" and the NUL-ing out the \0.
+  // cf http://svn.apache.org/viewvc/stdcxx/trunk/tests/src/environ.cpp?r1=611451&r2=637508&pathrev=637508
+  static const char* const kFakeZero = "0";
+  if (*value == '\0')
+    value = kFakeZero;
+  // Apparently the semantics of putenv() is that the input
+  // must live forever, so we leak memory here. :-(
+  const int nameval_len = strlen(name) + 1 + strlen(value) + 1;
+  char* nameval = reinterpret_cast<char*>(malloc(nameval_len));
+  snprintf(nameval, nameval_len, "%s=%s", name, value);
+  putenv(nameval);
+  if (value == kFakeZero) {
+    nameval[nameval_len - 2] = '\0';   // works when putenv() makes no copy
+    if (*getenv(name) != '\0')
+      *getenv(name) = '\0';            // works when putenv() copies nameval
+  }
+}
+#endif
+
 DECLARE_string(tryfromenv);   // in gflags.cc
 
 DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
@@ -85,18 +107,6 @@ DEFINE_string(test_str3, "initial", "");
 
 // This is used to test setting tryfromenv manually
 DEFINE_string(test_tryfromenv, "initial", "");
-
-// boolean flag assigned correctly with bool
-DEFINE_bool(test_bool_bool, true, "");
-
-// boolean flag assigned with string
-DEFINE_bool(test_bool_string, "", "");
-
-// boolean flag assigned with float
-DEFINE_bool(test_bool_float, 1.0, "");
-
-// boolean flag assigned with int
-DEFINE_bool(test_bool_int, 1, "");
 
 // Don't try this at home!
 static int changeable_var = 12;
@@ -249,7 +259,11 @@ vector<void (*)()> g_testlist;  // the tests to run
 #define TEST(a, b)                                      \
   struct Test_##a##_##b {                               \
     Test_##a##_##b() { g_testlist.push_back(&Run); }    \
-    static void Run() { FlagSaver fs; RunTest(); }      \
+    static void Run() {                                 \
+      FlagSaver fs;                                     \
+      fprintf(stderr, "Running test %s/%s\n", #a, #b);  \
+      RunTest();                                        \
+    }                                                   \
     static void RunTest();                              \
   };                                                    \
   static Test_##a##_##b g_test_##a##_##b;               \
@@ -416,6 +430,7 @@ TEST(FlagFileTest, FilenamesOurfileFirst) {
       -1.0);
 }
 
+#ifdef HAVE_FNMATCH_H   // otherwise glob isn't supported
 TEST(FlagFileTest, FilenamesOurfileGlob) {
   FLAGS_test_string = "initial";
   FLAGS_test_bool = false;
@@ -467,6 +482,7 @@ TEST(FlagFileTest, FilenamesOurfileInBigList) {
       1,
       -1.0);
 }
+#endif
 
 // Tests that a failed flag-from-string read keeps flags at default values
 TEST(FlagFileTest, FailReadFlagsFromString) {
@@ -540,8 +556,11 @@ TEST(SetFlagValueTest, OrdinaryValues) {
 
 
 // Tests that flags can be set to exceptional values.
+// Note: apparently MINGW doesn't parse inf and nan correctly:
+//    http://www.mail-archive.com/bug-gnulib@gnu.org/msg09573.html
+// This url says FreeBSD also has a problem, but I didn't see that.
 TEST(SetFlagValueTest, ExceptionalValues) {
-#ifdef isinf   // on systems without isinf, inf stuff may not work at all
+#if defined(isinf) && !defined(__MINGW32__)
   EXPECT_EQ("test_double set to inf\n",
             SetCommandLineOption("test_double", "inf"));
   EXPECT_INF(FLAGS_test_double);
@@ -558,14 +577,14 @@ TEST(SetFlagValueTest, ExceptionalValues) {
             SetCommandLineOption("test_double", " "));
   EXPECT_EQ("",
             SetCommandLineOption("test_double", ""));
-#ifdef isinf
+#if defined(isinf) && !defined(__MINGW32__)
   EXPECT_EQ("test_double set to -inf\n",
             SetCommandLineOption("test_double", "-inf"));
   EXPECT_INF(FLAGS_test_double);
   EXPECT_GT(0, FLAGS_test_double);
 #endif
 
-#ifdef isnan
+#if defined(isnan) && !defined(__MINGW32__)
   EXPECT_EQ("test_double set to nan\n",
             SetCommandLineOption("test_double", "NaN"));
   EXPECT_NAN(FLAGS_test_double);
@@ -1499,7 +1518,13 @@ static int Main(int argc, char **argv) {
   SetUsageMessage(usage_message.c_str());
   ParseCommandLineFlags(&argc, &argv, true);
 
+#ifdef __MINGW32__
+  // I had trouble creating a directory in /tmp from mingw
+  FLAGS_test_tmpdir = "./gflags_unittest_testdir";
+  mkdir(FLAGS_test_tmpdir.c_str());   // mingw has a weird one-arg mkdir
+#else
   mkdir(FLAGS_test_tmpdir.c_str(), 0755);
+#endif
 
   return RUN_ALL_TESTS();
 }

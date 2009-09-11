@@ -29,7 +29,7 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-"Unittest for flags.py module"
+"Unittest for gflags.py module"
 
 __pychecker__ = "no-local" # for unittest
 
@@ -495,7 +495,7 @@ class FlagsUnitTest(unittest.TestCase):
       "--testspacelist [] --x 10 "
       "--noexec --quack "
       "--test1 "
-      "--testget1 --no? --nodebug --nohelp --nohelpshort "
+      "--testget1 --no? --nodebug --nohelp --nohelpshort --nohelpxml "
       "--noq --notest0 --notestget2 "
       "--notestget3 --notestnone")
 
@@ -520,7 +520,7 @@ class FlagsUnitTest(unittest.TestCase):
       "--testspacelist [] --x 10 "
       "--debug --noexec --quack "
       "--test1 "
-      "--testget1 --no? --nohelp --nohelpshort "
+      "--testget1 --no? --nohelp --nohelpshort --nohelpxml "
       "--noq --notest0 --notestget2 "
       "--notestget3 --notestnone")
 
@@ -535,12 +535,25 @@ class FlagsUnitTest(unittest.TestCase):
     except flags.DuplicateFlag, e:
       pass
 
+    # Duplicate short flag detection
     try:
       flags.DEFINE_boolean("zoom1", 0, "runhelp z1", short_name='z')
       flags.DEFINE_boolean("zoom2", 0, "runhelp z2", short_name='z')
-      raise AssertionError("duplicate flag detection failed")
+      raise AssertionError("duplicate short flag detection failed")
     except flags.DuplicateFlag, e:
-      pass
+      self.assertTrue("The flag 'z' is defined twice. " in e.args[0])
+      self.assertTrue("First from" in e.args[0])
+      self.assertTrue(", Second from" in e.args[0])
+
+    # Duplicate mixed flag detection
+    try:
+      flags.DEFINE_boolean("short1", 0, "runhelp s1", short_name='s')
+      flags.DEFINE_boolean("s", 0, "runhelp s2")
+      raise AssertionError("duplicate mixed flag detection failed")
+    except flags.DuplicateFlag, e:
+      self.assertTrue("The flag 's' is defined twice. " in e.args[0])
+      self.assertTrue("First from" in e.args[0])
+      self.assertTrue(", Second from" in e.args[0])
 
     # Make sure allow_override works
     try:
@@ -1165,6 +1178,7 @@ class FlagsUnitTest(unittest.TestCase):
     (default: 'false')
   -?,--[no]help: show this help
   --[no]helpshort: show usage only for this module
+  --[no]helpxml: like --help, but generates XML output
   --kwery: <who|what|why|where|when>: ?
   --l: how long to be
     (default: '9223372032559808512')
@@ -1407,7 +1421,9 @@ class FlagsUnitTest(unittest.TestCase):
     try:
       help_flag_help = (
           "  -?,--[no]help: show this help\n"
-          "  --[no]helpshort: show usage only for this module")
+          "  --[no]helpshort: show usage only for this module\n"
+          "  --[no]helpxml: like --help, but generates XML output"
+          )
 
       expected_help = "\n%s:\n%s" % (sys.argv[0], help_flag_help)
 
@@ -1477,18 +1493,18 @@ class FlagsUnitTest(unittest.TestCase):
     self.assertEqual(flags._GetCallingModule(), sys.argv[0])
     self.assertEqual(
         module_foo.GetModuleName(),
-        'google3.pyglib.tests.flags_modules_for_testing.module_foo')
+        'test_module_foo')
     self.assertEqual(
         module_bar.GetModuleName(),
-        'google3.pyglib.tests.flags_modules_for_testing.module_bar')
+        'test_module_bar')
 
     # We execute the following exec statements for their side-effect
     # (i.e., not raising an error).  They emphasize the case that not
     # all code resides in one of the imported modules: Python is a
     # really dynamic language, where we can dynamically construct some
     # code and execute it.
-    code = ("from google3.pyglib import flags\n"
-            "module_name = flags._GetCallingModule()")
+    code = ("import gflags\n"
+            "module_name = gflags._GetCallingModule()")
     exec code
 
     # Next two exec statements executes code with a global environment
@@ -1517,7 +1533,7 @@ class FlagsUnitTest(unittest.TestCase):
     module_bar.ExecuteCode(code, global_dict)
     self.assertEqual(
         global_dict['module_name'],
-        'google3.pyglib.tests.flags_modules_for_testing.module_bar')
+        'test_module_bar')
 
 
 def main():

@@ -32,6 +32,15 @@ The %name-devel package contains static and debug libraries and header
 files for developing applications that use the %name package.
 
 %changelog
+	* Thu Sep 10 2009 <opensource@google.com>
+        - Change from '%configure' to something like it, but without -m32
+
+	* Mon Apr 20 2009 <opensource@google.com>
+	- Change build rule to use '%configure' rather than './configure'
+	- Change install to use DESTDIR instead of prefix for make install.
+	- Use wildcards for doc/ and lib/ directories
+        - Use {_libdir}/{_includedir}/etc instead of {prefix}/lib, etc
+
 	* Tue Dec 13 2006 <opensource@google.com>
 	- First draft
 
@@ -39,12 +48,15 @@ files for developing applications that use the %name package.
 %setup
 
 %build
-./configure
-make prefix=%prefix
+# I can't use '% configure', because it defines -m32 which breaks the
+# build somehow on my system.  But I do take as much from % configure
+# (in /usr/lib/rpm/macros) as I can.
+./configure --prefix=%{_prefix} --exec-prefix=%{_exec_prefix} --bindir=%{_bindir} --sbindir=%{_sbindir} --sysconfdir=%{_sysconfdir} --datadir=%{_datadir} --includedir=%{_includedir} --libdir=%{_libdir} --libexecdir=%{_libexecdir} --localstatedir=%{_localstatedir} --sharedstatedir=%{_sharedstatedir} --mandir=%{_mandir} --infodir=%{_infodir}
+make
 
 %install
 rm -rf $RPM_BUILD_ROOT
-make prefix=$RPM_BUILD_ROOT%{prefix} install
+make DESTDIR=$RPM_BUILD_ROOT install
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -52,28 +64,20 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root)
 
-## Mark all installed files within /usr/share/doc/{package name} as
-## documentation.  This depends on the following two lines appearing in
-## Makefile.am:
-##     docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
-##     dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README
 %docdir %{prefix}/share/doc/%{NAME}-%{VERSION}
 %{prefix}/share/doc/%{NAME}-%{VERSION}/*
 
-%{prefix}/lib/libgflags.so.0
-%{prefix}/lib/libgflags.so.0.0.0
-%{prefix}/lib/libgflags_nothreads.so.0
-%{prefix}/lib/libgflags_nothreads.so.0.0.0
-%{prefix}/bin/gflags_completions.sh
+%doc AUTHORS COPYING ChangeLog INSTALL NEWS README
+%doc doc/*
+
+%{_libdir}/*.so.*
+%{_bindir}/gflags_completions.sh
 
 %files devel
 %defattr(-,root,root)
 
-%{prefix}/include/google
-%{prefix}/include/gflags
-%{prefix}/lib/libgflags.a
-%{prefix}/lib/libgflags.la
-%{prefix}/lib/libgflags.so
-%{prefix}/lib/libgflags_nothreads.a
-%{prefix}/lib/libgflags_nothreads.la
-%{prefix}/lib/libgflags_nothreads.so
+%{_includedir}/gflags
+%{_includedir}/google
+%{_libdir}/*.a
+%{_libdir}/*.la
+%{_libdir}/*.so

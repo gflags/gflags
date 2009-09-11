@@ -67,7 +67,7 @@ lib_LTLIBRARIES += libgflags_nothreads.la
 libgflags_nothreads_la_SOURCES = $(GFLAGS_SOURCES)
 libgflags_nothreads_la_CXXFLAGS = -DNDEBUG -DNO_THREADS
 
-TESTS += gflags_unittest$(EXEEXT)
+TESTS += gflags_unittest
 gflags_unittest_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
                           src/gflags_unittest.cc
 gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
@@ -75,14 +75,14 @@ gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDADD = libgflags.la
 
 # Also make sure this works when we don't link in pthreads
-TESTS += gflags_nothreads_unittest$(EXEEXT)
+TESTS += gflags_nothreads_unittest
 gflags_nothreads_unittest_SOURCES = $(gflags_unittest_SOURCES)
 gflags_nothreads_unittest_LDADD = libgflags_nothreads.la
 
 # We also want to test that things work properly when the file that
 # holds main() has a name ending with -main or _main.  To keep the
 # Makefile small :-), we test the no-threads version of these.
-TESTS += gflags_unittest2$(EXEEXT)
+TESTS += gflags_unittest2
 gflags_unittest2_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
                            src/gflags_unittest-main.cc
 gflags_unittest2_LDADD = libgflags_nothreads.la
@@ -91,7 +91,7 @@ src/gflags_unittest-main.cc: src/gflags_unittest.cc
 	cp -p src/gflags_unittest.cc src/gflags_unittest-main.cc
 CLEANFILES += src/gflags_unittest-main.cc
 
-TESTS += gflags_unittest3$(EXEEXT)
+TESTS += gflags_unittest3
 gflags_unittest3_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
 	                   src/gflags_unittest_main.cc
 gflags_unittest3_LDADD = libgflags_nothreads.la
@@ -109,9 +109,32 @@ dist_noinst_DATA = src/gflags_unittest_flagfile
 gflags_unittest_sh: gflags_unittest$(EXEEXT) \
                     gflags_unittest2$(EXEEXT) \
                     gflags_unittest3$(EXEEXT)
-	bash --version >/dev/null && export SH=bash || export SH=sh; \
+	bash --version >/dev/null 2>&1 && export SH=bash || export SH=sh; \
 	$$SH "$(top_srcdir)/src/gflags_unittest.sh" "$(PWD)/gflags_unittest" \
-                                                    "$(top_srcdir)"
+                                                    "$(top_srcdir)" "@TMPDIR@"
+
+# These are negative-compilation tests.  We want to make sure these
+# erroneous use of the flags macros correctly fail to compile.
+# Again, we just bother testing with the no-threads version of the library.
+check_SCRIPTS += gflags_nc_test1
+gflags_nc_test1: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+	! $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+
+check_SCRIPTS += gflags_nc_test2
+gflags_nc_test2: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+	! $(CXX) -DTEST_INT_INSTEAD_OF_BOOL $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test2.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+
+check_SCRIPTS += gflags_nc_test3
+gflags_nc_test3: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+	! $(CXX) -DTEST_BOOL_IN_QUOTES $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test3.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+
+# This one, on the other hand, should succeed.
+check_SCRIPTS += gflags_nc_test4
+gflags_nc_test4: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+	$(CXX) -DSANITY $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test4.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+
+# This file isn't covered under any rule that would cause it to be distributed.
+dist_noinst_DATA += src/gflags_nc.cc
 
 # These aren't part of the c++ source, but we want them to be distributed
 PYTHON = python/setup.py \

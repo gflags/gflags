@@ -215,14 +215,6 @@ Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" \
 # Make sure -- by itself stops argv processing
 Expect $LINENO 0 "PASS" "" -- --help
 
-# Make sure boolean flags gives warning when type of default value is not bool
-Expect $LINENO 0 "Flag test_bool_string is of type bool, but its default value is not a boolean." ""
-Expect $LINENO 0 "Flag test_bool_float is of type bool, but its default value is not a boolean." ""
-Expect $LINENO 0 "Flag test_bool_int is of type bool, but its default value is not a boolean." ""
-
-# Make sure that boolean flags don't give warning when default value is bool
-Expect $LINENO 0 "" "Flag test_bool_bool is of type bool, but its default value is not a boolean."
-
 # And we should die if the flag value doesn't pas the validator
 Expect $LINENO 1 "ERROR: failed validation of new value 'true' for flag 'always_fail'" "" --always_fail
 
