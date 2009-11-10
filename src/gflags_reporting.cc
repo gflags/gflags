@@ -55,8 +55,8 @@
 #include <assert.h>
 #include <string>
 #include <vector>
-#include "gflags/gflags.h"
-#include "gflags/gflags_completions.h"
+#include <gflags/gflags.h>
+#include <gflags/gflags_completions.h>
 
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR  '/'

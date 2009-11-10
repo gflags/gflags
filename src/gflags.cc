@@ -112,7 +112,7 @@
 #include <vector>
 #include <utility>     // for pair<>
 #include <algorithm>
-#include "gflags/gflags.h"
+#include <gflags/gflags.h>
 #include "mutex.h"
 
 #ifndef PATH_SEPARATOR
@@ -178,7 +178,7 @@ _START_GOOGLE_NAMESPACE_
 const char kStrippedFlagHelp[] = "\001\002\003\004 (unknown) \004\003\002\001";
 
 // This is used by the unittest to test error-exit code
-void (*commandlineflags_exitfunc)(int) = &exit;   // from stdlib.h
+void GFLAGS_DLL_DECL (*commandlineflags_exitfunc)(int) = &exit;   // from stdlib.h
 
 namespace {
 

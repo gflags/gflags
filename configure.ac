@@ -28,14 +28,14 @@ case $host_os in
     # "make install".
     AC_DISABLE_FAST_INSTALL
     # /tmp is a mount-point in mingw, and hard to use.  use cwd instead
-    TMPDIR=gflags_testdir
+    TEST_TMPDIR=gflags_testdir
     ;;
     *)
     AC_ENABLE_FAST_INSTALL
-    TMPDIR=/tmp/gflags
+    TEST_TMPDIR=/tmp/gflags
     ;;
 esac
-AC_SUBST(TMPDIR)
+AC_SUBST(TEST_TMPDIR)
 
 # Uncomment this if you'll be exporting libraries (.so's)
 AC_PROG_LIBTOOL
@@ -96,6 +96,16 @@ AC_SUBST(ac_cv_have_u_int16_t)
 AC_SUBST(ac_cv_have___int16)
 
 ## Check out ../autoconf/ for other macros you can call to do useful stuff
+
+# For windows, this has a non-trivial value (__declspec(export)), but any
+# system that uses configure wants this to be the empty string.
+AC_DEFINE(GFLAGS_DLL_DECL,,
+          [Always the empty-string on non-windows systems.
+           On windows, should be "__declspec(dllexport)".
+	   This way, when we compile the dll, we export our functions/classes.
+	   It's safe to define this here because config.h is only used
+	   internally, to compile the DLL, and every DLL source file
+	   #includes "config.h" before anything else.])
 
 # Write generated configuration file, and also .h files
 AC_CONFIG_FILES([Makefile src/gflags/gflags.h src/gflags/gflags_completions.h])

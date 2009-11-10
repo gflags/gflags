@@ -33,26 +33,38 @@
 // For now, this unit test does not cover all features of
 // gflags.cc
 
-#include "config.h"
+#include "config_for_unittests.h"
 #include <stdio.h>
 #include <stdlib.h>     // for &exit
+#include <assert.h>
 #include <string.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>     // for unlink()
+#endif
+#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>   // for mkdir()
+#endif
 #include <math.h>       // for isinf() and isnan()
 #include <vector>
 #include <string>
-#include "gflags/gflags.h"
+#include <gflags/gflags.h>
 // I don't actually use this header file, but #include it under the
 // old location to make sure that the include-header-forwarding
-// works.
-#include "google/gflags_completions.h"
+// works.  But don't bother on windows; the windows port is so new
+// it never had the old location-names.
+#ifndef _WIN32
+#include <google/gflags_completions.h>
 void (*unused_fn)() = &GOOGLE_NAMESPACE::HandleCommandLineCompletions;
+#endif
 
 using std::vector;
 using std::string;
 using GOOGLE_NAMESPACE::int32;
 using GOOGLE_NAMESPACE::FlagRegisterer;
+using GOOGLE_NAMESPACE::StringFromEnv;
+using GOOGLE_NAMESPACE::RegisterFlagValidator;
+using GOOGLE_NAMESPACE::CommandLineFlagInfo;
+using GOOGLE_NAMESPACE::GetAllFlags;
 
 // Returns the number of elements in an array.
 #define GET_ARRAY_SIZE(arr) (sizeof(arr)/sizeof(*(arr)))
@@ -82,7 +94,7 @@ void setenv(const char* name, const char* value, int) {
 DECLARE_string(tryfromenv);   // in gflags.cc
 
 DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
-DEFINE_string(srcdir, GOOGLE_NAMESPACE::StringFromEnv("SRCDIR", "."),
+DEFINE_string(srcdir, StringFromEnv("SRCDIR", "."),
               "Source-dir root, needed to find gflags_unittest_flagfile");
 
 
@@ -139,9 +151,25 @@ DEFINE_bool(changed_bool2, false, "changed");
 
 static bool AlwaysFail(const char* flag, bool value) { return value == false; }
 DEFINE_bool(always_fail, false, "will fail to validate when you set it");
-static const bool dummy = GOOGLE_NAMESPACE::RegisterFlagValidator(&FLAGS_always_fail, AlwaysFail);
+static const bool dummy = RegisterFlagValidator(&FLAGS_always_fail, AlwaysFail);
 
-// This is a psuedo-flag -- we want to register a flag with a filename
+// See the comment by GetAllFlags in commandlineflags.h
+static bool DeadlockIfCantLockInValidators(const char* flag, bool value) {
+  if (!value) {
+    return true;
+  }
+  vector<CommandLineFlagInfo> dummy;
+  GetAllFlags(&dummy);
+  return true;
+}
+DEFINE_bool(deadlock_if_cant_lock,
+            false,
+            "will deadlock if set to true and "
+            "if locking of registry in validators fails.");
+static const bool dummy1 = RegisterFlagValidator(&FLAGS_deadlock_if_cant_lock,
+                                                 DeadlockIfCantLockInValidators);
+
+// This is a pseudo-flag -- we want to register a flag with a filename
 // at the top level, but there is no way to do this except by faking
 // the filename.
 namespace fLI {
@@ -239,11 +267,11 @@ _START_GOOGLE_NAMESPACE_
 
 static bool g_called_exit;
 static void CalledExit(int) { g_called_exit = true; }
+extern GFLAGS_DLL_DECL void (*commandlineflags_exitfunc)(int);  // in gflags.cc
 
 #define EXPECT_DEATH(fn, msg)                                           \
   do {                                                                  \
     g_called_exit = false;                                              \
-    extern void (*commandlineflags_exitfunc)(int);   /* in gflags.cc */ \
     commandlineflags_exitfunc = &CalledExit;                            \
     fn;                                                                 \
     commandlineflags_exitfunc = &exit;    /* set back to its default */ \
@@ -1518,10 +1546,17 @@ static int Main(int argc, char **argv) {
   SetUsageMessage(usage_message.c_str());
   ParseCommandLineFlags(&argc, &argv, true);
 
-#ifdef __MINGW32__
+#if defined(__MINGW32__)
   // I had trouble creating a directory in /tmp from mingw
   FLAGS_test_tmpdir = "./gflags_unittest_testdir";
   mkdir(FLAGS_test_tmpdir.c_str());   // mingw has a weird one-arg mkdir
+#elif defined(_WIN32)
+  char tmppath_buffer[1024];
+  int tmppath_len = GetTempPathA(sizeof(tmppath_buffer), tmppath_buffer);
+  assert(tmppath_len > 0 && tmppath_len < sizeof(tmppath_buffer));
+  assert(tmppath_buffer[tmppath_len - 1] == '\\');   // API guarantees it
+  FLAGS_test_tmpdir = string(tmppath_buffer) + "gflags_unittest_testdir";
+  _mkdir(FLAGS_test_tmpdir.c_str());
 #else
   mkdir(FLAGS_test_tmpdir.c_str(), 0755);
 #endif

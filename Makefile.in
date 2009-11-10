@@ -215,6 +215,7 @@ PACKAGE_BUGREPORT = @PACKAGE_BUGREPORT@
 PACKAGE_NAME = @PACKAGE_NAME@
 PACKAGE_STRING = @PACKAGE_STRING@
 PACKAGE_TARNAME = @PACKAGE_TARNAME@
+PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PTHREAD_CC = @PTHREAD_CC@
@@ -225,7 +226,7 @@ SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
-TMPDIR = @TMPDIR@
+TEST_TMPDIR = @TEST_TMPDIR@
 VERSION = @VERSION@
 ac_ct_CC = @ac_ct_CC@
 ac_ct_CXX = @ac_ct_CXX@
@@ -309,6 +310,9 @@ dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
 	doc/designstyle.css doc/gflags.html
 
 lib_LTLIBRARIES = libgflags.la libgflags_nothreads.la
+WINDOWS_PROJECTS = google-gflags.sln \
+	vsprojects/libgflags/libgflags.vcproj \
+	vsprojects/gflags_unittest/gflags_unittest.vcproj
 
 # Also make sure this works when we don't link in pthreads
 
@@ -334,7 +338,7 @@ check_SCRIPTS = gflags_unittest_sh gflags_nc_test1 gflags_nc_test2 \
 noinst_SCRIPTS = src/gflags_unittest.sh
 # Used for auto-generated source files
 CLEANFILES = src/gflags_unittest-main.cc src/gflags_unittest_main.cc
-GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/config.h src/mutex.h \
+GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/mutex.h \
                  src/gflags.cc src/gflags_reporting.cc \
                  src/gflags_completions.cc
 
@@ -344,7 +348,8 @@ libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS)
 libgflags_la_LIBADD = $(PTHREAD_LIBS)
 libgflags_nothreads_la_SOURCES = $(GFLAGS_SOURCES)
 libgflags_nothreads_la_CXXFLAGS = -DNDEBUG -DNO_THREADS
-gflags_unittest_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
+gflags_unittest_SOURCES = $(gflagsinclude_HEADERS) \
+                          src/config_for_unittests.h \
                           src/gflags_unittest.cc
 
 gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
@@ -352,11 +357,11 @@ gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDADD = libgflags.la
 gflags_nothreads_unittest_SOURCES = $(gflags_unittest_SOURCES)
 gflags_nothreads_unittest_LDADD = libgflags_nothreads.la
-gflags_unittest2_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
+gflags_unittest2_SOURCES = $(gflagsinclude_HEADERS) \
                            src/gflags_unittest-main.cc
 
 gflags_unittest2_LDADD = libgflags_nothreads.la
-gflags_unittest3_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
+gflags_unittest3_SOURCES = $(gflagsinclude_HEADERS) \
 	                   src/gflags_unittest_main.cc
 
 gflags_unittest3_LDADD = libgflags_nothreads.la
@@ -369,11 +374,15 @@ PYTHON = python/setup.py \
          python/gflags.py \
          python/gflags2man.py \
          python/gflags_unittest.py \
+         python/gflags_helpxml_test.py \
          python/test_module_foo.py \
          python/test_module_bar.py
 
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
 	libtool $(SCRIPTS) $(PYTHON) \
+	src/windows/config.h src/windows/port.h src/windows/port.cc \
+	src/windows/gflags/gflags.h src/windows/gflags/gflags_completions.h \
+	$(WINDOWS_PROJECTS) \
         src/solaris/libstdc++.la
 
 all: all-am
@@ -825,7 +834,7 @@ check-TESTS: $(TESTS)
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/m4 $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/gflags $(distdir)/src/google $(distdir)/src/solaris
+	$(mkdir_p) $(distdir)/doc $(distdir)/m4 $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/gflags $(distdir)/src/google $(distdir)/src/solaris $(distdir)/src/windows $(distdir)/src/windows/gflags $(distdir)/vsprojects/gflags_unittest $(distdir)/vsprojects/libgflags
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \
@@ -1064,23 +1073,23 @@ uninstall-am: uninstall-binSCRIPTS uninstall-dist_docDATA \
 
 src/gflags_unittest-main.cc: src/gflags_unittest.cc
 	rm -f src/gflags_unittest-main.cc
-	cp -p src/gflags_unittest.cc src/gflags_unittest-main.cc
+	cp -p $(top_srcdir)/src/gflags_unittest.cc src/gflags_unittest-main.cc
 src/gflags_unittest_main.cc: src/gflags_unittest.cc
 	rm -f src/gflags_unittest_main.cc
-	cp -p src/gflags_unittest.cc src/gflags_unittest_main.cc
+	cp -p $(top_srcdir)/src/gflags_unittest.cc src/gflags_unittest_main.cc
 gflags_unittest_sh: gflags_unittest$(EXEEXT) \
                     gflags_unittest2$(EXEEXT) \
                     gflags_unittest3$(EXEEXT)
 	bash --version >/dev/null 2>&1 && export SH=bash || export SH=sh; \
-	$$SH "$(top_srcdir)/src/gflags_unittest.sh" "$(PWD)/gflags_unittest" \
-                                                    "$(top_srcdir)" "@TMPDIR@"
-gflags_nc_test1: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+	$$SH "$(top_srcdir)/src/gflags_unittest.sh" \
+	     "$(PWD)/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
+gflags_nc_test1: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	! $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
-gflags_nc_test2: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+gflags_nc_test2: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	! $(CXX) -DTEST_INT_INSTEAD_OF_BOOL $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test2.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
-gflags_nc_test3: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+gflags_nc_test3: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	! $(CXX) -DTEST_BOOL_IN_QUOTES $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test3.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
-gflags_nc_test4: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+gflags_nc_test4: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	$(CXX) -DSANITY $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test4.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
 
 rpm: dist-gzip packages/rpm.sh packages/rpm/rpm.spec

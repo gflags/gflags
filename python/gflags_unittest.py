@@ -97,6 +97,10 @@ def MultiLineEqual(expected_help, help):
 class FlagsUnitTest(unittest.TestCase):
   "Flags Unit Test"
 
+  def setUp(self):
+    # make sure we are using the old, stupid way of parsing flags.
+    FLAGS.UseGnuGetOpt(False)
+
   def assertListEqual(self, list1, list2):
     """Asserts that, when sorted, list1 and list2 are identical."""
     sorted_list1 = list1[:]
@@ -127,12 +131,13 @@ class FlagsUnitTest(unittest.TestCase):
     flags.DEFINE_integer("x", 3, "how eXtreme to be")
     flags.DEFINE_integer("l", 0x7fffffff00000000L, "how long to be")
     flags.DEFINE_list('letters', 'a,b,c', "a list of letters")
+    flags.DEFINE_list('numbers', [1, 2, 3], "a list of numbers")
     flags.DEFINE_enum("kwery", None, ['who', 'what', 'why', 'where', 'when'],
                       "?")
 
     # Specify number of flags defined above.  The short_name defined
     # for 'repeat' counts as an extra flag.
-    number_defined_flags = 10 + 1
+    number_defined_flags = 11 + 1
     self.assertEqual(len(FLAGS.RegisteredFlags()),
                          number_defined_flags + number_test_framework_flags)
 
@@ -143,8 +148,10 @@ class FlagsUnitTest(unittest.TestCase):
     assert FLAGS.x == 3, "integer default values not set:" + FLAGS.x
     assert FLAGS.l == 0x7fffffff00000000L, ("integer default values not set:"
                                             + FLAGS.l)
-    assert FLAGS.letters == ['a', 'b', 'c'], "list default values not set:" \
-      + FLAGS.letters
+    assert FLAGS.letters == ['a', 'b', 'c'], ("list default values not set:"
+                                              + FLAGS.letters)
+    assert FLAGS.numbers == [1, 2, 3], ("list default values not set:"
+                                        + FLAGS.numbers)
     assert FLAGS.kwery is None, ("enum default None value not set:"
                                   + FLAGS.kwery)
 
@@ -158,6 +165,7 @@ class FlagsUnitTest(unittest.TestCase):
     assert flag_values['x'] == 3
     assert flag_values['l'] == 0x7fffffff00000000L
     assert flag_values['letters'] == ['a', 'b', 'c']
+    assert flag_values['numbers'] == [1, 2, 3]
     assert flag_values['kwery'] is None
 
     # Verify string form of defaults
@@ -170,6 +178,7 @@ class FlagsUnitTest(unittest.TestCase):
     assert FLAGS['x'].default_as_str == "'3'"
     assert FLAGS['l'].default_as_str == "'9223372032559808512'"
     assert FLAGS['letters'].default_as_str == "'a,b,c'"
+    assert FLAGS['numbers'].default_as_str == "'1,2,3'"
 
     # Verify that the iterator for flags yields all the keys
     keys = list(FLAGS)
@@ -211,6 +220,7 @@ class FlagsUnitTest(unittest.TestCase):
     assert 'x' in FLAGS.RegisteredFlags()
     assert 'l' in FLAGS.RegisteredFlags()
     assert 'letters' in FLAGS.RegisteredFlags()
+    assert 'numbers' in FLAGS.RegisteredFlags()
 
     # has_key
     assert FLAGS.has_key('name')
@@ -465,20 +475,21 @@ class FlagsUnitTest(unittest.TestCase):
 
       flagnames.sort()
       nonbool_flags = ['--%s %s' % (name, FLAGS.get(name, None))
-                      for name in flagnames
-                      if not isinstance(FLAGS[name], flags.BooleanFlag)]
+                       for name in flagnames
+                       if not isinstance(FLAGS[name], flags.BooleanFlag)]
 
       truebool_flags = ['--%s' % (name)
-                       for name in flagnames
-                       if isinstance(FLAGS[name], flags.BooleanFlag) and
-                          FLAGS.get(name, None)]
-      falsebool_flags = ['--no%s' % (name)
                         for name in flagnames
                         if isinstance(FLAGS[name], flags.BooleanFlag) and
+                          FLAGS.get(name, None)]
+      falsebool_flags = ['--no%s' % (name)
+                         for name in flagnames
+                         if isinstance(FLAGS[name], flags.BooleanFlag) and
                            not FLAGS.get(name, None)]
       return ' '.join(nonbool_flags + truebool_flags + falsebool_flags)
 
     argv = ('./program', '--repeat=3', '--name=giants', '--nodebug')
+
     FLAGS(argv)
     self.assertEqual(FLAGS.get('repeat', None), 3)
     self.assertEqual(FLAGS.get('name', None), 'giants')
@@ -489,6 +500,7 @@ class FlagsUnitTest(unittest.TestCase):
       "--letters ['a', 'b', 'c'] "
       "--m ['str1', 'str2'] --m_str ['str1', 'str2'] "
       "--name giants "
+      "--numbers [1, 2, 3] "
       "--repeat 3 "
       "--s ['sing1'] --s_str ['sing1'] "
       "--testget4 None --testlist [] "
@@ -514,6 +526,7 @@ class FlagsUnitTest(unittest.TestCase):
       "--m ['str1', 'str2', 'upd1'] "
       "--m_str ['str1', 'str2', 'upd1'] "
       "--name giants "
+      "--numbers [1, 2, 3] "
       "--repeat 3 "
       "--s ['upd2'] --s_str ['upd2'] "
       "--testget4 None --testlist [] "
@@ -871,6 +884,18 @@ class FlagsUnitTest(unittest.TestCase):
     self.assertEqual(argv, fake_argv[:1] + fake_argv[2:])
     self._UndeclareSomeFlags()
 
+  def test_parse_flags_after_args_if_using_gnu_getopt(self):
+    """
+    Test that flags given after arguments are parsed if using gnu_getopt.
+    """
+    self.__DeclareSomeFlags()
+    FLAGS.UseGnuGetOpt()
+    fake_argv = ['fooScript', '--UnitTestBoolFlag',
+                 'command', '--UnitTestB']
+    argv = FLAGS(fake_argv)
+    self.assertEqual(argv, ['fooScript', 'command'])
+    self._UndeclareSomeFlags()
+
   def test_SetDefault(self):
     """
     Test changing flag defaults.
@@ -1004,6 +1029,7 @@ class FlagsUnitTest(unittest.TestCase):
     # TODO(csilvers): we should still parse --onedash_name=Harry as a
     # flag, but currently we don't (we stop flag processing as soon as
     # we see the first non-flag).
+    # - This requires gnu_getopt from Python 2.3+ see FLAGS.UseGnuGetOpt()
 
   def test_unrecognized_flags(self):
     # Unknown flag --nosuchflag
@@ -1193,6 +1219,9 @@ class FlagsUnitTest(unittest.TestCase):
     (default: 'Bob')
   --[no]noexec: boolean flag with no as prefix
     (default: 'true')
+  --numbers: a list of numbers
+    (default: '1,2,3')
+    (a comma separated list)
   --[no]q: quiet mode
     (default: 'true')
   --[no]quack: superstring of 'q'

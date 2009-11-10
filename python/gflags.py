@@ -661,6 +661,16 @@ class FlagValues:
     # key for that module.
     self.__dict__['__key_flags_by_module'] = {}
 
+    # Set if we should use new style gnu_getopt rather than getopt when parsing
+    # the args.  Only possible with Python 2.3+
+    self.UseGnuGetOpt(False)
+
+  def UseGnuGetOpt(self, use_gnu_getopt=True):
+    self.__dict__['__use_gnu_getopt'] = use_gnu_getopt
+
+  def IsGnuGetOpt(self):
+    return self.__dict__['__use_gnu_getopt']
+
   def FlagDict(self):
     return self.__dict__['__flags']
 
@@ -974,7 +984,10 @@ class FlagValues:
     args = argv[1:]
     while True:
       try:
-        optlist, unparsed_args = getopt.getopt(args, shortopts, longopts)
+        if self.__dict__['__use_gnu_getopt']:
+          optlist, unparsed_args = getopt.gnu_getopt(args, shortopts, longopts)
+        else:
+          optlist, unparsed_args = getopt.getopt(args, shortopts, longopts)
         break
       except getopt.GetoptError, e:
         if not e.opt or e.opt in fl:
@@ -1029,10 +1042,14 @@ class FlagValues:
         raise UnrecognizedFlagError(opt)
 
     if unparsed_args:
-      # unparsed_args becomes the first non-flag detected by getopt to
-      # the end of argv.  Because argv may have been modified above,
-      # return original_argv for this region.
-      return argv[:1] + original_argv[-len(unparsed_args):]
+      if self.__dict__['__use_gnu_getopt']:
+        # if using gnu_getopt just return the program name + remainder of argv.
+        return argv[:1] + unparsed_args
+      else:
+        # unparsed_args becomes the first non-flag detected by getopt to
+        # the end of argv.  Because argv may have been modified above,
+        # return original_argv for this region.
+        return argv[:1] + original_argv[-len(unparsed_args):]
     else:
       return argv[:1]
 
@@ -2099,7 +2116,9 @@ class BaseListParser(ArgumentParser):
     self.syntactic_help = "a %s separated list" % self._name
 
   def Parse(self, argument):
-    if argument == '':
+    if isinstance(argument, list):
+      return argument
+    elif argument == '':
       return []
     else:
       return [s.strip() for s in argument.split(self._token)]

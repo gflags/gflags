@@ -38,6 +38,8 @@ dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
 
 ## The libraries (.so's) you want to install
 lib_LTLIBRARIES =
+## The location of the windows project file for each binary we make
+WINDOWS_PROJECTS = google-gflags.sln
 
 ## unittests you want to run when people type 'make check'.
 ## TESTS is for binary unittests, check_SCRIPTS for script-based unittests.
@@ -53,11 +55,12 @@ CLEANFILES =
 
 ## vvvv RULES TO MAKE THE LIBRARIES, BINARIES, AND UNITTESTS
 
-GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/config.h src/mutex.h \
+GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/mutex.h \
                  src/gflags.cc src/gflags_reporting.cc \
                  src/gflags_completions.cc
 
 lib_LTLIBRARIES += libgflags.la
+WINDOWS_PROJECTS += vsprojects/libgflags/libgflags.vcproj
 libgflags_la_SOURCES = $(GFLAGS_SOURCES)
 libgflags_la_CXXFLAGS = $(PTHREAD_CFLAGS) -DNDEBUG
 libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS)
@@ -68,7 +71,9 @@ libgflags_nothreads_la_SOURCES = $(GFLAGS_SOURCES)
 libgflags_nothreads_la_CXXFLAGS = -DNDEBUG -DNO_THREADS
 
 TESTS += gflags_unittest
-gflags_unittest_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
+WINDOWS_PROJECTS += vsprojects/gflags_unittest/gflags_unittest.vcproj
+gflags_unittest_SOURCES = $(gflagsinclude_HEADERS) \
+                          src/config_for_unittests.h \
                           src/gflags_unittest.cc
 gflags_unittest_CXXFLAGS = $(PTHREAD_CFLAGS)
 gflags_unittest_LDFLAGS = $(PTHREAD_CFLAGS)
@@ -83,21 +88,21 @@ gflags_nothreads_unittest_LDADD = libgflags_nothreads.la
 # holds main() has a name ending with -main or _main.  To keep the
 # Makefile small :-), we test the no-threads version of these.
 TESTS += gflags_unittest2
-gflags_unittest2_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
+gflags_unittest2_SOURCES = $(gflagsinclude_HEADERS) \
                            src/gflags_unittest-main.cc
 gflags_unittest2_LDADD = libgflags_nothreads.la
 src/gflags_unittest-main.cc: src/gflags_unittest.cc
 	rm -f src/gflags_unittest-main.cc
-	cp -p src/gflags_unittest.cc src/gflags_unittest-main.cc
+	cp -p $(top_srcdir)/src/gflags_unittest.cc src/gflags_unittest-main.cc
 CLEANFILES += src/gflags_unittest-main.cc
 
 TESTS += gflags_unittest3
-gflags_unittest3_SOURCES = $(gflagsinclude_HEADERS) src/config.h \
+gflags_unittest3_SOURCES = $(gflagsinclude_HEADERS) \
 	                   src/gflags_unittest_main.cc
 gflags_unittest3_LDADD = libgflags_nothreads.la
 src/gflags_unittest_main.cc: src/gflags_unittest.cc
 	rm -f src/gflags_unittest_main.cc
-	cp -p src/gflags_unittest.cc src/gflags_unittest_main.cc
+	cp -p $(top_srcdir)/src/gflags_unittest.cc src/gflags_unittest_main.cc
 CLEANFILES += src/gflags_unittest_main.cc
 
 # Some buggy sh's ignore "" instead of treating it as a positional
@@ -110,27 +115,27 @@ gflags_unittest_sh: gflags_unittest$(EXEEXT) \
                     gflags_unittest2$(EXEEXT) \
                     gflags_unittest3$(EXEEXT)
 	bash --version >/dev/null 2>&1 && export SH=bash || export SH=sh; \
-	$$SH "$(top_srcdir)/src/gflags_unittest.sh" "$(PWD)/gflags_unittest" \
-                                                    "$(top_srcdir)" "@TMPDIR@"
+	$$SH "$(top_srcdir)/src/gflags_unittest.sh" \
+	     "$(PWD)/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
 
 # These are negative-compilation tests.  We want to make sure these
 # erroneous use of the flags macros correctly fail to compile.
 # Again, we just bother testing with the no-threads version of the library.
 check_SCRIPTS += gflags_nc_test1
-gflags_nc_test1: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+gflags_nc_test1: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	! $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
 
 check_SCRIPTS += gflags_nc_test2
-gflags_nc_test2: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+gflags_nc_test2: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	! $(CXX) -DTEST_INT_INSTEAD_OF_BOOL $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test2.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
 
 check_SCRIPTS += gflags_nc_test3
-gflags_nc_test3: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+gflags_nc_test3: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	! $(CXX) -DTEST_BOOL_IN_QUOTES $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test3.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
 
 # This one, on the other hand, should succeed.
 check_SCRIPTS += gflags_nc_test4
-gflags_nc_test4: $(gflagsinclude_HEADERS) src/config.h src/gflags_nc.cc
+gflags_nc_test4: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	$(CXX) -DSANITY $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test4.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
 
 # This file isn't covered under any rule that would cause it to be distributed.
@@ -141,6 +146,7 @@ PYTHON = python/setup.py \
          python/gflags.py \
          python/gflags2man.py \
          python/gflags_unittest.py \
+         python/gflags_helpxml_test.py \
          python/test_module_foo.py \
          python/test_module_bar.py
 
@@ -162,4 +168,7 @@ libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
 	libtool $(SCRIPTS) $(PYTHON) \
+	src/windows/config.h src/windows/port.h src/windows/port.cc \
+	src/windows/gflags/gflags.h src/windows/gflags/gflags_completions.h \
+	$(WINDOWS_PROJECTS) \
         src/solaris/libstdc++.la

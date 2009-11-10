@@ -58,7 +58,7 @@
 #include <utility>
 #include <vector>
 
-#include "gflags/gflags.h"
+#include <gflags/gflags.h>
 
 using std::set;
 using std::string;

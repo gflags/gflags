@@ -215,8 +215,11 @@ Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" \
 # Make sure -- by itself stops argv processing
 Expect $LINENO 0 "PASS" "" -- --help
 
-# And we should die if the flag value doesn't pas the validator
+# And we should die if the flag value doesn't pass the validator
 Expect $LINENO 1 "ERROR: failed validation of new value 'true' for flag 'always_fail'" "" --always_fail
+
+# TODO(wojtekm) And if locking in validators fails.
+# Expect $LINENO 0 "PASS" "" --deadlock_if_cant_lock
 
 echo "PASS"
 exit 0

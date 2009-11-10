@@ -9,6 +9,9 @@ See INSTALL for (generic) installation instructions for C++: basically
 To install the python module, run
    cd python; python ./setup.py install
 
+You can also compile this under Windows, if you want.  The solution
+file (for VC 7.1 and later) is in this directory.
+
 When you install the python library, you also get a helper
 application, gflags2man.py, installed into /usr/local/bin.  You can
 run gflags2man.py to create an instant man page, with all the
