@@ -317,6 +317,9 @@ HREF="#special"><code>--undefok</code></A> to suppress the error.</p>
 processing.  So in <code>foo -f1 1 -- -f2 2</code>, <code>f1</code> is
 considered a flag, but <code>-f2</code> is not.</p>
 
+<p>If a flag is specified more than once, only the last specification
+is used; the others are ignored.</p>
+
 <p>Note that flags do not have single-letter synonyms, like they do in
 the getopt library, nor do we allow "combining" flags behind a
 single dash, as in <code>ls -la</code>.</p>

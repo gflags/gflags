@@ -60,10 +60,6 @@
 
 #include <gflags/gflags.h>
 
-using std::set;
-using std::string;
-using std::vector;
-
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR  '/'
 #endif
@@ -78,6 +74,10 @@ DEFINE_int32(tab_completion_columns, 80,
 _START_GOOGLE_NAMESPACE_
 
 namespace {
+
+using std::set;
+using std::string;
+using std::vector;
 
 // Function prototypes and Type forward declarations.  Code may be
 // more easily understood if it is roughly ordered according to

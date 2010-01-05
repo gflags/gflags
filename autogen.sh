@@ -17,22 +17,21 @@ rm -rf autom4te.cache
 
 trap 'rm -f aclocal.m4.tmp' EXIT
 
+# Returns the first binary in $* that exists, or the last arg, if none exists.
+WhichOf() {
+  for candidate in "$@"; do
+    if "$candidate" --version >/dev/null 2>&1; then
+      echo "$candidate"
+      return
+    fi
+  done
+  echo "$candidate"   # the last one in $@
+}
+
 # Use version 1.9 of aclocal and automake if available.
-ACLOCAL=aclocal-1.9
-if test -z `which "$ACLOCAL"`; then
-  ACLOCAL=aclocal
-fi
-
-AUTOMAKE=automake-1.9
-if test -z `which "$AUTOMAKE"`; then
-  AUTOMAKE=automake
-fi
-
-# glibtoolize is used for Mac OS X
-LIBTOOLIZE=libtoolize
-if test -z `which "$LIBTOOLIZE"`; then
-  LIBTOOLIZE=glibtoolize
-fi
+ACLOCAL=`WhichOf aclocal-1.9 aclocal`
+AUTOMAKE=`WhichOf automake-1.9 automake`
+LIBTOOLIZE=`WhichOf glibtoolize libtoolize15 libtoolize14 libtoolize`
 
 # aclocal tries to overwrite aclocal.m4 even if the contents haven't
 # changed, which is annoying when the file is not open for edit (in
@@ -46,7 +45,7 @@ else
   mv aclocal.m4.tmp aclocal.m4   # we did set -e above, so we die if this fails
 fi
 
-grep -q LIBTOOL configure.ac && "$LIBTOOLIZE" -c -f
+grep -q '^[^#]*AC_PROG_LIBTOOL' configure.ac && "$LIBTOOLIZE" -c -f
 autoconf -f -W all,no-obsolete
 autoheader -f -W all
 "$AUTOMAKE" -a -c -f -W all

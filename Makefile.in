@@ -368,18 +368,8 @@ gflags_unittest3_LDADD = libgflags_nothreads.la
 
 # This file isn't covered under any rule that would cause it to be distributed.
 dist_noinst_DATA = src/gflags_unittest_flagfile src/gflags_nc.cc
-
-# These aren't part of the c++ source, but we want them to be distributed
-PYTHON = python/setup.py \
-         python/gflags.py \
-         python/gflags2man.py \
-         python/gflags_unittest.py \
-         python/gflags_helpxml_test.py \
-         python/test_module_foo.py \
-         python/test_module_bar.py
-
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
-	libtool $(SCRIPTS) $(PYTHON) \
+	libtool $(SCRIPTS) \
 	src/windows/config.h src/windows/port.h src/windows/port.cc \
 	src/windows/gflags/gflags.h src/windows/gflags/gflags_completions.h \
 	$(WINDOWS_PROJECTS) \
@@ -834,7 +824,7 @@ check-TESTS: $(TESTS)
 distdir: $(DISTFILES)
 	$(am__remove_distdir)
 	mkdir $(distdir)
-	$(mkdir_p) $(distdir)/doc $(distdir)/m4 $(distdir)/packages $(distdir)/packages/rpm $(distdir)/python $(distdir)/src $(distdir)/src/gflags $(distdir)/src/google $(distdir)/src/solaris $(distdir)/src/windows $(distdir)/src/windows/gflags $(distdir)/vsprojects/gflags_unittest $(distdir)/vsprojects/libgflags
+	$(mkdir_p) $(distdir)/doc $(distdir)/m4 $(distdir)/packages $(distdir)/packages/rpm $(distdir)/src $(distdir)/src/gflags $(distdir)/src/google $(distdir)/src/solaris $(distdir)/src/windows $(distdir)/src/windows/gflags $(distdir)/vsprojects/gflags_unittest $(distdir)/vsprojects/libgflags
 	@srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`; \
 	topsrcdirstrip=`echo "$(top_srcdir)" | sed 's|.|.|g'`; \
 	list='$(DISTFILES)'; for file in $$list; do \

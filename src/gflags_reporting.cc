@@ -62,9 +62,6 @@
 #define PATH_SEPARATOR  '/'
 #endif
 
-using std::string;
-using std::vector;
-
 // The 'reporting' flags.  They all call exit().
 DEFINE_bool(help, false,
             "show help on all flags [tip: all flags can have two dashes]");
@@ -84,6 +81,9 @@ DEFINE_bool(version, false,
             "show version and build info and exit");
 
 _START_GOOGLE_NAMESPACE_
+
+using std::string;
+using std::vector;
 
 // --------------------------------------------------------------------
 // DescribeOneFlag()

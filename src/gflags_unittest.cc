@@ -47,18 +47,17 @@
 #include <math.h>       // for isinf() and isnan()
 #include <vector>
 #include <string>
+
 #include <gflags/gflags.h>
 // I don't actually use this header file, but #include it under the
 // old location to make sure that the include-header-forwarding
 // works.  But don't bother on windows; the windows port is so new
 // it never had the old location-names.
-#ifndef _WIN32
+#ifndef _MSC_VER
 #include <google/gflags_completions.h>
 void (*unused_fn)() = &GOOGLE_NAMESPACE::HandleCommandLineCompletions;
 #endif
 
-using std::vector;
-using std::string;
 using GOOGLE_NAMESPACE::int32;
 using GOOGLE_NAMESPACE::FlagRegisterer;
 using GOOGLE_NAMESPACE::StringFromEnv;
@@ -94,9 +93,13 @@ void setenv(const char* name, const char* value, int) {
 DECLARE_string(tryfromenv);   // in gflags.cc
 
 DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
+#ifdef _MSC_VER  // in MSVC, we run from the vsprojects directory
+DEFINE_string(srcdir, "..\\..",
+              "Source-dir root, needed to find gflags_unittest_flagfile");
+#else
 DEFINE_string(srcdir, StringFromEnv("SRCDIR", "."),
               "Source-dir root, needed to find gflags_unittest_flagfile");
-
+#endif
 
 DEFINE_bool(test_bool, false, "tests bool-ness");
 DEFINE_int32(test_int32, -1, "");
@@ -128,8 +131,8 @@ static int changeable_bool_var = 8008;
 DEFINE_bool(changeable_bool_var, ++changeable_bool_var == 8009, "");
 
 static int changeable_string_var = 0;
-static string ChangeableString() {
-  char r[] = {'0' + ++changeable_string_var, '\0'};
+static std::string ChangeableString() {
+  char r[] = {static_cast<char>('0' + ++changeable_string_var), '\0'};
   return r;
 }
 DEFINE_string(changeable_string_var, ChangeableString(), "");
@@ -151,14 +154,14 @@ DEFINE_bool(changed_bool2, false, "changed");
 
 static bool AlwaysFail(const char* flag, bool value) { return value == false; }
 DEFINE_bool(always_fail, false, "will fail to validate when you set it");
-static const bool dummy = RegisterFlagValidator(&FLAGS_always_fail, AlwaysFail);
+static bool dummy = RegisterFlagValidator(&FLAGS_always_fail, AlwaysFail);
 
 // See the comment by GetAllFlags in commandlineflags.h
 static bool DeadlockIfCantLockInValidators(const char* flag, bool value) {
   if (!value) {
     return true;
   }
-  vector<CommandLineFlagInfo> dummy;
+  std::vector<CommandLineFlagInfo> dummy;
   GetAllFlags(&dummy);
   return true;
 }
@@ -166,8 +169,8 @@ DEFINE_bool(deadlock_if_cant_lock,
             false,
             "will deadlock if set to true and "
             "if locking of registry in validators fails.");
-static const bool dummy1 = RegisterFlagValidator(&FLAGS_deadlock_if_cant_lock,
-                                                 DeadlockIfCantLockInValidators);
+static bool dummy1 = RegisterFlagValidator(&FLAGS_deadlock_if_cant_lock,
+                                           DeadlockIfCantLockInValidators);
 
 // This is a pseudo-flag -- we want to register a flag with a filename
 // at the top level, but there is no way to do this except by faking
@@ -195,6 +198,9 @@ namespace fLI {
 using fLI::FLAGS_tldflag2;
 
 _START_GOOGLE_NAMESPACE_
+
+using std::string;
+using std::vector;
 
 // The following is some bare-bones testing infrastructure
 
@@ -305,6 +311,26 @@ static int RUN_ALL_TESTS() {
   }
   fprintf(stderr, "Passed %d tests\n\nPASS\n", (int)g_testlist.size());
   return 0;
+}
+
+
+static string TmpFile(const string& basename) {
+#ifdef _MSC_VER
+  return FLAGS_test_tmpdir + "\\" + basename;
+#else
+  return FLAGS_test_tmpdir + "/" + basename;
+#endif
+}
+
+// Returns the definition of the --flagfile flag to be used in the tests.
+static const char* GetFlagFileFlag() {
+#ifdef _MSC_VER
+  static const string flagfile = FLAGS_srcdir + "\\src\\gflags_unittest_flagfile";
+#else
+  static const string flagfile = FLAGS_srcdir + "/src/gflags_unittest_flagfile";
+#endif
+  static const string flagfile_flag = string("--flagfile=") + flagfile;
+  return flagfile_flag.c_str();
 }
 
 
@@ -665,7 +691,7 @@ TEST(SetFlagValueTest, IllegalValues) {
   EXPECT_EQ("", SetCommandLineOption("test_double", ""));
   EXPECT_EQ("test_string set to \n", SetCommandLineOption("test_string", ""));
 
-  EXPECT_EQ(true, FLAGS_test_bool);
+  EXPECT_TRUE(FLAGS_test_bool);
   EXPECT_EQ(119, FLAGS_test_int32);
   EXPECT_EQ(1191, FLAGS_test_int64);
   EXPECT_EQ(11911, FLAGS_test_uint64);
@@ -685,12 +711,12 @@ TEST(MacroArgs, EvaluateOnce) {
 }
 
 TEST(MacroArgs, EvaluateOnceBool) {
-  EXPECT_EQ(true, FLAGS_changeable_bool_var);
-  EXPECT_EQ(true, FLAGS_changeable_bool_var);
+  EXPECT_TRUE(FLAGS_changeable_bool_var);
+  EXPECT_TRUE(FLAGS_changeable_bool_var);
   EXPECT_EQ(8009, changeable_bool_var);
   SetCommandLineOptionWithMode("changeable_bool_var", "false",
                                SET_FLAG_IF_DEFAULT);
-  EXPECT_EQ(false, FLAGS_changeable_bool_var);
+  EXPECT_FALSE(FLAGS_changeable_bool_var);
 }
 
 TEST(MacroArgs, EvaluateOnceStrings) {
@@ -708,12 +734,12 @@ TEST(FromEnvTest, LegalValues) {
   setenv("BOOL_VAL2", "false", 1);
   setenv("BOOL_VAL3", "1", 1);
   setenv("BOOL_VAL4", "F", 1);
-  EXPECT_EQ(true, BoolFromEnv("BOOL_VAL1", false));
-  EXPECT_EQ(false, BoolFromEnv("BOOL_VAL2", true));
-  EXPECT_EQ(true, BoolFromEnv("BOOL_VAL3", false));
-  EXPECT_EQ(false, BoolFromEnv("BOOL_VAL4", true));
-  EXPECT_EQ(true, BoolFromEnv("BOOL_VAL_UNKNOWN", true));
-  EXPECT_EQ(false, BoolFromEnv("BOOL_VAL_UNKNOWN", false));
+  EXPECT_TRUE(BoolFromEnv("BOOL_VAL1", false));
+  EXPECT_FALSE(BoolFromEnv("BOOL_VAL2", true));
+  EXPECT_TRUE(BoolFromEnv("BOOL_VAL3", false));
+  EXPECT_FALSE(BoolFromEnv("BOOL_VAL4", true));
+  EXPECT_TRUE(BoolFromEnv("BOOL_VAL_UNKNOWN", true));
+  EXPECT_FALSE(BoolFromEnv("BOOL_VAL_UNKNOWN", false));
 
   setenv("INT_VAL1", "1", 1);
   setenv("INT_VAL2", "-1", 1);
@@ -749,7 +775,7 @@ TEST(FromEnvTest, LegalValues) {
 
 // Tests that the FooFromEnv dies on parse-error
 TEST(FromEnvDeathTest, IllegalValues) {
-  setenv("BOOL_BAD1", "so true!",1 );
+  setenv("BOOL_BAD1", "so true!", 1);
   setenv("BOOL_BAD2", "", 1);
   EXPECT_DEATH(BoolFromEnv("BOOL_BAD1", false), "error parsing env variable");
   EXPECT_DEATH(BoolFromEnv("BOOL_BAD2", true), "error parsing env variable");
@@ -906,7 +932,7 @@ TEST(GetAllFlagsTest, BaseTest) {
       break;
     }
   }
-  EXPECT_EQ(true, found_test_bool);
+  EXPECT_TRUE(found_test_bool);
 }
 
 TEST(ShowUsageWithFlagsTest, BaseTest) {
@@ -956,7 +982,7 @@ TEST(ProgramInvocationShortNameTest, BaseTest) {
   EXPECT_STREQ("gflags_unittest", ProgramInvocationShortName());
 }
 
-TEST(ProgramUsageTest, BaseTest) { // Depends on 1st arg to InitGoogle in main()
+TEST(ProgramUsageTest, BaseTest) {  // Depends on 1st arg to InitGoogle in main
   EXPECT_STREQ("/test/argv/for/gflags_unittest: "
                "<useless flag> [...]\nDoes something useless.\n",
                ProgramUsage());
@@ -965,11 +991,11 @@ TEST(ProgramUsageTest, BaseTest) { // Depends on 1st arg to InitGoogle in main()
 TEST(GetCommandLineOptionTest, NameExistsAndIsDefault) {
   string value("will be changed");
   bool r = GetCommandLineOption("test_bool", &value);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("false", value);
 
   r = GetCommandLineOption("test_int32", &value);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("-1", value);
 }
 
@@ -977,7 +1003,7 @@ TEST(GetCommandLineOptionTest, NameExistsAndWasAssigned) {
   FLAGS_test_int32 = 400;
   string value("will be changed");
   const bool r = GetCommandLineOption("test_int32", &value);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("400", value);
 }
 
@@ -985,7 +1011,7 @@ TEST(GetCommandLineOptionTest, NameExistsAndWasSet) {
   SetCommandLineOption("test_int32", "700");
   string value("will be changed");
   const bool r = GetCommandLineOption("test_int32", &value);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("700", value);
 }
 
@@ -995,60 +1021,59 @@ TEST(GetCommandLineOptionTest, NameExistsAndWasNotSet) {
   SetCommandLineOptionWithMode("test_int32", "800", SET_FLAGS_DEFAULT);
   string value("will be changed");
   const bool r = GetCommandLineOption("test_int32", &value);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("800", value);
-  EXPECT_EQ(true, GetCommandLineFlagInfoOrDie("test_int32").is_default);
-
+  EXPECT_TRUE(GetCommandLineFlagInfoOrDie("test_int32").is_default);
 }
 
 TEST(GetCommandLineOptionTest, NameExistsAndWasConditionallySet) {
   SetCommandLineOptionWithMode("test_int32", "900", SET_FLAG_IF_DEFAULT);
   string value("will be changed");
   const bool r = GetCommandLineOption("test_int32", &value);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("900", value);
 }
 
 TEST(GetCommandLineOptionTest, NameDoesNotExist) {
   string value("will not be changed");
   const bool r = GetCommandLineOption("test_int3210", &value);
-  EXPECT_EQ(false, r);
+  EXPECT_FALSE(r);
   EXPECT_EQ("will not be changed", value);
 }
 
 TEST(GetCommandLineFlagInfoTest, FlagExists) {
   CommandLineFlagInfo info;
   bool r = GetCommandLineFlagInfo("test_int32", &info);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("test_int32", info.name);
   EXPECT_EQ("int32", info.type);
   EXPECT_EQ("", info.description);
   EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
-  EXPECT_EQ(true, info.is_default);
-  EXPECT_EQ(false, info.has_validator_fn);
+  EXPECT_TRUE(info.is_default);
+  EXPECT_FALSE(info.has_validator_fn);
 
   FLAGS_test_bool = true;
   r = GetCommandLineFlagInfo("test_bool", &info);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
   EXPECT_EQ("true", info.current_value);
   EXPECT_EQ("false", info.default_value);
-  EXPECT_EQ(false, info.is_default);
-  EXPECT_EQ(false, info.has_validator_fn);
+  EXPECT_FALSE(info.is_default);
+  EXPECT_FALSE(info.has_validator_fn);
 
   FLAGS_test_bool = false;
   r = GetCommandLineFlagInfo("test_bool", &info);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
   EXPECT_EQ("false", info.current_value);
   EXPECT_EQ("false", info.default_value);
-  EXPECT_EQ(false, info.is_default);  // value is same, but flag *was* modified
-  EXPECT_EQ(false, info.has_validator_fn);
+  EXPECT_FALSE(info.is_default);  // value is same, but flag *was* modified
+  EXPECT_FALSE(info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
@@ -1062,15 +1087,15 @@ TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
   info.is_default = false;
   info.has_validator_fn = true;
   bool r = GetCommandLineFlagInfo("test_int3210", &info);
-  EXPECT_EQ(false, r);
+  EXPECT_FALSE(r);
   EXPECT_EQ("name", info.name);
   EXPECT_EQ("type", info.type);
   EXPECT_EQ("", info.description);
   EXPECT_EQ("curr", info.current_value);
   EXPECT_EQ("def", info.default_value);
   EXPECT_EQ("/", info.filename);
-  EXPECT_EQ(false, info.is_default);
-  EXPECT_EQ(true, info.has_validator_fn);
+  EXPECT_FALSE(info.is_default);
+  EXPECT_TRUE(info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
@@ -1081,15 +1106,15 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
   EXPECT_EQ("", info.description);
   EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
-  EXPECT_EQ(true, info.is_default);
+  EXPECT_TRUE(info.is_default);
   info = GetCommandLineFlagInfoOrDie("test_bool");
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
   EXPECT_EQ("false", info.current_value);
   EXPECT_EQ("false", info.default_value);
-  EXPECT_EQ(true, info.is_default);
-  EXPECT_EQ(false, info.has_validator_fn);
+  EXPECT_TRUE(info.is_default);
+  EXPECT_FALSE(info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
@@ -1101,7 +1126,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ("", info.description);
   EXPECT_EQ("400", info.current_value);
   EXPECT_EQ("-1", info.default_value);
-  EXPECT_EQ(false, info.is_default);
+  EXPECT_FALSE(info.is_default);
   FLAGS_test_bool = true;
   info = GetCommandLineFlagInfoOrDie("test_bool");
   EXPECT_EQ("test_bool", info.name);
@@ -1109,8 +1134,8 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ("tests bool-ness", info.description);
   EXPECT_EQ("true", info.current_value);
   EXPECT_EQ("false", info.default_value);
-  EXPECT_EQ(false, info.is_default);
-  EXPECT_EQ(false, info.has_validator_fn);
+  EXPECT_FALSE(info.is_default);
+  EXPECT_FALSE(info.has_validator_fn);
 }
 
 TEST(GetCommandLineFlagInfoOrDieDeathTest, FlagDoesNotExist) {
@@ -1129,10 +1154,10 @@ TEST(DeprecatedFunctionsTest, CommandlineFlagsIntoString) {
 
 TEST(DeprecatedFunctionsTest, AppendFlagsIntoFile) {
   FLAGS_test_int32 = 10;     // just to make the test more interesting
-  string filename(FLAGS_test_tmpdir + "/flagfile");
+  string filename(TmpFile("flagfile"));
   unlink(filename.c_str());  // just to be safe
   const bool r = AppendFlagsIntoFile(filename, "not the real argv0");
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
 
   FILE* fp = fopen(filename.c_str(), "r");
   EXPECT_TRUE(fp != NULL);
@@ -1148,27 +1173,27 @@ TEST(DeprecatedFunctionsTest, AppendFlagsIntoFile) {
     if (strcmp(line, "--test_int32=10\n") == 0)
       found_int32 = true;
   }
-  EXPECT_EQ(true, found_int32);
-  EXPECT_EQ(true, found_bool);
+  EXPECT_TRUE(found_int32);
+  EXPECT_TRUE(found_bool);
   fclose(fp);
 }
 
 TEST(DeprecatedFunctionsTest, ReadFromFlagsFile) {
   FLAGS_test_int32 = -10;    // just to make the test more interesting
-  string filename(FLAGS_test_tmpdir + "/flagfile2");
+  string filename(TmpFile("flagfile2"));
   unlink(filename.c_str());  // just to be safe
   bool r = AppendFlagsIntoFile(filename, GetArgv0());
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
 
   FLAGS_test_int32 = -11;
   r = ReadFromFlagsFile(filename, GetArgv0(), true);
-  EXPECT_EQ(true, r);
+  EXPECT_TRUE(r);
   EXPECT_EQ(-10, FLAGS_test_int32);
 }
 
 TEST(DeprecatedFunctionsTest, ReadFromFlagsFileFailure) {
   FLAGS_test_int32 = -20;
-  string filename(FLAGS_test_tmpdir + "/flagfile3");
+  string filename(TmpFile("flagfile3"));
   FILE* fp = fopen(filename.c_str(), "w");
   EXPECT_TRUE(fp != NULL);
   // Note the error in the bool assignment below...
@@ -1177,7 +1202,7 @@ TEST(DeprecatedFunctionsTest, ReadFromFlagsFileFailure) {
 
   FLAGS_test_int32 = -22;
   const bool r = ReadFromFlagsFile(filename, GetArgv0(), false);
-  EXPECT_EQ(false, r);
+  EXPECT_FALSE(r);
   EXPECT_EQ(-22, FLAGS_test_int32);   // the -21 from the flagsfile didn't take
 }
 
@@ -1190,14 +1215,6 @@ TEST(FlagsSetBeforeInitGoogleTest, TryFromEnv) {
 // in case it's defined more than once.
 
 DEFINE_int32(test_flag, -1, "used for testing commandlineflags.cc");
-
-// Returns the definition of the --flagfile flag to be used in the tests.
-const char* GetFlagFileFlag() {
-  static const string flagfile_flag = string("--flagfile=")
-      + FLAGS_srcdir + "/src/gflags_unittest_flagfile";
-
-  return flagfile_flag.c_str();
-}
 
 // Parses and returns the --test_flag flag.
 // If with_help is true, calls ParseCommandLineFlags; otherwise calls
@@ -1506,7 +1523,7 @@ TEST(FlagsValidator, FlagSaver) {
   {
     FlagSaver fs;
     EXPECT_TRUE(RegisterFlagValidator(&FLAGS_test_flag, &ValidateTestFlagIs5));
-    EXPECT_EQ("", SetCommandLineOption("test_flag", "50")); // fails validation
+    EXPECT_EQ("", SetCommandLineOption("test_flag", "50"));  // fails validation
   }
   EXPECT_NE("", SetCommandLineOption("test_flag", "50"));  // validator is gone
 
@@ -1550,7 +1567,7 @@ static int Main(int argc, char **argv) {
   // I had trouble creating a directory in /tmp from mingw
   FLAGS_test_tmpdir = "./gflags_unittest_testdir";
   mkdir(FLAGS_test_tmpdir.c_str());   // mingw has a weird one-arg mkdir
-#elif defined(_WIN32)
+#elif defined(_MSC_VER)
   char tmppath_buffer[1024];
   int tmppath_len = GetTempPathA(sizeof(tmppath_buffer), tmppath_buffer);
   assert(tmppath_len > 0 && tmppath_len < sizeof(tmppath_buffer));

@@ -1,3 +1,14 @@
+Mon Jan  4 18:09:30 2010  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.3
+	* PORTABILITY: can now build and run tests under MSVC (csilvers)
+	* Remove the python gflags code, which is now its own package (tansell)
+	* Clarify that "last flag wins" in the docs (csilvers)
+	* Comment danger of using GetAllFlags in validators (wojtekm)
+	* PORTABILITY: Some fixes necessary for c++0x (mboerger)
+	* Makefile fix: $(srcdir) -> $(top_srcdir) in one place (csilvres)
+	* INSTALL: autotools to autoconf v2.64 + automake v1.11 (csilvers)
+
 Thu Sep 10 12:53:04 2009  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.2

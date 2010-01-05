@@ -141,15 +141,6 @@ gflags_nc_test4: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 # This file isn't covered under any rule that would cause it to be distributed.
 dist_noinst_DATA += src/gflags_nc.cc
 
-# These aren't part of the c++ source, but we want them to be distributed
-PYTHON = python/setup.py \
-         python/gflags.py \
-         python/gflags2man.py \
-         python/gflags_unittest.py \
-         python/gflags_helpxml_test.py \
-         python/test_module_foo.py \
-         python/test_module_bar.py
-
 
 ## ^^^^ END OF RULES TO MAKE THE LIBRARIES, BINARIES, AND UNITTESTS
 
@@ -167,7 +158,7 @@ deb: dist-gzip packages/deb.sh packages/deb/*
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
-	libtool $(SCRIPTS) $(PYTHON) \
+	libtool $(SCRIPTS) \
 	src/windows/config.h src/windows/port.h src/windows/port.cc \
 	src/windows/gflags/gflags.h src/windows/gflags/gflags_completions.h \
 	$(WINDOWS_PROJECTS) \

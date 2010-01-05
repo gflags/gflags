@@ -144,13 +144,6 @@
 # define PRIu64 "llu"
 #endif
 
-using std::string;
-using std::map;
-using std::vector;
-using std::pair;
-using std::cerr;
-using std::sort;
-
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
 DEFINE_string(flagfile, "",
               "load flags from file");
@@ -168,6 +161,13 @@ DEFINE_string(undefok, "",
               "arguments MUST use the flag=value format");
 
 _START_GOOGLE_NAMESPACE_
+
+using std::cerr;
+using std::map;
+using std::pair;
+using std::sort;
+using std::string;
+using std::vector;
 
 // The help message indicating that the commandline flag has been
 // 'stripped'. It will not show up when doing "-help" and its
