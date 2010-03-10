@@ -520,17 +520,17 @@ bool IsBoolFlag(bool from);
 // The weird 'using' + 'extern' inside the fLS namespace is to work around
 // an unknown compiler bug/issue with the gcc 4.2.1 on SUSE 10.  See
 //    http://code.google.com/p/google-gflags/issues/detail?id=20
-#define DEFINE_string(name, val, txt)                                     \
-  namespace fLS {                                                         \
-    static union { void* align; char s[sizeof(std::string)]; } s_##name[2]; \
-    const std::string* const FLAGS_no##name = new (s_##name[0].s) std::string(val); \
-    static @ac_google_namespace@::FlagRegisterer o_##name(                \
-      #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
-      s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));   \
-    extern std::string& FLAGS_##name;                                     \
-    using fLS::FLAGS_##name;                                              \
-    std::string& FLAGS_##name = *(reinterpret_cast<std::string*>(s_##name[0].s));   \
-  }                                                                       \
+#define DEFINE_string(name, val, txt)                                         \
+  namespace fLS {                                                             \
+    static union { void* align; char s[sizeof(std::string)]; } s_##name[2];   \
+    std::string* const FLAGS_no##name = new (s_##name[0].s) std::string(val); \
+    static @ac_google_namespace@::FlagRegisterer o_##name(                    \
+      #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                    \
+      s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));       \
+    extern std::string& FLAGS_##name;                                         \
+    using fLS::FLAGS_##name;                                                  \
+    std::string& FLAGS_##name = *FLAGS_no##name;                              \
+  }                                                                           \
   using fLS::FLAGS_##name
 
 #endif  // SWIG
