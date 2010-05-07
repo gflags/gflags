@@ -106,7 +106,6 @@
 #ifdef HAVE_FNMATCH_H
 #include <fnmatch.h>
 #endif  // HAVE_FNMATCH_H
-#include <iostream>    // for cerr
 #include <string>
 #include <map>
 #include <vector>
@@ -162,7 +161,6 @@ DEFINE_string(undefok, "",
 
 _START_GOOGLE_NAMESPACE_
 
-using std::cerr;
 using std::map;
 using std::pair;
 using std::sort;
@@ -243,12 +241,14 @@ class FlagValue {
   bool Equal(const FlagValue& x) const;
   FlagValue* New() const;   // creates a new one with default value
   void CopyFrom(const FlagValue& x);
+  int ValueSize() const;
 
   // Calls the given validate-fn on value_buffer_, and returns
   // whatever it returns.  But first casts validate_fn_proto to a
   // function that takes our value as an argument (eg void
   // (*validate_fn)(bool) for a bool flag).
   bool Validate(const char* flagname, ValidateFnProto validate_fn_proto) const;
+
 
   void* value_buffer_;          // points to the buffer holding our data
   ValueType type_;              // how to interpret value_
@@ -452,6 +452,18 @@ void FlagValue::CopyFrom(const FlagValue& x) {
     case FV_DOUBLE: SET_VALUE_AS(double, OTHER_VALUE_AS(x, double));  break;
     case FV_STRING: SET_VALUE_AS(string, OTHER_VALUE_AS(x, string));  break;
     default: assert(false);  // unknown type
+  }
+}
+
+int FlagValue::ValueSize() const {
+  switch (type_) {
+    case FV_BOOL:   return sizeof(bool);
+    case FV_INT32:  return sizeof(int32);
+    case FV_INT64:  return sizeof(int64);
+    case FV_UINT64: return sizeof(uint64);
+    case FV_DOUBLE: return sizeof(double);
+    case FV_STRING: return sizeof(string);
+    default: assert(false); return 0; // unknown type
   }
 }
 

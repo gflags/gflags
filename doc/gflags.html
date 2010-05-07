@@ -18,7 +18,7 @@
     color: #000;
     font-family: "Times Roman", times, serif;
   }
-  ul.blacklist li {  
+  ul.blacklist li {
     color: #000;
     font-family: "Times Roman", times, serif;
   }
@@ -37,6 +37,20 @@
 </small>
 <br>
 
+<blockquote><dl>
+  <dt> Table of contents </dt>
+  <dd> <a href="#intro">Introduction</a> </dd>
+  <dd> <a href="#define">DEFINE: Defining Flags In Program</A> </dd>
+  <dd> <a href="#using">Accessing the Flag</A> </dd>
+  <dd> <a href="#declare">DECLARE: Using the Flag in a Different File</a> </dd>
+  <dd> <a href="#validate">RegisterFlagValidator: Sanity-checking Flag Values</a> </dd>
+  <dd> <a href="#together">Putting It Together: How to Set Up Flags</a> </dd>
+  <dd> <a href="#commandline">Setting Flags on the Command Line</a> </dd>
+  <dd> <a href="#varz">Setting Flags at Runtime</a> </dd>
+  <dd> <a href="#special">Special Flags</a> </dd>
+  <dd> <a href="#api">The API</a> </dd>
+  <dd> <br/> </dd>
+</dl></blockquote>
 
 <h2> <A NAME=intro>Introduction, and Comparison to Other Commandline
      Flags Libraries</A> </h2>
@@ -122,6 +136,15 @@ HREF="#declare">DECLARE</A> it in the others.  Even better, DEFINE it
 in <code>foo.cc</code> and DECLARE it in <code>foo.h</code>; then
 everyone who <code>#includes foo.h</code> can use the flag.</p>
 
+<p>
+Defining flags in libraries rather than in main() is powerful, but
+does have some costs. One is that a library might not have a good
+default value for its flags, for example if the flag holds a
+filename that might not exist in some environments. To mitigate such problems,
+you can use <a href="#validate">flag validators</a> to ensure prompt
+notification (in the form of a crash) of an invalid flag value.
+</p>
+
 <p>Note that while most functions in this library are defined in the
 <code>google</code> namespace, <code>DEFINE_foo</code> (and
 <code>DECLARE_foo</code>, <A HREF="#declare">below</A>), should always
@@ -200,7 +223,7 @@ with the new value as an argument.  The validator function should
 return 'true' if the flag value is valid, and false otherwise.
 If the function returns false for the new setting of the
 flag, the flag will retain its current value. If it returns false for the
-default value, InitGoogle will die.
+default value, ParseCommandLineFlags will die.
 
 <p>Here is an example use of this functionality:</p>
 <pre>
@@ -417,7 +440,7 @@ that file as if these flags had been specified on the commandline.</p>
 
 <p>In its simplest form, <code>f</code> should just be a list of flag
 assignments, one per line.  Unlike on the commandline, the equals sign
-separating a flagname from its argument is <i>required</i> for 
+separating a flagname from its argument is <i>required</i> for
 flagfiles.  An example flagfile, <code>/tmp/myflags</code>:</p>
 <pre>
 --nobig_menus
