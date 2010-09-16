@@ -99,11 +99,25 @@
 #endif
 
 // Annoying stuff for windows -- makes sure clients can import these functions
-#ifndef GFLAGS_DLL_DECL
-# ifdef _WIN32
+#if defined(_WIN32)
+# ifndef GFLAGS_DLL_DECL
 #   define GFLAGS_DLL_DECL  __declspec(dllimport)
-# else
+# endif
+# ifndef GFLAGS_DLL_DECLARE_FLAG
+#   define GFLAGS_DLL_DECLARE_FLAG  __declspec(import)
+# endif
+# ifndef GFLAGS_DLL_DEFINE_FLAG
+#   define GFLAGS_DLL_DEFINE_FLAG   __declspec(dllexport)
+# endif
+#else
+# ifndef GFLAGS_DLL_DECL
 #   define GFLAGS_DLL_DECL
+# endif
+# ifndef GFLAGS_DLL_DECLARE_FLAG
+#   define GFLAGS_DLL_DECLARE_FLAG
+# endif
+# ifndef GFLAGS_DLL_DEFINE_FLAG
+#   define GFLAGS_DLL_DEFINE_FLAG
 # endif
 #endif
 
@@ -133,7 +147,8 @@ typedef unsigned __int64 uint64;
 // DEFINE_string, etc. at the bottom of this file.  You may also find
 // it useful to register a validator with the flag.  This ensures that
 // when the flag is parsed from the commandline, or is later set via
-// SetCommandLineOption, we call the validation function.
+// SetCommandLineOption, we call the validation function. It is _not_
+// called when you assign the value to the flag directly using the = operator.
 //
 // The validation function should return true if the flag value is valid, and
 // false otherwise. If the function returns false for the new setting of the
@@ -189,7 +204,9 @@ struct GFLAGS_DLL_DECL CommandLineFlagInfo {
   std::string default_value;  // the default value, as a string
   std::string filename;       // 'cleaned' version of filename holding the flag
   bool has_validator_fn;      // true if RegisterFlagValidator called on flag
-  bool is_default;            // true if the flag has default value
+  bool is_default;            // true if the flag has the default value and
+                              // has not been set explicitly from the cmdline
+                              // or via SetCommandLineOption
 };
 
 // Using this inside of a validator is a recipe for a deadlock.
@@ -471,7 +488,7 @@ extern const char kStrippedFlagHelp[];
   namespace fL##shorttype {                                     \
     static const type FLAGS_nono##name = value;                 \
     /* We always want to export defined variables, dll or no */ \
-    __declspec(dllexport) type FLAGS_##name = FLAGS_nono##name; \
+    GFLAGS_DLL_DEFINE_FLAG type FLAGS_##name = FLAGS_nono##name; \
     type FLAGS_no##name = FLAGS_nono##name;                     \
     static ::google::FlagRegisterer o_##name(                   \
       #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,        \
@@ -482,7 +499,7 @@ extern const char kStrippedFlagHelp[];
 #define DECLARE_VARIABLE(type, shorttype, name) \
   namespace fL##shorttype {                     \
     /* We always want to import declared variables, dll or no */ \
-    extern __declspec(dllimport) type FLAGS_##name; \
+    extern GFLAGS_DLL_DECLARE_FLAG type FLAGS_##name; \
   }                                             \
   using fL##shorttype::FLAGS_##name
 
@@ -528,7 +545,7 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 // try to avoid crashes in that case, we use a char buffer to store
 // the string, which we can static-initialize, and then placement-new
 // into it later.  It's not perfect, but the best we can do.
-#define DECLARE_string(name)  namespace fLS { extern __declspec(dllimport) std::string& FLAGS_##name; } \
+#define DECLARE_string(name)  namespace fLS { extern GFLAGS_DLL_DECLARE_FLAG std::string& FLAGS_##name; } \
                               using fLS::FLAGS_##name
 
 // We need to define a var named FLAGS_no##name so people don't define
@@ -545,7 +562,7 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
     static ::google::FlagRegisterer o_##name(                                 \
       #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                    \
       s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));       \
-    extern __declspec(dllexport) std::string& FLAGS_##name;                   \
+    extern GFLAGS_DLL_DEFINE_FLAG std::string& FLAGS_##name;                  \
     using fLS::FLAGS_##name;                                                  \
     std::string& FLAGS_##name = *FLAGS_no##name;                              \
   }                                                                           \

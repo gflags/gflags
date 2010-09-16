@@ -47,6 +47,7 @@
   <dd> <a href="#together">Putting It Together: How to Set Up Flags</a> </dd>
   <dd> <a href="#commandline">Setting Flags on the Command Line</a> </dd>
   <dd> <a href="#varz">Setting Flags at Runtime</a> </dd>
+  <dd> <a href="#default">Changing the Default Flag Value</a> </dd>
   <dd> <a href="#special">Special Flags</a> </dd>
   <dd> <a href="#api">The API</a> </dd>
   <dd> <br/> </dd>
@@ -346,6 +347,26 @@ is used; the others are ignored.</p>
 <p>Note that flags do not have single-letter synonyms, like they do in
 the getopt library, nor do we allow "combining" flags behind a
 single dash, as in <code>ls -la</code>.</p>
+
+
+
+<h2> <A name=default>Changing the Default Flag Value</A> </h2>
+
+<p>Sometimes a flag is defined in a library, and you want to change
+its default value in one application but not others.  It's simple to
+do this: just assign a new value to the flag in <code>main()</code>,
+before calling <code>ParseCommandLineFlags()</code>:</p>
+<pre>
+   DECLARE_bool(lib_verbose);   // mylib has a lib_verbose flag, default is false
+   int main(int argc, char** argv) {
+     FLAGS_lib_verbose = true;  // in my app, I want a verbose lib by default
+     ParseCommandLineFlags(...);
+   }
+</pre>
+
+<p>For this application, users can still set the flag value on the
+commandline, but if they do not, the flag's value will default to
+true.</p>
 
 
 <h2> <A name="special">Special Flags</code> </h2>

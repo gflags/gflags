@@ -34,7 +34,7 @@ docdir = $(prefix)/share/doc/$(PACKAGE)-$(VERSION)
 ## Add your documentation files (in doc/) in addition to these
 ## top-level boilerplate files.  Also add a TODO file if you have one.
 dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
-	doc/designstyle.css doc/gflags.html
+	README_windows.txt doc/designstyle.css doc/gflags.html
 
 ## The libraries (.so's) you want to install
 lib_LTLIBRARIES =

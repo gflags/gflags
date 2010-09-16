@@ -124,7 +124,8 @@ typedef unsigned __int64 uint64;
 // DEFINE_string, etc. at the bottom of this file.  You may also find
 // it useful to register a validator with the flag.  This ensures that
 // when the flag is parsed from the commandline, or is later set via
-// SetCommandLineOption, we call the validation function.
+// SetCommandLineOption, we call the validation function. It is _not_
+// called when you assign the value to the flag directly using the = operator.
 //
 // The validation function should return true if the flag value is valid, and
 // false otherwise. If the function returns false for the new setting of the
@@ -180,7 +181,9 @@ struct CommandLineFlagInfo {
   std::string default_value;  // the default value, as a string
   std::string filename;       // 'cleaned' version of filename holding the flag
   bool has_validator_fn;      // true if RegisterFlagValidator called on flag
-  bool is_default;            // true if the flag has default value
+  bool is_default;            // true if the flag has the default value and
+                              // has not been set explicitly from the cmdline
+                              // or via SetCommandLineOption
 };
 
 // Using this inside of a validator is a recipe for a deadlock.

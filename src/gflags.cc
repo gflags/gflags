@@ -143,6 +143,8 @@
 # define PRIu64 "llu"
 #endif
 
+typedef unsigned char uint8;
+
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
 DEFINE_string(flagfile, "",
               "load flags from file");
@@ -235,8 +237,15 @@ class FlagValue {
   friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
                              const char*, string*);  // for New(), CopyFrom()
 
-  enum ValueType {FV_BOOL, FV_INT32, FV_INT64, FV_UINT64, FV_DOUBLE, FV_STRING};
-
+  enum ValueType {
+    FV_BOOL = 0,
+    FV_INT32 = 1,
+    FV_INT64 = 2,
+    FV_UINT64 = 3,
+    FV_DOUBLE = 4,
+    FV_STRING = 5,
+    FV_MAX_INDEX = 5,
+  };
   const char* TypeName() const;
   bool Equal(const FlagValue& x) const;
   FlagValue* New() const;   // creates a new one with default value
@@ -249,9 +258,8 @@ class FlagValue {
   // (*validate_fn)(bool) for a bool flag).
   bool Validate(const char* flagname, ValidateFnProto validate_fn_proto) const;
 
-
   void* value_buffer_;          // points to the buffer holding our data
-  ValueType type_;              // how to interpret value_
+  uint32 type_;                  // how to interpret value_
 
   FlagValue(const FlagValue&);   // no copying!
   void operator=(const FlagValue&);
@@ -265,13 +273,12 @@ class FlagValue {
 #define SET_VALUE_AS(type, value)  VALUE_AS(type) = (value)
 
 FlagValue::FlagValue(void* valbuf, const char* type) : value_buffer_(valbuf) {
-  if      (strcmp(type, "bool") == 0)  type_ = FV_BOOL;
-  else if (strcmp(type, "int32") == 0)  type_ = FV_INT32;
-  else if (strcmp(type, "int64") == 0)  type_ = FV_INT64;
-  else if (strcmp(type, "uint64") == 0)  type_ = FV_UINT64;
-  else if (strcmp(type, "double") == 0)  type_ = FV_DOUBLE;
-  else if (strcmp(type, "string") == 0)  type_ = FV_STRING;
-  else assert(false); // Unknown typename
+  for (type_ = 0; type_ <= FV_MAX_INDEX; ++type_) {
+    if (!strcmp(type, TypeName())) {
+      break;
+    }
+  }
+  assert(type_ <= FV_MAX_INDEX);  // Unknown typename
 }
 
 FlagValue::~FlagValue() {
@@ -405,15 +412,20 @@ bool FlagValue::Validate(const char* flagname,
 }
 
 const char* FlagValue::TypeName() const {
-  switch (type_) {
-    case FV_BOOL:   return "bool";
-    case FV_INT32:  return "int32";
-    case FV_INT64:  return "int64";
-    case FV_UINT64: return "uint64";
-    case FV_DOUBLE: return "double";
-    case FV_STRING: return "string";
-    default: assert(false); return "";  // unknown type
+  static const char types[] =
+      "bool\0xx"
+      "int32\0x"
+      "int64\0x"
+      "uint64\0"
+      "double\0"
+      "string";
+  if (type_ > FV_MAX_INDEX) {
+    assert(false);
+    return "";
   }
+  // Directly indexing the strigns in the 'types' string, each of them
+  // is 7 bytes long.
+  return &types[type_ * 7];
 }
 
 bool FlagValue::Equal(const FlagValue& x) const {
@@ -431,13 +443,14 @@ bool FlagValue::Equal(const FlagValue& x) const {
 }
 
 FlagValue* FlagValue::New() const {
+  const char *type = TypeName();
   switch (type_) {
-    case FV_BOOL:   return new FlagValue(new bool(false), "bool");
-    case FV_INT32:  return new FlagValue(new int32(0), "int32");
-    case FV_INT64:  return new FlagValue(new int64(0), "int64");
-    case FV_UINT64: return new FlagValue(new uint64(0), "uint64");
-    case FV_DOUBLE: return new FlagValue(new double(0.0), "double");
-    case FV_STRING: return new FlagValue(new string, "string");
+    case FV_BOOL:   return new FlagValue(new bool(false), type);
+    case FV_INT32:  return new FlagValue(new int32(0), type);
+    case FV_INT64:  return new FlagValue(new int64(0), type);
+    case FV_UINT64: return new FlagValue(new uint64(0), type);
+    case FV_DOUBLE: return new FlagValue(new double(0.0), type);
+    case FV_STRING: return new FlagValue(new string, type);
     default: assert(false); return NULL;  // unknown type
   }
 }
@@ -456,15 +469,19 @@ void FlagValue::CopyFrom(const FlagValue& x) {
 }
 
 int FlagValue::ValueSize() const {
-  switch (type_) {
-    case FV_BOOL:   return sizeof(bool);
-    case FV_INT32:  return sizeof(int32);
-    case FV_INT64:  return sizeof(int64);
-    case FV_UINT64: return sizeof(uint64);
-    case FV_DOUBLE: return sizeof(double);
-    case FV_STRING: return sizeof(string);
-    default: assert(false); return 0; // unknown type
+  if (type_ > FV_MAX_INDEX) {
+    assert(false);  // unknown type
+    return 0;
   }
+  static const uint8 valuesize[] = {
+    sizeof(bool),
+    sizeof(int32),
+    sizeof(int64),
+    sizeof(uint64),
+    sizeof(double),
+    sizeof(string),
+  };
+  return valuesize[type_];
 }
 
 // --------------------------------------------------------------------

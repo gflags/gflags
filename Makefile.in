@@ -307,7 +307,7 @@ googleincludedir = $(includedir)/google
 googleinclude_HEADERS = src/google/gflags.h src/google/gflags_completions.h
 bin_SCRIPTS = src/gflags_completions.sh
 dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
-	doc/designstyle.css doc/gflags.html
+	README_windows.txt doc/designstyle.css doc/gflags.html
 
 lib_LTLIBRARIES = libgflags.la libgflags_nothreads.la
 WINDOWS_PROJECTS = google-gflags.sln \
