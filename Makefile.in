@@ -75,7 +75,8 @@ am__vpath_adj = case $$p in \
   esac;
 am__strip_dir = `echo $$p | sed -e 's|^.*/||'`;
 am__installdirs = "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" \
-	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(gflagsincludedir)" \
+	"$(DESTDIR)$(docdir)" "$(DESTDIR)$(pkgconfigdir)" \
+	"$(DESTDIR)$(gflagsincludedir)" \
 	"$(DESTDIR)$(googleincludedir)"
 libLTLIBRARIES_INSTALL = $(INSTALL)
 LTLIBRARIES = $(lib_LTLIBRARIES)
@@ -145,7 +146,8 @@ DIST_SOURCES = $(libgflags_la_SOURCES) \
 	$(gflags_unittest_SOURCES) $(gflags_unittest2_SOURCES) \
 	$(gflags_unittest3_SOURCES)
 dist_docDATA_INSTALL = $(INSTALL_DATA)
-DATA = $(dist_doc_DATA) $(dist_noinst_DATA)
+pkgconfigDATA_INSTALL = $(INSTALL_DATA)
+DATA = $(dist_doc_DATA) $(dist_noinst_DATA) $(pkgconfig_DATA)
 gflagsincludeHEADERS_INSTALL = $(INSTALL_HEADER)
 googleincludeHEADERS_INSTALL = $(INSTALL_HEADER)
 HEADERS = $(gflagsinclude_HEADERS) $(googleinclude_HEADERS)
@@ -337,7 +339,8 @@ check_SCRIPTS = gflags_unittest_sh gflags_nc_test1 gflags_nc_test2 \
 # Every time you add a unittest to check_SCRIPTS, add it here too
 noinst_SCRIPTS = src/gflags_unittest.sh
 # Used for auto-generated source files
-CLEANFILES = src/gflags_unittest-main.cc src/gflags_unittest_main.cc
+CLEANFILES = src/gflags_unittest-main.cc src/gflags_unittest_main.cc \
+	$(pkgconfig_DATA)
 GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/mutex.h \
                  src/gflags.cc src/gflags_reporting.cc \
                  src/gflags_completions.cc
@@ -368,6 +371,10 @@ gflags_unittest3_LDADD = libgflags_nothreads.la
 
 # This file isn't covered under any rule that would cause it to be distributed.
 dist_noinst_DATA = src/gflags_unittest_flagfile src/gflags_nc.cc
+
+# http://linux.die.net/man/1/pkg-config, http://pkg-config.freedesktop.org/wiki
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = lib${PACKAGE}.pc lib${PACKAGE}_nothreads.pc
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
 	libtool $(SCRIPTS) \
 	src/windows/config.h src/windows/port.h src/windows/port.cc \
@@ -665,6 +672,23 @@ uninstall-dist_docDATA:
 	  echo " rm -f '$(DESTDIR)$(docdir)/$$f'"; \
 	  rm -f "$(DESTDIR)$(docdir)/$$f"; \
 	done
+install-pkgconfigDATA: $(pkgconfig_DATA)
+	@$(NORMAL_INSTALL)
+	test -z "$(pkgconfigdir)" || $(mkdir_p) "$(DESTDIR)$(pkgconfigdir)"
+	@list='$(pkgconfig_DATA)'; for p in $$list; do \
+	  if test -f "$$p"; then d=; else d="$(srcdir)/"; fi; \
+	  f=$(am__strip_dir) \
+	  echo " $(pkgconfigDATA_INSTALL) '$$d$$p' '$(DESTDIR)$(pkgconfigdir)/$$f'"; \
+	  $(pkgconfigDATA_INSTALL) "$$d$$p" "$(DESTDIR)$(pkgconfigdir)/$$f"; \
+	done
+
+uninstall-pkgconfigDATA:
+	@$(NORMAL_UNINSTALL)
+	@list='$(pkgconfig_DATA)'; for p in $$list; do \
+	  f=$(am__strip_dir) \
+	  echo " rm -f '$(DESTDIR)$(pkgconfigdir)/$$f'"; \
+	  rm -f "$(DESTDIR)$(pkgconfigdir)/$$f"; \
+	done
 install-gflagsincludeHEADERS: $(gflagsinclude_HEADERS)
 	@$(NORMAL_INSTALL)
 	test -z "$(gflagsincludedir)" || $(mkdir_p) "$(DESTDIR)$(gflagsincludedir)"
@@ -956,7 +980,7 @@ check: check-am
 all-am: Makefile $(LTLIBRARIES) $(PROGRAMS) $(SCRIPTS) $(DATA) \
 		$(HEADERS)
 installdirs:
-	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(gflagsincludedir)" "$(DESTDIR)$(googleincludedir)"; do \
+	for dir in "$(DESTDIR)$(libdir)" "$(DESTDIR)$(bindir)" "$(DESTDIR)$(docdir)" "$(DESTDIR)$(pkgconfigdir)" "$(DESTDIR)$(gflagsincludedir)" "$(DESTDIR)$(googleincludedir)"; do \
 	  test -z "$$dir" || $(mkdir_p) "$$dir"; \
 	done
 install: install-am
@@ -1007,7 +1031,7 @@ info: info-am
 info-am:
 
 install-data-am: install-dist_docDATA install-gflagsincludeHEADERS \
-	install-googleincludeHEADERS
+	install-googleincludeHEADERS install-pkgconfigDATA
 
 install-exec-am: install-binSCRIPTS install-libLTLIBRARIES
 
@@ -1039,7 +1063,8 @@ ps-am:
 
 uninstall-am: uninstall-binSCRIPTS uninstall-dist_docDATA \
 	uninstall-gflagsincludeHEADERS uninstall-googleincludeHEADERS \
-	uninstall-info-am uninstall-libLTLIBRARIES
+	uninstall-info-am uninstall-libLTLIBRARIES \
+	uninstall-pkgconfigDATA
 
 .PHONY: CTAGS GTAGS all all-am am--refresh check check-TESTS check-am \
 	clean clean-generic clean-libLTLIBRARIES clean-libtool \
@@ -1052,14 +1077,15 @@ uninstall-am: uninstall-binSCRIPTS uninstall-dist_docDATA \
 	install-data-am install-dist_docDATA install-exec \
 	install-exec-am install-gflagsincludeHEADERS \
 	install-googleincludeHEADERS install-info install-info-am \
-	install-libLTLIBRARIES install-man install-strip installcheck \
-	installcheck-am installdirs maintainer-clean \
-	maintainer-clean-generic mostlyclean mostlyclean-compile \
-	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
-	tags uninstall uninstall-am uninstall-binSCRIPTS \
-	uninstall-dist_docDATA uninstall-gflagsincludeHEADERS \
-	uninstall-googleincludeHEADERS uninstall-info-am \
-	uninstall-libLTLIBRARIES
+	install-libLTLIBRARIES install-man install-pkgconfigDATA \
+	install-strip installcheck installcheck-am installdirs \
+	maintainer-clean maintainer-clean-generic mostlyclean \
+	mostlyclean-compile mostlyclean-generic mostlyclean-libtool \
+	pdf pdf-am ps ps-am tags uninstall uninstall-am \
+	uninstall-binSCRIPTS uninstall-dist_docDATA \
+	uninstall-gflagsincludeHEADERS uninstall-googleincludeHEADERS \
+	uninstall-info-am uninstall-libLTLIBRARIES \
+	uninstall-pkgconfigDATA
 
 src/gflags_unittest-main.cc: src/gflags_unittest.cc
 	rm -f src/gflags_unittest-main.cc
@@ -1072,21 +1098,44 @@ gflags_unittest_sh: gflags_unittest$(EXEEXT) \
                     gflags_unittest3$(EXEEXT)
 	bash --version >/dev/null 2>&1 && export SH=bash || export SH=sh; \
 	$$SH "$(top_srcdir)/src/gflags_unittest.sh" \
-	     "$(PWD)/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
+	     "`pwd`/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
 gflags_nc_test1: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	! $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	if $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc; then echo "Compile succeeded but should have failed"; exit 1; else echo "Compile failed, like it was supposed to"; fi
 gflags_nc_test2: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	! $(CXX) -DTEST_INT_INSTEAD_OF_BOOL $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test2.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	if $(CXX) -DTEST_INT_INSTEAD_OF_BOOL $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test2.o $(srcdir)/src/gflags_nc.cc; then echo "Compile succeeded but should have failed"; exit 1; else echo "Compile failed, like it was supposed to"; fi
 gflags_nc_test3: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	! $(CXX) -DTEST_BOOL_IN_QUOTES $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test3.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	if $(CXX) -DTEST_BOOL_IN_QUOTES $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test3.o $(srcdir)/src/gflags_nc.cc; then echo "Compile succeeded but should have failed"; exit 1; else echo "Compile failed, like it was supposed to"; fi
 gflags_nc_test4: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	$(CXX) -DSANITY $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test4.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	$(CXX) -DSANITY $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test4.o $(srcdir)/src/gflags_nc.cc
 
 rpm: dist-gzip packages/rpm.sh packages/rpm/rpm.spec
 	@cd packages && ./rpm.sh ${PACKAGE} ${VERSION}
 
 deb: dist-gzip packages/deb.sh packages/deb/*
 	@cd packages && ./deb.sh ${PACKAGE} ${VERSION}
+
+# I get the description and URL lines from the rpm spec. I use sed to
+# try to rewrite exec_prefix, libdir, and includedir in terms of
+# prefix, if possible.
+lib${PACKAGE}.pc: Makefile packages/rpm/rpm.spec
+	echo 'prefix=$(prefix)' > "$@".tmp
+	echo 'exec_prefix='`echo '$(exec_prefix)' | sed 's@^$(prefix)@$${prefix}@'` >> "$@".tmp
+	echo 'libdir='`echo '$(libdir)' | sed 's@^$(exec_prefix)@$${exec_prefix}@'` >> "$@".tmp
+	echo 'includedir='`echo '$(includedir)' | sed 's@^$(prefix)@$${prefix}@'` >> "$@".tmp
+	echo '' >> "$@".tmp
+	echo 'Name: $(PACKAGE)' >> "$@".tmp
+	echo 'Version: $(VERSION)' >> "$@".tmp
+	-grep '^Summary:' packages/rpm/rpm.spec | sed s/^Summary:/Description:/ | head -n1 >> "$@".tmp
+	-grep '^URL: ' packages/rpm/rpm.spec >> "$@".tmp
+	echo 'Requires:' >> "$@".tmp
+	echo 'Libs: -L$${libdir} -l$(PACKAGE)' >> "$@".tmp
+	echo 'Libs.private: $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)' >> "$@".tmp
+	echo 'Cflags: -I$${includedir}' >> "$@".tmp
+	mv -f "$@".tmp "$@"
+
+# The nothreads version is mostly the same
+lib${PACKAGE}_nothreads.pc: lib${PACKAGE}.pc
+	grep -v Libs.private lib${PACKAGE}.pc | sed s/-l$(PACKAGE)/-l$(PACKAGE)_nothreads/ > "$@"
 
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck

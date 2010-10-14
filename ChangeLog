@@ -1,3 +1,14 @@
+Wed Oct 13 17:40:12 2010  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.4
+	* Add a check to prevent passing 0 to DEFINE_string (jorg)
+	* Reduce compile (.o) size (jyrki)
+	* Some small changes to quiet debug compiles (alexk)
+	* PORTING: better support static linking on windows (csilvers)
+	* DOCUMENTATION: change default values, use validators, etc.
+	* Update the NEWS file to be non-empty
+	* Add pkg-config (.pc) files for libgflags and libgflags_nothreads
+
 Mon Jan  4 18:09:30 2010  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.3

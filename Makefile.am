@@ -116,27 +116,27 @@ gflags_unittest_sh: gflags_unittest$(EXEEXT) \
                     gflags_unittest3$(EXEEXT)
 	bash --version >/dev/null 2>&1 && export SH=bash || export SH=sh; \
 	$$SH "$(top_srcdir)/src/gflags_unittest.sh" \
-	     "$(PWD)/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
+	     "`pwd`/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
 
 # These are negative-compilation tests.  We want to make sure these
 # erroneous use of the flags macros correctly fail to compile.
 # Again, we just bother testing with the no-threads version of the library.
 check_SCRIPTS += gflags_nc_test1
 gflags_nc_test1: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	! $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	if $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc; then echo "Compile succeeded but should have failed"; exit 1; else echo "Compile failed, like it was supposed to"; fi
 
 check_SCRIPTS += gflags_nc_test2
 gflags_nc_test2: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	! $(CXX) -DTEST_INT_INSTEAD_OF_BOOL $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test2.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	if $(CXX) -DTEST_INT_INSTEAD_OF_BOOL $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test2.o $(srcdir)/src/gflags_nc.cc; then echo "Compile succeeded but should have failed"; exit 1; else echo "Compile failed, like it was supposed to"; fi
 
 check_SCRIPTS += gflags_nc_test3
 gflags_nc_test3: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	! $(CXX) -DTEST_BOOL_IN_QUOTES $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test3.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	if $(CXX) -DTEST_BOOL_IN_QUOTES $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test3.o $(srcdir)/src/gflags_nc.cc; then echo "Compile succeeded but should have failed"; exit 1; else echo "Compile failed, like it was supposed to"; fi
 
 # This one, on the other hand, should succeed.
 check_SCRIPTS += gflags_nc_test4
 gflags_nc_test4: $(gflagsinclude_HEADERS) src/gflags_nc.cc
-	$(CXX) -DSANITY $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test4.o $(srcdir)/src/gflags_nc.cc && echo "Compile failed, like it was supposed to"
+	$(CXX) -DSANITY $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test4.o $(srcdir)/src/gflags_nc.cc
 
 # This file isn't covered under any rule that would cause it to be distributed.
 dist_noinst_DATA += src/gflags_nc.cc
@@ -155,8 +155,37 @@ rpm: dist-gzip packages/rpm.sh packages/rpm/rpm.spec
 deb: dist-gzip packages/deb.sh packages/deb/*
 	@cd packages && ./deb.sh ${PACKAGE} ${VERSION}
 
+# http://linux.die.net/man/1/pkg-config, http://pkg-config.freedesktop.org/wiki
+pkgconfigdir = $(libdir)/pkgconfig
+pkgconfig_DATA = lib${PACKAGE}.pc lib${PACKAGE}_nothreads.pc
+CLEANFILES += $(pkgconfig_DATA)
+
+# I get the description and URL lines from the rpm spec. I use sed to
+# try to rewrite exec_prefix, libdir, and includedir in terms of
+# prefix, if possible.
+lib${PACKAGE}.pc: Makefile packages/rpm/rpm.spec
+	echo 'prefix=$(prefix)' > "$@".tmp
+	echo 'exec_prefix='`echo '$(exec_prefix)' | sed 's@^$(prefix)@$${prefix}@'` >> "$@".tmp
+	echo 'libdir='`echo '$(libdir)' | sed 's@^$(exec_prefix)@$${exec_prefix}@'` >> "$@".tmp
+	echo 'includedir='`echo '$(includedir)' | sed 's@^$(prefix)@$${prefix}@'` >> "$@".tmp
+	echo '' >> "$@".tmp
+	echo 'Name: $(PACKAGE)' >> "$@".tmp
+	echo 'Version: $(VERSION)' >> "$@".tmp
+	-grep '^Summary:' packages/rpm/rpm.spec | sed s/^Summary:/Description:/ | head -n1 >> "$@".tmp
+	-grep '^URL: ' packages/rpm/rpm.spec >> "$@".tmp
+	echo 'Requires:' >> "$@".tmp
+	echo 'Libs: -L$${libdir} -l$(PACKAGE)' >> "$@".tmp
+	echo 'Libs.private: $(PTHREAD_CFLAGS) $(PTHREAD_LIBS)' >> "$@".tmp
+	echo 'Cflags: -I$${includedir}' >> "$@".tmp
+	mv -f "$@".tmp "$@"
+
+# The nothreads version is mostly the same
+lib${PACKAGE}_nothreads.pc: lib${PACKAGE}.pc
+	grep -v Libs.private lib${PACKAGE}.pc | sed s/-l$(PACKAGE)/-l$(PACKAGE)_nothreads/ > "$@"
+
 libtool: $(LIBTOOL_DEPS)
 	$(SHELL) ./config.status --recheck
+
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
 	libtool $(SCRIPTS) \
 	src/windows/config.h src/windows/port.h src/windows/port.cc \

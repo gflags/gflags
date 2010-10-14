@@ -67,9 +67,6 @@ rm -rf $RPM_BUILD_ROOT
 %docdir %{prefix}/share/doc/%{NAME}-%{VERSION}
 %{prefix}/share/doc/%{NAME}-%{VERSION}/*
 
-%doc AUTHORS COPYING ChangeLog INSTALL NEWS README
-%doc doc/*
-
 %{_libdir}/*.so.*
 %{_bindir}/gflags_completions.sh
 
@@ -81,3 +78,4 @@ rm -rf $RPM_BUILD_ROOT
 %{_libdir}/*.a
 %{_libdir}/*.la
 %{_libdir}/*.so
+%{_libdir}/pkgconfig/*.pc

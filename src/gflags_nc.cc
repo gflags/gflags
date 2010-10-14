@@ -60,4 +60,10 @@ DEFINE_bool(some_bool_flag_4,
             true,
             "this is the correct usage of DEFINE_bool");
 
+#elif defined(TEST_DEFINE_STRING_WITH_0)
+
+DEFINE_string(some_string_flag,
+              0,
+              "Trying to construct a string by passing 0 would cause a crash.");
+
 #endif

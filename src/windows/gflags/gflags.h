@@ -104,7 +104,7 @@
 #   define GFLAGS_DLL_DECL  __declspec(dllimport)
 # endif
 # ifndef GFLAGS_DLL_DECLARE_FLAG
-#   define GFLAGS_DLL_DECLARE_FLAG  __declspec(import)
+#   define GFLAGS_DLL_DECLARE_FLAG  __declspec(dllimport)
 # endif
 # ifndef GFLAGS_DLL_DEFINE_FLAG
 #   define GFLAGS_DLL_DEFINE_FLAG   __declspec(dllexport)
@@ -548,6 +548,19 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 #define DECLARE_string(name)  namespace fLS { extern GFLAGS_DLL_DECLARE_FLAG std::string& FLAGS_##name; } \
                               using fLS::FLAGS_##name
 
+namespace fLS {
+inline std::string* dont_pass0toDEFINE_string(char *stringspot,
+                                              const char *value) {
+  return new(stringspot) std::string(value);
+}
+inline std::string* dont_pass0toDEFINE_string(char *stringspot,
+                                              const std::string &value) {
+  return new(stringspot) std::string(value);
+}
+inline std::string* dont_pass0toDEFINE_string(char *stringspot,
+                                              int value);
+}  // namespace fLS
+
 // We need to define a var named FLAGS_no##name so people don't define
 // --string and --nostring.  And we need a temporary place to put val
 // so we don't have to evaluate it twice.  Two great needs that go
@@ -558,7 +571,9 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 #define DEFINE_string(name, val, txt)                                         \
   namespace fLS {                                                             \
     static union { void* align; char s[sizeof(std::string)]; } s_##name[2];   \
-    std::string* const FLAGS_no##name = new (s_##name[0].s) std::string(val); \
+    std::string* const FLAGS_no##name = ::fLS::                               \
+                                   dont_pass0toDEFINE_string(s_##name[0].s,   \
+                                                             val);            \
     static ::google::FlagRegisterer o_##name(                                 \
       #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                    \
       s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));       \
