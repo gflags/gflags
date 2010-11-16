@@ -63,12 +63,14 @@ lib_LTLIBRARIES += libgflags.la
 WINDOWS_PROJECTS += vsprojects/libgflags/libgflags.vcproj
 libgflags_la_SOURCES = $(GFLAGS_SOURCES)
 libgflags_la_CXXFLAGS = $(PTHREAD_CFLAGS) -DNDEBUG
-libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS)
+# -version-info gets passed to libtool
+libgflags_la_LDFLAGS = $(PTHREAD_CFLAGS) -version-info @SO_VERSION@
 libgflags_la_LIBADD = $(PTHREAD_LIBS)
 
 lib_LTLIBRARIES += libgflags_nothreads.la
 libgflags_nothreads_la_SOURCES = $(GFLAGS_SOURCES)
 libgflags_nothreads_la_CXXFLAGS = -DNDEBUG -DNO_THREADS
+libgflags_nothreads_la_LDFLAGS = -version-info @SO_VERSION@
 
 TESTS += gflags_unittest
 WINDOWS_PROJECTS += vsprojects/gflags_unittest/gflags_unittest.vcproj
