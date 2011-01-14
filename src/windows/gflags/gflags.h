@@ -153,7 +153,7 @@ typedef unsigned __int64 uint64;
 // The validation function should return true if the flag value is valid, and
 // false otherwise. If the function returns false for the new setting of the
 // flag, the flag will retain its current value. If it returns false for the
-// default value, InitGoogle will die.
+// default value, ParseCommandLineFlags() will die.
 //
 // This function is safe to call at global construct time (as in the
 // example below).
@@ -408,6 +408,16 @@ extern GFLAGS_DLL_DECL void AllowCommandLineReparsing();
 // since their flags are not registered until they are loaded.
 extern GFLAGS_DLL_DECL uint32 ReparseCommandLineNonHelpFlags();
 
+// Clean up memory allocated by flags.  This is only needed to reduce
+// the quantity of "potentially leaked" reports emitted by memory
+// debugging tools such as valgrind.  It is not required for normal
+// operation, or for the perftools heap-checker.  It must only be called
+// when the process is about to exit, and all threads that might
+// access flags are quiescent.  Referencing flags after this is called
+// will have unexpected consequences.  This is not safe to run when
+// multiple threads might be running: the function is thread-hostile.
+extern void ShutDownCommandLineFlags();
+
 
 // --------------------------------------------------------------------
 // Now come the command line flag declaration/definition macros that
@@ -522,7 +532,7 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 #define DECLARE_bool(name)          DECLARE_VARIABLE(bool, B, name)
 #define DEFINE_bool(name, val, txt)                                       \
   namespace fLB {                                                         \
-    typedef CompileAssert FLAG_##name##_value_is_not_a_bool[              \
+    typedef ::fLB::CompileAssert FLAG_##name##_value_is_not_a_bool[       \
             (sizeof(::fLB::IsBoolFlag(val)) != sizeof(double)) ? 1 : -1]; \
   }                                                                       \
   DEFINE_VARIABLE(bool, B, name, val, txt)
@@ -545,21 +555,28 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 // try to avoid crashes in that case, we use a char buffer to store
 // the string, which we can static-initialize, and then placement-new
 // into it later.  It's not perfect, but the best we can do.
-#define DECLARE_string(name)  namespace fLS { extern GFLAGS_DLL_DECLARE_FLAG std::string& FLAGS_##name; } \
-                              using fLS::FLAGS_##name
 
 namespace fLS {
-inline std::string* dont_pass0toDEFINE_string(char *stringspot,
-                                              const char *value) {
-  return new(stringspot) std::string(value);
+// The meaning of "string" might be different between now and when the
+// macros below get invoked (e.g., if someone is experimenting with
+// other string implementations that get defined after this file is
+// included).  Save the current meaning now and use it in the macros.
+typedef std::string clstring;
+
+inline clstring* dont_pass0toDEFINE_string(char *stringspot,
+                                           const char *value) {
+  return new(stringspot) clstring(value);
 }
-inline std::string* dont_pass0toDEFINE_string(char *stringspot,
-                                              const std::string &value) {
-  return new(stringspot) std::string(value);
+inline clstring* dont_pass0toDEFINE_string(char *stringspot,
+                                           const clstring &value) {
+  return new(stringspot) clstring(value);
 }
-inline std::string* dont_pass0toDEFINE_string(char *stringspot,
-                                              int value);
+inline clstring* dont_pass0toDEFINE_string(char *stringspot,
+                                           int value);
 }  // namespace fLS
+
+#define DECLARE_string(name)  namespace fLS { extern ::fLS::clstring& FLAGS_##name; } \
+                              using fLS::FLAGS_##name
 
 // We need to define a var named FLAGS_no##name so people don't define
 // --string and --nostring.  And we need a temporary place to put val
@@ -568,19 +585,20 @@ inline std::string* dont_pass0toDEFINE_string(char *stringspot,
 // The weird 'using' + 'extern' inside the fLS namespace is to work around
 // an unknown compiler bug/issue with the gcc 4.2.1 on SUSE 10.  See
 //    http://code.google.com/p/google-gflags/issues/detail?id=20
-#define DEFINE_string(name, val, txt)                                         \
-  namespace fLS {                                                             \
-    static union { void* align; char s[sizeof(std::string)]; } s_##name[2];   \
-    std::string* const FLAGS_no##name = ::fLS::                               \
-                                   dont_pass0toDEFINE_string(s_##name[0].s,   \
-                                                             val);            \
-    static ::google::FlagRegisterer o_##name(                                 \
-      #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                    \
-      s_##name[0].s, new (s_##name[1].s) std::string(*FLAGS_no##name));       \
-    extern GFLAGS_DLL_DEFINE_FLAG std::string& FLAGS_##name;                  \
-    using fLS::FLAGS_##name;                                                  \
-    std::string& FLAGS_##name = *FLAGS_no##name;                              \
-  }                                                                           \
+#define DEFINE_string(name, val, txt)                                       \
+  namespace fLS {                                                           \
+    using ::fLS::clstring;                                                  \
+    static union { void* align; char s[sizeof(clstring)]; } s_##name[2];    \
+    clstring* const FLAGS_no##name = ::fLS::                                \
+                                   dont_pass0toDEFINE_string(s_##name[0].s, \
+                                                             val);          \
+    static ::google::FlagRegisterer o_##name(                  \
+        #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
+        s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
+    extern clstring& FLAGS_##name;                                          \
+    using fLS::FLAGS_##name;                                                \
+    clstring& FLAGS_##name = *FLAGS_no##name;                               \
+  }                                                                         \
   using fLS::FLAGS_##name
 
 #endif  // SWIG

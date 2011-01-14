@@ -948,7 +948,7 @@ TEST(ShowUsageWithFlagsRestrictTest, BaseTest) {
 }
 
 // Note: all these argv-based tests depend on SetArgv being called
-// before InitGoogle() in main(), below.
+// before ParseCommandLineFlags() in Main(), below.
 TEST(GetArgvsTest, BaseTest) {
   vector<string> argvs = GetArgvs();
   EXPECT_EQ(4, argvs.size());
@@ -982,7 +982,7 @@ TEST(ProgramInvocationShortNameTest, BaseTest) {
   EXPECT_STREQ("gflags_unittest", ProgramInvocationShortName());
 }
 
-TEST(ProgramUsageTest, BaseTest) {  // Depends on 1st arg to InitGoogle in main
+TEST(ProgramUsageTest, BaseTest) {  // Depends on arg to SetUsageMessage()
   EXPECT_STREQ("/test/argv/for/gflags_unittest: "
                "<useless flag> [...]\nDoes something useless.\n",
                ProgramUsage());
@@ -1206,7 +1206,7 @@ TEST(DeprecatedFunctionsTest, ReadFromFlagsFileFailure) {
   EXPECT_EQ(-22, FLAGS_test_int32);   // the -21 from the flagsfile didn't take
 }
 
-TEST(FlagsSetBeforeInitGoogleTest, TryFromEnv) {
+TEST(FlagsSetBeforeInitTest, TryFromEnv) {
   EXPECT_EQ("pre-set", FLAGS_test_tryfromenv);
 }
 
@@ -1538,7 +1538,7 @@ TEST(FlagsValidator, FlagSaver) {
 
 
 static int Main(int argc, char **argv) {
-  // We need to call SetArgv before InitGoogle, so our "test" argv will
+  // We need to call SetArgv before SetUsage, so our "test" argv will
   // win out over this executable's real argv.  That makes running this
   // test with a real --help flag kinda annoying, unfortunately.
   const char* test_argv[] = { "/test/argv/for/gflags_unittest",
@@ -1549,8 +1549,8 @@ static int Main(int argc, char **argv) {
   string usage_message = (string(GetArgv0()) +
                           ": <useless flag> [...]\nDoes something useless.\n");
 
-  // We test setting tryfromenv manually, and making sure initgoogle still
-  // evaluates it.
+  // We test setting tryfromenv manually, and making sure
+  // ParseCommandLineFlags still evaluates it.
   FLAGS_tryfromenv = "test_tryfromenv";
   setenv("FLAGS_test_tryfromenv", "pre-set", 1);
 
@@ -1584,5 +1584,7 @@ static int Main(int argc, char **argv) {
 _END_GOOGLE_NAMESPACE_
 
 int main(int argc, char** argv) {
-  return GOOGLE_NAMESPACE::Main(argc, argv);
+  const int exit_status = GOOGLE_NAMESPACE::Main(argc, argv);
+  GOOGLE_NAMESPACE::ShutDownCommandLineFlags();
+  return exit_status;
 }

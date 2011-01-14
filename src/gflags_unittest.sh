@@ -118,7 +118,12 @@ Expect $LINENO 1 "/gflags_reporting.cc" "" --help
 Expect $LINENO 1 \
      "-changed_bool1 (changed) type: bool default: true" "" --help
 Expect $LINENO 1 \
-     "-changed_bool2 (changed) type: bool default: true" "" --help
+     "-changed_bool2 (changed) type: bool default: false currently: true" "" \
+     --help
+# And on the command-line, too
+Expect $LINENO 1 \
+     "-changeable_string_var () type: string default: \"1\" currently: \"2\"" \
+     "" --changeable_string_var 2 --help
 
 # --nohelp and --help=false should be as if we didn't say anything
 Expect $LINENO 0 "PASS" "" --nohelp

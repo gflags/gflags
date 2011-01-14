@@ -130,7 +130,7 @@ typedef unsigned __int64 uint64;
 // The validation function should return true if the flag value is valid, and
 // false otherwise. If the function returns false for the new setting of the
 // flag, the flag will retain its current value. If it returns false for the
-// default value, InitGoogle will die.
+// default value, ParseCommandLineFlags() will die.
 //
 // This function is safe to call at global construct time (as in the
 // example below).
@@ -385,6 +385,16 @@ extern void AllowCommandLineReparsing();
 // since their flags are not registered until they are loaded.
 extern uint32 ReparseCommandLineNonHelpFlags();
 
+// Clean up memory allocated by flags.  This is only needed to reduce
+// the quantity of "potentially leaked" reports emitted by memory
+// debugging tools such as valgrind.  It is not required for normal
+// operation, or for the perftools heap-checker.  It must only be called
+// when the process is about to exit, and all threads that might
+// access flags are quiescent.  Referencing flags after this is called
+// will have unexpected consequences.  This is not safe to run when
+// multiple threads might be running: the function is thread-hostile.
+extern void ShutDownCommandLineFlags();
+
 
 // --------------------------------------------------------------------
 // Now come the command line flag declaration/definition macros that
@@ -497,7 +507,7 @@ bool IsBoolFlag(bool from);
 #define DECLARE_bool(name)          DECLARE_VARIABLE(bool, B, name)
 #define DEFINE_bool(name, val, txt)                                       \
   namespace fLB {                                                         \
-    typedef CompileAssert FLAG_##name##_value_is_not_a_bool[              \
+    typedef ::fLB::CompileAssert FLAG_##name##_value_is_not_a_bool[       \
             (sizeof(::fLB::IsBoolFlag(val)) != sizeof(double)) ? 1 : -1]; \
   }                                                                       \
   DEFINE_VARIABLE(bool, B, name, val, txt)

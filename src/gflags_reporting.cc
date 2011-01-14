@@ -109,6 +109,17 @@ static void AddString(const string& s,
   *chars_in_line += slen;
 }
 
+static string PrintStringFlagsWithQuotes(const CommandLineFlagInfo& flag,
+                                         const string& text, bool current) {
+  const char* c_string = (current ? flag.current_value.c_str() :
+                          flag.default_value.c_str());
+  if (strcmp(flag.type.c_str(), "string") == 0) {  // add quotes for strings
+    return text + ": \"" + c_string + "\"";
+  } else {
+    return text + ": " + c_string;
+  }
+}
+
 // Create a descriptive string for a flag.
 // Goes to some trouble to make pretty line breaks.
 string DescribeOneFlag(const CommandLineFlagInfo& flag) {
@@ -159,22 +170,14 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
 
   // Append data type
   AddString(string("type: ") + flag.type, &final_string, &chars_in_line);
-  // Append the effective default value (i.e., the value that the flag
-  // will have after the command line is parsed if the flag is not
-  // specified on the command line), which may be different from the
-  // stored default value. This would happen if the value of the flag
-  // was modified before the command line was parsed. (Unless the
-  // value was modified using SetCommandLineOptionWithMode() with mode
-  // SET_FLAGS_DEFAULT.)
-  // Note that we are assuming this code is being executed because a help
-  // request was just parsed from the command line, in which case the
-  // printed value is indeed the effective default, as long as no value
-  // for the flag was parsed from the command line before "--help".
-  if (strcmp(flag.type.c_str(), "string") == 0) {  // add quotes for strings
-    AddString(string("default: \"") + flag.current_value + string("\""),
-              &final_string, &chars_in_line);
-  } else {
-    AddString(string("default: ") + flag.current_value,
+  // The listed default value will be the actual default from the flag
+  // definition in the originating source file, unless the value has
+  // subsequently been modified using SetCommandLineOptionWithMode() with mode
+  // SET_FLAGS_DEFAULT, or by setting FLAGS_foo = bar before initializing.
+  AddString(PrintStringFlagsWithQuotes(flag, "default", false), &final_string,
+            &chars_in_line);
+  if (!flag.is_default) {
+    AddString(PrintStringFlagsWithQuotes(flag, "currently", true),
               &final_string, &chars_in_line);
   }
 

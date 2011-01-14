@@ -143,6 +143,7 @@
 # define PRIu64 "llu"
 #endif
 
+typedef signed char int8;
 typedef unsigned char uint8;
 
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
@@ -223,7 +224,7 @@ static void ReportError(DieWhenReporting should_die, const char* format, ...) {
 class CommandLineFlag;
 class FlagValue {
  public:
-  FlagValue(void* valbuf, const char* type);
+  FlagValue(void* valbuf, const char* type, bool transfer_ownership_of_value);
   ~FlagValue();
 
   bool ParseFrom(const char* spec);
@@ -259,7 +260,8 @@ class FlagValue {
   bool Validate(const char* flagname, ValidateFnProto validate_fn_proto) const;
 
   void* value_buffer_;          // points to the buffer holding our data
-  uint32 type_;                  // how to interpret value_
+  int8 type_;                   // how to interpret value_
+  bool owns_value_;         // whether to free value on destruct
 
   FlagValue(const FlagValue&);   // no copying!
   void operator=(const FlagValue&);
@@ -272,7 +274,10 @@ class FlagValue {
 #define OTHER_VALUE_AS(fv, type)  *reinterpret_cast<type*>(fv.value_buffer_)
 #define SET_VALUE_AS(type, value)  VALUE_AS(type) = (value)
 
-FlagValue::FlagValue(void* valbuf, const char* type) : value_buffer_(valbuf) {
+FlagValue::FlagValue(void* valbuf, const char* type,
+                     bool transfer_ownership_of_value)
+    : value_buffer_(valbuf),
+      owns_value_(transfer_ownership_of_value) {
   for (type_ = 0; type_ <= FV_MAX_INDEX; ++type_) {
     if (!strcmp(type, TypeName())) {
       break;
@@ -282,6 +287,9 @@ FlagValue::FlagValue(void* valbuf, const char* type) : value_buffer_(valbuf) {
 }
 
 FlagValue::~FlagValue() {
+  if (!owns_value_) {
+    return;
+  }
   switch (type_) {
     case FV_BOOL: delete reinterpret_cast<bool*>(value_buffer_); break;
     case FV_INT32: delete reinterpret_cast<int32*>(value_buffer_); break;
@@ -445,12 +453,12 @@ bool FlagValue::Equal(const FlagValue& x) const {
 FlagValue* FlagValue::New() const {
   const char *type = TypeName();
   switch (type_) {
-    case FV_BOOL:   return new FlagValue(new bool(false), type);
-    case FV_INT32:  return new FlagValue(new int32(0), type);
-    case FV_INT64:  return new FlagValue(new int64(0), type);
-    case FV_UINT64: return new FlagValue(new uint64(0), type);
-    case FV_DOUBLE: return new FlagValue(new double(0.0), type);
-    case FV_STRING: return new FlagValue(new string, type);
+    case FV_BOOL:   return new FlagValue(new bool(false), type, true);
+    case FV_INT32:  return new FlagValue(new int32(0), type, true);
+    case FV_INT64:  return new FlagValue(new int64(0), type, true);
+    case FV_UINT64: return new FlagValue(new uint64(0), type, true);
+    case FV_DOUBLE: return new FlagValue(new double(0.0), type, true);
+    case FV_STRING: return new FlagValue(new string, type, true);
     default: assert(false); return NULL;  // unknown type
   }
 }
@@ -521,7 +529,6 @@ class CommandLineFlag {
   // for SetFlagLocked() and setting flags_by_ptr_
   friend class FlagRegistry;
   friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // for cloning the values
-  friend bool GetCommandLineOption(const char*, string*, bool*);
   // set validate_fn
   friend bool AddFlagValidator(const void*, ValidateFnProto);
 
@@ -640,6 +647,17 @@ struct StringCmp {  // Used by the FlagRegistry map class to compare char*'s
 class FlagRegistry {
  public:
   FlagRegistry() { }
+  ~FlagRegistry() {
+    for (FlagMap::iterator p = flags_.begin(), e = flags_.end(); p != e; ++p) {
+      CommandLineFlag* flag = p->second;
+      delete flag;
+    }
+  }
+
+  static void DeleteGlobalRegistry() {
+    delete global_registry_;
+    global_registry_ = NULL;
+  }
 
   void Lock() { lock_.Lock(); }
   void Unlock() { lock_.Unlock(); }
@@ -1342,7 +1360,7 @@ T GetFromEnv(const char *varname, const char* type, T dflt) {
   const char* const valstr = getenv(varname);
   if (!valstr)
     return dflt;
-  FlagValue ifv(new T, type);
+  FlagValue ifv(new T, type, true);
   if (!ifv.ParseFrom(valstr))
     ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
                 varname, valstr);
@@ -1400,8 +1418,8 @@ FlagRegisterer::FlagRegisterer(const char* name, const char* type,
   // components, so we get rid of those, if any.
   if (strchr(type, ':'))
     type = strrchr(type, ':') + 1;
-  FlagValue* current = new FlagValue(current_storage, type);
-  FlagValue* defvalue = new FlagValue(defvalue_storage, type);
+  FlagValue* current = new FlagValue(current_storage, type, false);
+  FlagValue* defvalue = new FlagValue(defvalue_storage, type, false);
   // Importantly, flag_ will never be deleted, so storage is always good.
   CommandLineFlag* flag = new CommandLineFlag(name, help, filename,
                                               current, defvalue);
@@ -1931,6 +1949,10 @@ uint32 ReparseCommandLineNonHelpFlags() {
   delete[] tmp_argv;
 
   return retval;
+}
+
+void ShutDownCommandLineFlags() {
+  FlagRegistry::DeleteGlobalRegistry();
 }
 
 _END_GOOGLE_NAMESPACE_
