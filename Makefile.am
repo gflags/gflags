@@ -120,6 +120,21 @@ gflags_unittest_sh: gflags_unittest$(EXEEXT) \
 	$$SH "$(top_srcdir)/src/gflags_unittest.sh" \
 	     "`pwd`/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
 
+# Test the STRIP_FLAGS #define.
+TESTS += gflags_strip_flags_test
+gflags_strip_flags_test_SOURCES = $(gflagsinclude_HEADERS) \
+                                  src/config_for_unittests.h \
+                                  src/gflags_strip_flags_test.cc
+gflags_strip_flags_test_CXXFLAGS = $(PTHREAD_CFLAGS)
+gflags_strip_flags_test_LDFLAGS = $(PTHREAD_CFLAGS)
+gflags_strip_flags_test_LDADD = libgflags.la
+
+check_SCRIPTS += gflags_strip_flags_test_sh
+noinst_SCRIPTS += src/gflags_strip_flags_test.sh
+gflags_strip_flags_test_sh: gflags_strip_flags_test$(EXEEXT)
+	sh "$(top_srcdir)/src/gflags_strip_flags_test.sh" \
+           "`pwd`/gflags_strip_flags_test$(EXEEXT)"
+
 # These are negative-compilation tests.  We want to make sure these
 # erroneous use of the flags macros correctly fail to compile.
 # Again, we just bother testing with the no-threads version of the library.

@@ -1162,7 +1162,8 @@ TEST(DeprecatedFunctionsTest, AppendFlagsIntoFile) {
   FILE* fp = fopen(filename.c_str(), "r");
   EXPECT_TRUE(fp != NULL);
   char line[8192];
-  fgets(line, sizeof(line)-1, fp);   // first line should be progname
+  EXPECT_TRUE(fgets(line, sizeof(line)-1, fp) != NULL);  // get the first line
+  // First line should be progname.
   EXPECT_STREQ("not the real argv0\n", line);
 
   bool found_bool = false, found_int32 = false;

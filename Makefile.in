@@ -98,13 +98,18 @@ am_libgflags_nothreads_la_OBJECTS = $(am__objects_3)
 libgflags_nothreads_la_OBJECTS = $(am_libgflags_nothreads_la_OBJECTS)
 am__EXEEXT_1 = gflags_unittest$(EXEEXT) \
 	gflags_nothreads_unittest$(EXEEXT) gflags_unittest2$(EXEEXT) \
-	gflags_unittest3$(EXEEXT)
+	gflags_unittest3$(EXEEXT) gflags_strip_flags_test$(EXEEXT)
 PROGRAMS = $(noinst_PROGRAMS)
 am__objects_4 = $(am__objects_1) gflags_unittest.$(OBJEXT)
 am_gflags_nothreads_unittest_OBJECTS = $(am__objects_4)
 gflags_nothreads_unittest_OBJECTS =  \
 	$(am_gflags_nothreads_unittest_OBJECTS)
 gflags_nothreads_unittest_DEPENDENCIES = libgflags_nothreads.la
+am_gflags_strip_flags_test_OBJECTS = $(am__objects_1) \
+	gflags_strip_flags_test-gflags_strip_flags_test.$(OBJEXT)
+gflags_strip_flags_test_OBJECTS =  \
+	$(am_gflags_strip_flags_test_OBJECTS)
+gflags_strip_flags_test_DEPENDENCIES = libgflags.la
 am_gflags_unittest_OBJECTS = $(am__objects_1) \
 	gflags_unittest-gflags_unittest.$(OBJEXT)
 gflags_unittest_OBJECTS = $(am_gflags_unittest_OBJECTS)
@@ -140,13 +145,13 @@ LINK = $(LIBTOOL) --tag=CC --mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(AM_LDFLAGS) $(LDFLAGS) -o $@
 SOURCES = $(libgflags_la_SOURCES) $(libgflags_nothreads_la_SOURCES) \
 	$(gflags_nothreads_unittest_SOURCES) \
-	$(gflags_unittest_SOURCES) $(gflags_unittest2_SOURCES) \
-	$(gflags_unittest3_SOURCES)
+	$(gflags_strip_flags_test_SOURCES) $(gflags_unittest_SOURCES) \
+	$(gflags_unittest2_SOURCES) $(gflags_unittest3_SOURCES)
 DIST_SOURCES = $(libgflags_la_SOURCES) \
 	$(libgflags_nothreads_la_SOURCES) \
 	$(gflags_nothreads_unittest_SOURCES) \
-	$(gflags_unittest_SOURCES) $(gflags_unittest2_SOURCES) \
-	$(gflags_unittest3_SOURCES)
+	$(gflags_strip_flags_test_SOURCES) $(gflags_unittest_SOURCES) \
+	$(gflags_unittest2_SOURCES) $(gflags_unittest3_SOURCES)
 dist_docDATA_INSTALL = $(INSTALL_DATA)
 pkgconfigDATA_INSTALL = $(INSTALL_DATA)
 DATA = $(dist_doc_DATA) $(dist_noinst_DATA) $(pkgconfig_DATA)
@@ -330,8 +335,10 @@ WINDOWS_PROJECTS = google-gflags.sln \
 # We also want to test that things work properly when the file that
 # holds main() has a name ending with -main or _main.  To keep the
 # Makefile small :-), we test the no-threads version of these.
+
+# Test the STRIP_FLAGS #define.
 TESTS = gflags_unittest gflags_nothreads_unittest gflags_unittest2 \
-	gflags_unittest3
+	gflags_unittest3 gflags_strip_flags_test
 TESTS_ENVIRONMENT = SRCDIR="$(top_srcdir)"
 
 # Some buggy sh's ignore "" instead of treating it as a positional
@@ -343,10 +350,11 @@ TESTS_ENVIRONMENT = SRCDIR="$(top_srcdir)"
 # Again, we just bother testing with the no-threads version of the library.
 
 # This one, on the other hand, should succeed.
-check_SCRIPTS = gflags_unittest_sh gflags_nc_test1 gflags_nc_test2 \
-	gflags_nc_test3 gflags_nc_test4
+check_SCRIPTS = gflags_unittest_sh gflags_strip_flags_test_sh \
+	gflags_nc_test1 gflags_nc_test2 gflags_nc_test3 \
+	gflags_nc_test4
 # Every time you add a unittest to check_SCRIPTS, add it here too
-noinst_SCRIPTS = src/gflags_unittest.sh
+noinst_SCRIPTS = src/gflags_unittest.sh src/gflags_strip_flags_test.sh
 # Used for auto-generated source files
 CLEANFILES = src/gflags_unittest-main.cc src/gflags_unittest_main.cc \
 	$(pkgconfig_DATA)
@@ -382,6 +390,13 @@ gflags_unittest3_LDADD = libgflags_nothreads.la
 
 # This file isn't covered under any rule that would cause it to be distributed.
 dist_noinst_DATA = src/gflags_unittest_flagfile src/gflags_nc.cc
+gflags_strip_flags_test_SOURCES = $(gflagsinclude_HEADERS) \
+                                  src/config_for_unittests.h \
+                                  src/gflags_strip_flags_test.cc
+
+gflags_strip_flags_test_CXXFLAGS = $(PTHREAD_CFLAGS)
+gflags_strip_flags_test_LDFLAGS = $(PTHREAD_CFLAGS)
+gflags_strip_flags_test_LDADD = libgflags.la
 
 # http://linux.die.net/man/1/pkg-config, http://pkg-config.freedesktop.org/wiki
 pkgconfigdir = $(libdir)/pkgconfig
@@ -492,6 +507,9 @@ clean-noinstPROGRAMS:
 gflags_nothreads_unittest$(EXEEXT): $(gflags_nothreads_unittest_OBJECTS) $(gflags_nothreads_unittest_DEPENDENCIES) 
 	@rm -f gflags_nothreads_unittest$(EXEEXT)
 	$(CXXLINK) $(gflags_nothreads_unittest_LDFLAGS) $(gflags_nothreads_unittest_OBJECTS) $(gflags_nothreads_unittest_LDADD) $(LIBS)
+gflags_strip_flags_test$(EXEEXT): $(gflags_strip_flags_test_OBJECTS) $(gflags_strip_flags_test_DEPENDENCIES) 
+	@rm -f gflags_strip_flags_test$(EXEEXT)
+	$(CXXLINK) $(gflags_strip_flags_test_LDFLAGS) $(gflags_strip_flags_test_OBJECTS) $(gflags_strip_flags_test_LDADD) $(LIBS)
 gflags_unittest$(EXEEXT): $(gflags_unittest_OBJECTS) $(gflags_unittest_DEPENDENCIES) 
 	@rm -f gflags_unittest$(EXEEXT)
 	$(CXXLINK) $(gflags_unittest_LDFLAGS) $(gflags_unittest_OBJECTS) $(gflags_unittest_LDADD) $(LIBS)
@@ -527,6 +545,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gflags_unittest-gflags_unittest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gflags_unittest-main.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gflags_unittest.Po@am__quote@
@@ -614,6 +633,20 @@ gflags_unittest.obj: src/gflags_unittest.cc
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_unittest.cc' object='gflags_unittest.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_unittest.obj `if test -f 'src/gflags_unittest.cc'; then $(CYGPATH_W) 'src/gflags_unittest.cc'; else $(CYGPATH_W) '$(srcdir)/src/gflags_unittest.cc'; fi`
+
+gflags_strip_flags_test-gflags_strip_flags_test.o: src/gflags_strip_flags_test.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gflags_strip_flags_test_CXXFLAGS) $(CXXFLAGS) -MT gflags_strip_flags_test-gflags_strip_flags_test.o -MD -MP -MF "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Tpo" -c -o gflags_strip_flags_test-gflags_strip_flags_test.o `test -f 'src/gflags_strip_flags_test.cc' || echo '$(srcdir)/'`src/gflags_strip_flags_test.cc; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Tpo" "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Po"; else rm -f "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_strip_flags_test.cc' object='gflags_strip_flags_test-gflags_strip_flags_test.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gflags_strip_flags_test_CXXFLAGS) $(CXXFLAGS) -c -o gflags_strip_flags_test-gflags_strip_flags_test.o `test -f 'src/gflags_strip_flags_test.cc' || echo '$(srcdir)/'`src/gflags_strip_flags_test.cc
+
+gflags_strip_flags_test-gflags_strip_flags_test.obj: src/gflags_strip_flags_test.cc
+@am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gflags_strip_flags_test_CXXFLAGS) $(CXXFLAGS) -MT gflags_strip_flags_test-gflags_strip_flags_test.obj -MD -MP -MF "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Tpo" -c -o gflags_strip_flags_test-gflags_strip_flags_test.obj `if test -f 'src/gflags_strip_flags_test.cc'; then $(CYGPATH_W) 'src/gflags_strip_flags_test.cc'; else $(CYGPATH_W) '$(srcdir)/src/gflags_strip_flags_test.cc'; fi`; \
+@am__fastdepCXX_TRUE@	then mv -f "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Tpo" "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Po"; else rm -f "$(DEPDIR)/gflags_strip_flags_test-gflags_strip_flags_test.Tpo"; exit 1; fi
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	source='src/gflags_strip_flags_test.cc' object='gflags_strip_flags_test-gflags_strip_flags_test.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCXX_FALSE@	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCXX_FALSE@	$(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gflags_strip_flags_test_CXXFLAGS) $(CXXFLAGS) -c -o gflags_strip_flags_test-gflags_strip_flags_test.obj `if test -f 'src/gflags_strip_flags_test.cc'; then $(CYGPATH_W) 'src/gflags_strip_flags_test.cc'; else $(CYGPATH_W) '$(srcdir)/src/gflags_strip_flags_test.cc'; fi`
 
 gflags_unittest-gflags_unittest.o: src/gflags_unittest.cc
 @am__fastdepCXX_TRUE@	if $(CXX) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(gflags_unittest_CXXFLAGS) $(CXXFLAGS) -MT gflags_unittest-gflags_unittest.o -MD -MP -MF "$(DEPDIR)/gflags_unittest-gflags_unittest.Tpo" -c -o gflags_unittest-gflags_unittest.o `test -f 'src/gflags_unittest.cc' || echo '$(srcdir)/'`src/gflags_unittest.cc; \
@@ -1110,6 +1143,9 @@ gflags_unittest_sh: gflags_unittest$(EXEEXT) \
 	bash --version >/dev/null 2>&1 && export SH=bash || export SH=sh; \
 	$$SH "$(top_srcdir)/src/gflags_unittest.sh" \
 	     "`pwd`/gflags_unittest" "$(top_srcdir)" "@TEST_TMPDIR@"
+gflags_strip_flags_test_sh: gflags_strip_flags_test$(EXEEXT)
+	sh "$(top_srcdir)/src/gflags_strip_flags_test.sh" \
+           "`pwd`/gflags_strip_flags_test$(EXEEXT)"
 gflags_nc_test1: $(gflagsinclude_HEADERS) src/gflags_nc.cc
 	if $(CXX) -DTEST_SWAPPED_ARGS $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CXXFLAGS) $(CXXFLAGS) -c -o gflags_nc_test1.o $(srcdir)/src/gflags_nc.cc; then echo "Compile succeeded but should have failed"; exit 1; else echo "Compile failed, like it was supposed to"; fi
 gflags_nc_test2: $(gflagsinclude_HEADERS) src/gflags_nc.cc

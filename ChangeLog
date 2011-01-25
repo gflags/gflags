@@ -1,3 +1,12 @@
+Mon Jan 24 16:11:35 2011  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.5
+	* Better reporting of current vs default value (handler)
+	* Add API for cleaning up of memory at program-exit (jmarantz)
+	* Fix macros to work inside namespaces (csilvers)
+	* Use our own string typedef in case string is redefined (csilvers)
+	* Updated to autoconf 2.65
+
 Wed Oct 13 17:40:12 2010  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.4

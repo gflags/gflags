@@ -369,11 +369,12 @@ commandline, but if they do not, the flag's value will default to
 true.</p>
 
 
-<h2> <A name="special">Special Flags</code> </h2>
+<h2> <A name="special">Special Flags</a> </h2>
 
 <p>There are a few flags defined by the commandlineflags module
-itself, and are available to all applications.  These fall into three
-categories.  First are the 'reporting' flags that, when found, cause
+itself, and are available to all applications that use
+commandlineflags.  These fall into
+three categories.  First are the 'reporting' flags that, when found, cause
 the application to print some information about itself and exit.</p>
 
 <table><tr valign=top>
@@ -504,7 +505,7 @@ and then processing continues with remaining flags from the command
 line.</p>
 
 
-<h2> <A name="api">The API</code> </h2>
+<h2> <A name="api">The API</a> </h2>
 
 <p>In addition to accessing <code>FLAGS_foo</code> directly, it is
 possible to access the flags programmatically, through an API.  It is

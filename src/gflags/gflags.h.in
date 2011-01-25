@@ -347,7 +347,8 @@ extern void SetUsageMessage(const std::string& usage);
 // Looks for flags in argv and parses them.  Rearranges argv to put
 // flags first, or removes them entirely if remove_flags is true.
 // If a flag is defined more than once in the command line or flag
-// file, the last definition is used.
+// file, the last definition is used.  Returns the index (into argv)
+// of the first non-flag argument.
 // See top-of-file for more details on this function.
 #ifndef SWIG   // In swig, use ParseCommandLineFlagsScript() instead.
 extern uint32 ParseCommandLineFlags(int *argc, char*** argv,
@@ -361,9 +362,10 @@ extern uint32 ParseCommandLineFlags(int *argc, char*** argv,
 // changing default values for some FLAGS (via
 // e.g. SetCommandLineOptionWithMode calls) between the time of
 // command line parsing and the time of dumping help information for
-// the flags as a result of command line parsing.
-// If a flag is defined more than once in the command line or flag
-// file, the last definition is used.
+// the flags as a result of command line parsing.  If a flag is
+// defined more than once in the command line or flag file, the last
+// definition is used.  Returns the index (into argv) of the first
+// non-flag argument.  (If remove_flags is true, will always return 1.)
 extern uint32 ParseCommandLineNonHelpFlags(int *argc, char*** argv,
                                            bool remove_flags);
 // This is actually defined in commandlineflags_reporting.cc.
@@ -377,12 +379,14 @@ extern void HandleCommandLineHelpFlags();   // in commandlineflags_reporting.cc
 // are spawned.
 extern void AllowCommandLineReparsing();
 
-// Reparse the flags that have not yet been recognized.
-// Only flags registered since the last parse will be recognized.
-// Any flag value must be provided as part of the argument using "=",
-// not as a separate command line argument that follows the flag argument.
+// Reparse the flags that have not yet been recognized.  Only flags
+// registered since the last parse will be recognized.  Any flag value
+// must be provided as part of the argument using "=", not as a
+// separate command line argument that follows the flag argument.
 // Intended for handling flags from dynamically loaded libraries,
 // since their flags are not registered until they are loaded.
+// Returns the index (into the original argv) of the first non-flag
+// argument.  (If remove_flags is true, will always return 1.)
 extern uint32 ReparseCommandLineNonHelpFlags();
 
 // Clean up memory allocated by flags.  This is only needed to reduce
@@ -455,7 +459,7 @@ extern const char kStrippedFlagHelp[];
 
 #if defined(STRIP_FLAG_HELP) && STRIP_FLAG_HELP > 0
 // Need this construct to avoid the 'defined but not used' warning.
-#define MAYBE_STRIPPED_HELP(txt) (false ? (txt) : kStrippedFlagHelp)
+#define MAYBE_STRIPPED_HELP(txt) (false ? (txt) : @ac_google_namespace@::kStrippedFlagHelp)
 #else
 #define MAYBE_STRIPPED_HELP(txt) txt
 #endif

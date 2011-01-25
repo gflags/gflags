@@ -416,7 +416,7 @@ extern GFLAGS_DLL_DECL uint32 ReparseCommandLineNonHelpFlags();
 // access flags are quiescent.  Referencing flags after this is called
 // will have unexpected consequences.  This is not safe to run when
 // multiple threads might be running: the function is thread-hostile.
-extern void ShutDownCommandLineFlags();
+extern GFLAGS_DLL_DECL void ShutDownCommandLineFlags();
 
 
 // --------------------------------------------------------------------
@@ -575,16 +575,13 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
                                            int value);
 }  // namespace fLS
 
-#define DECLARE_string(name)  namespace fLS { extern ::fLS::clstring& FLAGS_##name; } \
+#define DECLARE_string(name)  namespace fLS { extern GFLAGS_DLL_DECLARE_FLAG ::fLS::clstring& FLAGS_##name; } \
                               using fLS::FLAGS_##name
 
 // We need to define a var named FLAGS_no##name so people don't define
 // --string and --nostring.  And we need a temporary place to put val
 // so we don't have to evaluate it twice.  Two great needs that go
 // great together!
-// The weird 'using' + 'extern' inside the fLS namespace is to work around
-// an unknown compiler bug/issue with the gcc 4.2.1 on SUSE 10.  See
-//    http://code.google.com/p/google-gflags/issues/detail?id=20
 #define DEFINE_string(name, val, txt)                                       \
   namespace fLS {                                                           \
     using ::fLS::clstring;                                                  \
@@ -595,9 +592,7 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
     static ::google::FlagRegisterer o_##name(                  \
         #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
         s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
-    extern clstring& FLAGS_##name;                                          \
-    using fLS::FLAGS_##name;                                                \
-    clstring& FLAGS_##name = *FLAGS_no##name;                               \
+    GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name = *FLAGS_no##name;        \
   }                                                                         \
   using fLS::FLAGS_##name
 
