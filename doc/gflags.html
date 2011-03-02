@@ -218,7 +218,7 @@ two files. This causes the flag to be a global variable.</p>
 
 <p>After DEFINE-ing a flag, you may optionally register a validator
 function with the flag.  If you do this, after the flag is parsed from
-the commandline, and whenever its value is changes via a call to
+the commandline, and whenever its value is changed via a call to
 <code>SetCommandLineOption()</code>, the validator function is called
 with the new value as an argument.  The validator function should
 return 'true' if the flag value is valid, and false otherwise.

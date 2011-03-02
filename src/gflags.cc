@@ -1934,7 +1934,7 @@ void AllowCommandLineReparsing() {
   allow_command_line_reparsing = true;
 }
 
-uint32 ReparseCommandLineNonHelpFlags() {
+void ReparseCommandLineNonHelpFlags() {
   // We make a copy of argc and argv to pass in
   const vector<string>& argvs = GetArgvs();
   int tmp_argc = static_cast<int>(argvs.size());
@@ -1942,13 +1942,11 @@ uint32 ReparseCommandLineNonHelpFlags() {
   for (int i = 0; i < tmp_argc; ++i)
     tmp_argv[i] = strdup(argvs[i].c_str());   // TODO(csilvers): don't dup
 
-  const int retval = ParseCommandLineNonHelpFlags(&tmp_argc, &tmp_argv, false);
+  ParseCommandLineNonHelpFlags(&tmp_argc, &tmp_argv, false);
 
   for (int i = 0; i < tmp_argc; ++i)
     free(tmp_argv[i]);
   delete[] tmp_argv;
-
-  return retval;
 }
 
 void ShutDownCommandLineFlags() {

@@ -15094,6 +15094,77 @@ $as_echo "$as_me: WARNING: Impossible to determine how to use pthreads with shar
 	   acx_pthread_ok=no
 	fi
 
+	{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether what we have so far is sufficient with -nostdlib" >&5
+$as_echo_n "checking whether what we have so far is sufficient with -nostdlib... " >&6; }
+	CFLAGS="-nostdlib $CFLAGS"
+	# we need c with nostdlib
+	LIBS="$LIBS -lc"
+	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <pthread.h>
+int
+main ()
+{
+pthread_t th; pthread_join(th, 0);
+	       pthread_attr_init(0); pthread_cleanup_push(0, 0);
+	       pthread_create(0,0,0,0); pthread_cleanup_pop(0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  done=yes
+else
+  done=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+	if test "x$done" = xyes; then
+	   { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	else
+	   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	fi
+
+	if test x"$done" = xno; then
+	   { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -lpthread saves the day" >&5
+$as_echo_n "checking whether -lpthread saves the day... " >&6; }
+	   LIBS="-lpthread $LIBS"
+	   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <pthread.h>
+int
+main ()
+{
+pthread_t th; pthread_join(th, 0);
+	       pthread_attr_init(0); pthread_cleanup_push(0, 0);
+	       pthread_create(0,0,0,0); pthread_cleanup_pop(0);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  done=yes
+else
+  done=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+
+	   if test "x$done" = xyes; then
+	      { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+	      PTHREAD_LIBS="$PTHREAD_LIBS -lpthread"
+	   else
+	      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+	      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: Impossible to determine how to use pthreads with shared libraries and -nostdlib" >&5
+$as_echo "$as_me: WARNING: Impossible to determine how to use pthreads with shared libraries and -nostdlib" >&2;}
+	   fi
+	fi
+
 	CFLAGS="$save_CFLAGS"
 	LIBS="$save_LIBS"
 	CC="$save_CC"

@@ -385,9 +385,7 @@ extern void AllowCommandLineReparsing();
 // separate command line argument that follows the flag argument.
 // Intended for handling flags from dynamically loaded libraries,
 // since their flags are not registered until they are loaded.
-// Returns the index (into the original argv) of the first non-flag
-// argument.  (If remove_flags is true, will always return 1.)
-extern uint32 ReparseCommandLineNonHelpFlags();
+extern void ReparseCommandLineNonHelpFlags();
 
 // Clean up memory allocated by flags.  This is only needed to reduce
 // the quantity of "potentially leaked" reports emitted by memory
