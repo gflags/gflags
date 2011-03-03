@@ -1467,9 +1467,12 @@ void GetAllFlags(vector<CommandLineFlagInfo>* OUTPUT) {
 // ProgramInvocationShortName()
 // SetUsageMessage()
 // ProgramUsage()
+// SetVersionString()
+// VersionString()
 //    Functions to set and get argv.  Typically the setter is called
 //    by ParseCommandLineFlags.  Also can get the ProgramUsage string,
-//    set by SetUsageMessage.
+//    set by SetUsageMessage, and the version string, set by
+//    SetVersionString.
 // --------------------------------------------------------------------
 
 // These values are not protected by a Mutex because they are normally
@@ -1479,6 +1482,7 @@ static const char* cmdline = "";           // the entire command-line
 static vector<string> argvs;
 static uint32 argv_sum = 0;
 static const char* program_usage = NULL;
+static const char* version_string = NULL;
 
 void SetArgv(int argc, const char** argv) {
   static bool called_set_argv = false;
@@ -1528,11 +1532,21 @@ void SetUsageMessage(const string& usage) {
   program_usage = strdup(usage.c_str());      // small memory leak
 }
 
+void SetVersionString(const string& version) {
+  if (version_string != NULL)
+    ReportError(DIE, "ERROR: SetVersionString() called twice\n");
+  version_string = strdup(version.c_str());   // small memory leak
+}
+
 const char* ProgramUsage() {
   if (program_usage) {
     return program_usage;
   }
   return "Warning: SetUsageMessage() never called";
+}
+
+const char* VersionString() {
+  return version_string ? version_string : "";
 }
 
 // --------------------------------------------------------------------

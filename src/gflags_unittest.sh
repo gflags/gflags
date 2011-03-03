@@ -182,6 +182,7 @@ Expect $LINENO 1 "/gflags_unittest.cc</file>" \
 
 # just print the version info and exit
 Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" --version
+Expect $LINENO 0 "version test_version" "gflags_unittest.cc" --version
 
 # --undefok is a fun flag...
 Expect $LINENO 1 "unknown command line flag 'foo'" "" --undefok= --foo --unused_bool

@@ -347,9 +347,13 @@ static void ShowXMLOfFlags(const char *prog_name) {
 // --------------------------------------------------------------------
 
 static void ShowVersion() {
-  fprintf(stdout, "%s\n", ProgramInvocationShortName());
-  // TODO: add other stuff, like a timestamp, who built it, what
-  //       target they built, etc.
+  const char* version_string = VersionString();
+  if (version_string && *version_string) {
+    fprintf(stdout, "%s version %s\n",
+            ProgramInvocationShortName(), version_string);
+  } else {
+    fprintf(stdout, "%s\n", ProgramInvocationShortName());
+  }
 
 # if !defined(NDEBUG)
   fprintf(stdout, "Debug build (NDEBUG not #defined)\n");

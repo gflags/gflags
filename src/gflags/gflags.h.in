@@ -210,10 +210,11 @@ extern const char* GetArgv0();               // only argv0
 extern uint32 GetArgvSum();                  // simple checksum of argv
 extern const char* ProgramInvocationName();  // argv0, or "UNKNOWN" if not set
 extern const char* ProgramInvocationShortName();   // basename(argv0)
-// ProgramUsage() is thread-safe as long as SetUsageMessage() is only
-// called before any threads start.
+// ProgramUsage() and VersionString() are thread-safe as long as
+// SetUsageMessage() and SetVersionString() are only called before any
+// threads start.
 extern const char* ProgramUsage();           // string set by SetUsageMessage()
-
+extern const char* VersionString();          // string set by SetVersionString()
 
 // --------------------------------------------------------------------
 // Normally you access commandline flags by just saying "if (FLAGS_foo)"
@@ -343,6 +344,11 @@ extern const char *StringFromEnv(const char *varname, const char *defval);
 // Do not include commandline flags in the usage: we do that for you!
 // Thread-hostile; meant to be called before any threads are spawned.
 extern void SetUsageMessage(const std::string& usage);
+
+// Sets the version string, which is emitted with --version.
+// For instance: SetVersionString("1.3");
+// Thread-hostile; meant to be called before any threads are spawned.
+extern void SetVersionString(const std::string& version);
 
 // Looks for flags in argv and parses them.  Rearranges argv to put
 // flags first, or removes them entirely if remove_flags is true.

@@ -1562,6 +1562,7 @@ static int Main(int argc, char **argv) {
   FLAGS_changed_bool2 = true;
 
   SetUsageMessage(usage_message.c_str());
+  SetVersionString("test_version");
   ParseCommandLineFlags(&argc, &argv, true);
 
 #if defined(__MINGW32__)
