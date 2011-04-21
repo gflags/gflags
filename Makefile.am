@@ -21,7 +21,8 @@ AM_LDFLAGS = -no-undefined $(LIBSTDCXX_LA_LINKER_FLAG)
 gflagsincludedir = $(includedir)/gflags
 ## The .h files you want to install (that is, .h files that people
 ## who install this package can include in their own applications.)
-gflagsinclude_HEADERS = src/gflags/gflags.h src/gflags/gflags_completions.h
+gflagsinclude_HEADERS = src/gflags/gflags.h src/gflags/gflags_declare.h \
+                        src/gflags/gflags_completions.h
 
 # This is for backwards compatibility only.
 googleincludedir = $(includedir)/google
@@ -206,6 +207,7 @@ libtool: $(LIBTOOL_DEPS)
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
 	libtool $(SCRIPTS) \
 	src/windows/config.h src/windows/port.h src/windows/port.cc \
-	src/windows/gflags/gflags.h src/windows/gflags/gflags_completions.h \
+	src/windows/gflags/gflags.h src/windows/gflags/gflags_declare.h \
+        src/windows/gflags/gflags_completions.h \
 	$(WINDOWS_PROJECTS) \
         src/solaris/libstdc++.la

@@ -136,6 +136,9 @@
 				RelativePath="..\..\src\windows\gflags\gflags.h">
 			</File>
 			<File
+				RelativePath="..\..\src\windows\gflags\gflags_declare.h">
+			</File>
+			<File
 				RelativePath="..\..\src\windows\gflags\gflags_completions.h">
 			</File>
 			<File

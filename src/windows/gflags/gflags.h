@@ -81,22 +81,7 @@
 
 #include <string>
 #include <vector>
-
-// We care a lot about number of bits things take up.  Unfortunately,
-// systems define their bit-specific ints in a lot of different ways.
-// We use our own way, and have a typedef to get there.
-// Note: these commands below may look like "#if 1" or "#if 0", but
-// that's because they were constructed that way at ./configure time.
-// Look at gflags.h.in to see how they're calculated (based on your config).
-#if 0
-#include <stdint.h>             // the normal place uint16_t is defined
-#endif
-#if 1
-#include <sys/types.h>          // the normal place u_int16_t is defined
-#endif
-#if 0
-#include <inttypes.h>           // a third place for uint16_t or u_int16_t
-#endif
+#include <gflags/gflags_declare.h>  // IWYU pragma: export
 
 // Annoying stuff for windows -- makes sure clients can import these functions
 #if defined(_WIN32)
@@ -122,25 +107,6 @@
 #endif
 
 namespace google {
-
-#if 0      // the C99 format
-typedef int32_t int32;
-typedef uint32_t uint32;
-typedef int64_t int64;
-typedef uint64_t uint64;
-#elif 0   // the BSD format
-typedef int32_t int32;
-typedef u_int32_t uint32;
-typedef int64_t int64;
-typedef u_int64_t uint64;
-#elif 1     // the windows (vc7) format
-typedef __int32 int32;
-typedef unsigned __int32 uint32;
-typedef __int64 int64;
-typedef unsigned __int64 uint64;
-#else
-#error Do not know how to define a 32-bit integer quantity on your system
-#endif
 
 // --------------------------------------------------------------------
 // To actually define a flag in a file, use DEFINE_bool,
@@ -213,9 +179,9 @@ struct GFLAGS_DLL_DECL CommandLineFlagInfo {
 // TODO(wojtekm) Fix locking when validators are running, to make it safe to
 // call validators during ParseAllFlags.
 // Also make sure then to uncomment the corresponding unit test in
-// commandlineflags_unittest.sh
+// gflags_unittest.sh
 extern GFLAGS_DLL_DECL void GetAllFlags(std::vector<CommandLineFlagInfo>* OUTPUT);
-// These two are actually defined in commandlineflags_reporting.cc.
+// These two are actually defined in gflags_reporting.cc.
 extern GFLAGS_DLL_DECL void ShowUsageWithFlags(const char *argv0);  // what --help does
 extern GFLAGS_DLL_DECL void ShowUsageWithFlagsRestrict(const char *argv0, const char *restrict);
 
@@ -233,10 +199,11 @@ extern GFLAGS_DLL_DECL const char* GetArgv0();              // only argv0
 extern GFLAGS_DLL_DECL uint32 GetArgvSum();                 // simple checksum of argv
 extern GFLAGS_DLL_DECL const char* ProgramInvocationName(); // argv0, or "UNKNOWN" if not set
 extern GFLAGS_DLL_DECL const char* ProgramInvocationShortName();   // basename(argv0)
-// ProgramUsage() is thread-safe as long as SetUsageMessage() is only
-// called before any threads start.
+// ProgramUsage() and VersionString() are thread-safe as long as
+// SetUsageMessage() and SetVersionString() are only called before any
+// threads start.
 extern GFLAGS_DLL_DECL const char* ProgramUsage();          // string set by SetUsageMessage()
-
+extern GFLAGS_DLL_DECL const char* VersionString();          // string set by SetVersionString()
 
 // --------------------------------------------------------------------
 // Normally you access commandline flags by just saying "if (FLAGS_foo)"
@@ -367,6 +334,11 @@ extern GFLAGS_DLL_DECL const char *StringFromEnv(const char *varname, const char
 // Thread-hostile; meant to be called before any threads are spawned.
 extern GFLAGS_DLL_DECL void SetUsageMessage(const std::string& usage);
 
+// Sets the version string, which is emitted with --version.
+// For instance: SetVersionString("1.3");
+// Thread-hostile; meant to be called before any threads are spawned.
+extern void SetVersionString(const std::string& version);
+
 // Looks for flags in argv and parses them.  Rearranges argv to put
 // flags first, or removes them entirely if remove_flags is true.
 // If a flag is defined more than once in the command line or flag
@@ -391,10 +363,10 @@ extern GFLAGS_DLL_DECL uint32 ParseCommandLineFlags(int *argc, char*** argv,
 // non-flag argument.  (If remove_flags is true, will always return 1.)
 extern GFLAGS_DLL_DECL uint32 ParseCommandLineNonHelpFlags(int *argc, char*** argv,
                                            bool remove_flags);
-// This is actually defined in commandlineflags_reporting.cc.
+// This is actually defined in gflags_reporting.cc.
 // This function is misnamed (it also handles --version, etc.), but
 // it's too late to change that now. :-(
-extern GFLAGS_DLL_DECL void HandleCommandLineHelpFlags();   // in commandlineflags_reporting.cc
+extern GFLAGS_DLL_DECL void HandleCommandLineHelpFlags();   // in gflags_reporting.cc
 
 // Allow command line reparsing.  Disables the error normally
 // generated when an unknown flag is found, since it may be found in a
@@ -408,9 +380,7 @@ extern GFLAGS_DLL_DECL void AllowCommandLineReparsing();
 // separate command line argument that follows the flag argument.
 // Intended for handling flags from dynamically loaded libraries,
 // since their flags are not registered until they are loaded.
-// Returns the index (into the original argv) of the first non-flag
-// argument.  (If remove_flags is true, will always return 1.)
-extern GFLAGS_DLL_DECL uint32 ReparseCommandLineNonHelpFlags();
+extern GFLAGS_DLL_DECL void ReparseCommandLineNonHelpFlags();
 
 // Clean up memory allocated by flags.  This is only needed to reduce
 // the quantity of "potentially leaked" reports emitted by memory
@@ -510,13 +480,6 @@ extern const char kStrippedFlagHelp[];
   }                                                             \
   using fL##shorttype::FLAGS_##name
 
-#define DECLARE_VARIABLE(type, shorttype, name) \
-  namespace fL##shorttype {                     \
-    /* We always want to import declared variables, dll or no */ \
-    extern GFLAGS_DLL_DECLARE_FLAG type FLAGS_##name; \
-  }                                             \
-  using fL##shorttype::FLAGS_##name
-
 // For DEFINE_bool, we want to do the extra check that the passed-in
 // value is actually a bool, and not a string or something that can be
 // coerced to a bool.  These declarations (no definition needed!) will
@@ -533,7 +496,9 @@ template<typename From> GFLAGS_DLL_DECL double IsBoolFlag(const From& from);
 GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 }  // namespace fLB
 
-#define DECLARE_bool(name)          DECLARE_VARIABLE(bool, B, name)
+// Here are the actual DEFINE_*-macros. The respective DECLARE_*-macros
+// are in a separate include, gflags_declare.h, for reducing
+// the physical transitive size for DECLARE use.
 #define DEFINE_bool(name, val, txt)                                       \
   namespace fLB {                                                         \
     typedef ::fLB::CompileAssert FLAG_##name##_value_is_not_a_bool[       \
@@ -541,16 +506,12 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
   }                                                                       \
   DEFINE_VARIABLE(bool, B, name, val, txt)
 
-#define DECLARE_int32(name)         DECLARE_VARIABLE(::google::int32, I, name)
 #define DEFINE_int32(name,val,txt)  DEFINE_VARIABLE(::google::int32, I, name, val, txt)
 
-#define DECLARE_int64(name)         DECLARE_VARIABLE(::google::int64, I64, name)
 #define DEFINE_int64(name,val,txt)  DEFINE_VARIABLE(::google::int64, I64, name, val, txt)
 
-#define DECLARE_uint64(name)        DECLARE_VARIABLE(::google::uint64, U64, name)
 #define DEFINE_uint64(name,val,txt) DEFINE_VARIABLE(::google::uint64, U64, name, val, txt)
 
-#define DECLARE_double(name)          DECLARE_VARIABLE(double, D, name)
 #define DEFINE_double(name, val, txt) DEFINE_VARIABLE(double, D, name, val, txt)
 
 // Strings are trickier, because they're not a POD, so we can't
@@ -578,9 +539,6 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
 inline clstring* dont_pass0toDEFINE_string(char *stringspot,
                                            int value);
 }  // namespace fLS
-
-#define DECLARE_string(name)  namespace fLS { extern GFLAGS_DLL_DECLARE_FLAG ::fLS::clstring& FLAGS_##name; } \
-                              using fLS::FLAGS_##name
 
 // We need to define a var named FLAGS_no##name so people don't define
 // --string and --nostring.  And we need a temporary place to put val

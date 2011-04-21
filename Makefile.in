@@ -50,9 +50,10 @@ DIST_COMMON = README $(am__configure_deps) $(dist_doc_DATA) \
 	$(srcdir)/Makefile.in $(top_srcdir)/configure \
 	$(top_srcdir)/src/config.h.in \
 	$(top_srcdir)/src/gflags/gflags.h.in \
-	$(top_srcdir)/src/gflags/gflags_completions.h.in AUTHORS \
-	COPYING ChangeLog INSTALL NEWS compile config.guess config.sub \
-	depcomp install-sh ltmain.sh missing mkinstalldirs
+	$(top_srcdir)/src/gflags/gflags_completions.h.in \
+	$(top_srcdir)/src/gflags/gflags_declare.h.in AUTHORS COPYING \
+	ChangeLog INSTALL NEWS compile config.guess config.sub depcomp \
+	install-sh ltmain.sh missing mkinstalldirs
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/m4/ac_have_attribute.m4 \
@@ -68,7 +69,7 @@ am__CONFIG_DISTCLEAN_FILES = config.status config.cache config.log \
  configure.lineno configure.status.lineno
 mkinstalldirs = $(SHELL) $(top_srcdir)/mkinstalldirs
 CONFIG_HEADER = $(top_builddir)/src/config.h
-CONFIG_CLEAN_FILES = src/gflags/gflags.h \
+CONFIG_CLEAN_FILES = src/gflags/gflags.h src/gflags/gflags_declare.h \
 	src/gflags/gflags_completions.h
 am__vpath_adj_setup = srcdirstrip=`echo "$(srcdir)" | sed 's|.|.|g'`;
 am__vpath_adj = case $$p in \
@@ -316,7 +317,9 @@ AM_CXXFLAGS = $(am__append_1)
 # Cygwin and MinGW.  LIBSTDCXX_LA_LINKER_FLAG is used to fix a Solaris bug.
 AM_LDFLAGS = -no-undefined $(LIBSTDCXX_LA_LINKER_FLAG)
 gflagsincludedir = $(includedir)/gflags
-gflagsinclude_HEADERS = src/gflags/gflags.h src/gflags/gflags_completions.h
+gflagsinclude_HEADERS = src/gflags/gflags.h src/gflags/gflags_declare.h \
+                        src/gflags/gflags_completions.h
+
 
 # This is for backwards compatibility only.
 googleincludedir = $(includedir)/google
@@ -404,7 +407,8 @@ pkgconfig_DATA = lib${PACKAGE}.pc lib${PACKAGE}_nothreads.pc
 EXTRA_DIST = packages/rpm.sh packages/rpm/rpm.spec packages/deb.sh packages/deb \
 	libtool $(SCRIPTS) \
 	src/windows/config.h src/windows/port.h src/windows/port.cc \
-	src/windows/gflags/gflags.h src/windows/gflags/gflags_completions.h \
+	src/windows/gflags/gflags.h src/windows/gflags/gflags_declare.h \
+        src/windows/gflags/gflags_completions.h \
 	$(WINDOWS_PROJECTS) \
         src/solaris/libstdc++.la
 
@@ -463,6 +467,8 @@ $(top_srcdir)/src/config.h.in:  $(am__configure_deps)
 distclean-hdr:
 	-rm -f src/config.h src/stamp-h1
 src/gflags/gflags.h: $(top_builddir)/config.status $(top_srcdir)/src/gflags/gflags.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $@
+src/gflags/gflags_declare.h: $(top_builddir)/config.status $(top_srcdir)/src/gflags/gflags_declare.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@
 src/gflags/gflags_completions.h: $(top_builddir)/config.status $(top_srcdir)/src/gflags/gflags_completions.h.in
 	cd $(top_builddir) && $(SHELL) ./config.status $@

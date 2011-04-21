@@ -114,5 +114,7 @@ AC_DEFINE(GFLAGS_DLL_DECL,,
 	   #includes "config.h" before anything else.])
 
 # Write generated configuration file, and also .h files
-AC_CONFIG_FILES([Makefile src/gflags/gflags.h src/gflags/gflags_completions.h])
+AC_CONFIG_FILES([Makefile
+                 src/gflags/gflags.h src/gflags/gflags_declare.h
+                 src/gflags/gflags_completions.h])
 AC_OUTPUT
