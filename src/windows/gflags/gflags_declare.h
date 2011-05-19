@@ -57,6 +57,17 @@
 
 namespace google {
 
+namespace fLS {
+
+// The meaning of "string" might be different between now and when the
+// macros below get invoked (e.g., if someone is experimenting with
+// other string implementations that get defined after this file is
+// included).  Save the current meaning now and use it in the macros.
+typedef std::string clstring;
+
+}
+
+
 #if 0      // the C99 format
 typedef int32_t int32;
 typedef uint32_t uint32;
@@ -89,7 +100,10 @@ typedef unsigned __int64 uint64;
 #define DECLARE_uint64(name) DECLARE_VARIABLE(google::uint64, U64, name)
 #define DECLARE_double(name) DECLARE_VARIABLE(double, D, name)
 #define DECLARE_string(name) \
-  namespace fLS { typedef std::string clstring; extern GFLAGS_DLL_DECLARE_FLAG ::fLS::clstring& FLAGS_##name; } \
+  namespace fLS {                       \
+  using ::fLS::clstring;                \
+  extern GFLAGS_DLL_DECLARE_FLAG ::fLS::clstring& FLAGS_##name; \
+  }                                     \
   using fLS::FLAGS_##name
 
 #endif  // BASE_COMMANDLINEFLAGS_DECLARE_H_

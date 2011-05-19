@@ -522,11 +522,6 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 // into it later.  It's not perfect, but the best we can do.
 
 namespace fLS {
-// The meaning of "string" might be different between now and when the
-// macros below get invoked (e.g., if someone is experimenting with
-// other string implementations that get defined after this file is
-// included).  Save the current meaning now and use it in the macros.
-typedef std::string clstring;
 
 inline clstring* dont_pass0toDEFINE_string(char *stringspot,
                                            const char *value) {
