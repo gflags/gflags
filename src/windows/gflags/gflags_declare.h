@@ -1,4 +1,4 @@
-// Copyright (c) 2011, Google Inc.
+// Copyright (c) 1999, Google Inc.
 // All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // ---
-// Author: Ray Sidney
+//
 // Revamped and reorganized by Craig Silverstein
 //
 // This is the file that should be included by any file which declares
@@ -38,24 +38,60 @@
 #define BASE_COMMANDLINEFLAGS_DECLARE_H_
 
 #include <string>
-
-// We care a lot about number of bits things take up.  Unfortunately,
-// systems define their bit-specific ints in a lot of different ways.
-// We use our own way, and have a typedef to get there.
-// Note: these commands below may look like "#if 1" or "#if 0", but
-// that's because they were constructed that way at ./configure time.
-// Look at gflags.h.in to see how they're calculated (based on your config).
 #if 0
-#include <stdint.h>             // the normal place uint16_t is defined
+#include <stdint.h>         // the normal place uint16_t is defined
 #endif
 #if 1
-#include <sys/types.h>          // the normal place u_int16_t is defined
+#include <sys/types.h>      // the normal place u_int16_t is defined
 #endif
 #if 0
-#include <inttypes.h>           // a third place for uint16_t or u_int16_t
+#include <inttypes.h>       // a third place for uint16_t or u_int16_t
 #endif
 
 namespace google {
+#if 0      // the C99 format
+typedef int32_t int32;
+typedef uint32_t uint32;
+typedef int64_t int64;
+typedef uint64_t uint64;
+#elif 0   // the BSD format
+typedef int32_t int32;
+typedef u_int32_t uint32;
+typedef int64_t int64;
+typedef u_int64_t uint64;
+#elif 1     // the windows (vc7) format
+typedef __int32 int32;
+typedef unsigned __int32 uint32;
+typedef __int64 int64;
+typedef unsigned __int64 uint64;
+#else
+#error Do not know how to define a 32-bit integer quantity on your system
+#endif
+}
+
+
+// Annoying stuff for windows -- makes sure clients can import these functions
+#if defined(_WIN32)
+# ifndef GFLAGS_DLL_DECL
+#   define GFLAGS_DLL_DECL  __declspec(dllimport)
+# endif
+# ifndef GFLAGS_DLL_DECLARE_FLAG
+#   define GFLAGS_DLL_DECLARE_FLAG  __declspec(dllimport)
+# endif
+# ifndef GFLAGS_DLL_DEFINE_FLAG
+#   define GFLAGS_DLL_DEFINE_FLAG   __declspec(dllexport)
+# endif
+#else
+# ifndef GFLAGS_DLL_DECL
+#   define GFLAGS_DLL_DECL  /**/
+# endif
+# ifndef GFLAGS_DLL_DECLARE_FLAG
+#   define GFLAGS_DLL_DECLARE_FLAG  /**/
+# endif
+# ifndef GFLAGS_DLL_DEFINE_FLAG
+#   define GFLAGS_DLL_DEFINE_FLAG  /**/
+# endif
+#endif
 
 namespace fLS {
 
@@ -67,38 +103,26 @@ typedef std::string clstring;
 
 }
 
-
-#if 0      // the C99 format
-typedef int32_t int32;
-typedef uint32_t uint32;
-typedef int64_t int64;
-typedef uint64_t uint64;
-#elif 0   // the BSD format
-typedef int32_t int32;
-typedef u_int32_t uint32;
-typedef int64_t int64;
-typedef u_int64_t uint64;
-#elif 1   // the windows (vc7) format
-typedef __int32 int32;
-typedef unsigned __int32 uint32;
-typedef __int64 int64;
-typedef unsigned __int64 uint64;
-#else
-#error Do not know how to define a 32-bit integer quantity on your system
-#endif
-
-}
-
 #define DECLARE_VARIABLE(type, shorttype, name) \
   /* We always want to import declared variables, dll or no */ \
   namespace fL##shorttype { extern GFLAGS_DLL_DECLARE_FLAG type FLAGS_##name; } \
   using fL##shorttype::FLAGS_##name
 
-#define DECLARE_bool(name) DECLARE_VARIABLE(bool, B, name)
-#define DECLARE_int32(name) DECLARE_VARIABLE(google::int32, I, name)
-#define DECLARE_int64(name) DECLARE_VARIABLE(google::int64, I64, name)
-#define DECLARE_uint64(name) DECLARE_VARIABLE(google::uint64, U64, name)
-#define DECLARE_double(name) DECLARE_VARIABLE(double, D, name)
+#define DECLARE_bool(name) \
+  DECLARE_VARIABLE(bool, B, name)
+
+#define DECLARE_int32(name) \
+  DECLARE_VARIABLE(::google::int32, I, name)
+
+#define DECLARE_int64(name) \
+  DECLARE_VARIABLE(::google::int64, I64, name)
+
+#define DECLARE_uint64(name) \
+  DECLARE_VARIABLE(::google::uint64, U64, name)
+
+#define DECLARE_double(name) \
+  DECLARE_VARIABLE(double, D, name)
+
 #define DECLARE_string(name) \
   namespace fLS {                       \
   using ::fLS::clstring;                \

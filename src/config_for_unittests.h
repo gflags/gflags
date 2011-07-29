@@ -30,7 +30,6 @@
 // ---
 // All Rights Reserved.
 //
-// Author: Craig Silverstein
 //
 // This file is needed for windows -- unittests are not part of the
 // gflags dll, but still want to include config.h just like the

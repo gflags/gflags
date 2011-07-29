@@ -56,7 +56,7 @@ CLEANFILES =
 
 ## vvvv RULES TO MAKE THE LIBRARIES, BINARIES, AND UNITTESTS
 
-GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/mutex.h \
+GFLAGS_SOURCES = $(gflagsinclude_HEADERS) src/mutex.h src/util.h \
                  src/gflags.cc src/gflags_reporting.cc \
                  src/gflags_completions.cc
 

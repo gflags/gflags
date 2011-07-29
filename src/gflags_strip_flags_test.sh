@@ -30,14 +30,12 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 # ---
-# Author: Craig Silverstein
+# Author: csilvers@google.com (Craig Silverstein)
 
-if [ -z "$1" ]
-then
-    echo "USAGE: $0 <unittest exe>"
-    exit 1
+if [ -z "$1" ]; then
+  echo "USAGE: $0 <unittest exe>"
+  exit 1
 fi
-
 BINARY="$1"
 
 # Make sure the binary exists...
@@ -57,15 +55,15 @@ fi
 # Make sure the stripped text isn't in the binary at all.
 if strings --help >/dev/null 2>&1    # make sure the binary exists
 then
-  # Unfortunately, for us, libtool can replace executables with a shell
-  # script that does some work before calling the 'real' executable
-  # under a different name.  We need the 'real' executable name to run
-  # 'strings' on it, so we construct this binary to print the real
-  # name (argv[0]) on stdout when run.
+  # Unfortunately, for us, libtool can replace executables with a
+  # shell script that does some work before calling the 'real'
+  # executable under a different name.  We need the 'real'
+  # executable name to run 'strings' on it, so we construct this
+  # binary to print the real name (argv[0]) on stdout when run.
   REAL_BINARY=`"$BINARY"`
   # On cygwin, we may need to add a '.exe' extension by hand.
   [ -f "$REAL_BINARY.exe" ] && REAL_BINARY="$REAL_BINARY.exe"
-  if strings "$REAL_BINARY" | grep "This text should be stripped out" >/dev/null 2>&1
+  if strings "$REAL_BINARY" | grep "This text should be stripped" >/dev/null 2>&1
   then
     echo "Text not stripped from binary like it should be: $BINARY"
     exit 1

@@ -55,6 +55,8 @@ AC_CHECK_HEADER(stdint.h, ac_cv_have_stdint_h=1, ac_cv_have_stdint_h=0)
 AC_CHECK_HEADER(sys/types.h, ac_cv_have_systypes_h=1, ac_cv_have_systypes_h=0)
 AC_CHECK_HEADER(inttypes.h, ac_cv_have_inttypes_h=1, ac_cv_have_inttypes_h=0)
 AC_CHECK_HEADERS([fnmatch.h])
+AC_CHECK_HEADERS([sys/stat.h])
+AC_CHECK_HEADERS([unistd.h])
 
 # These are the types I need.  We look for them in either stdint.h,
 # sys/types.h, or inttypes.h, all of which are part of the default-includes.
@@ -63,7 +65,6 @@ AC_CHECK_TYPE(u_int16_t, ac_cv_have_u_int16_t=1, ac_cv_have_u_int16_t=0)
 AC_CHECK_TYPE(__int16, ac_cv_have___int16=1, ac_cv_have___int16=0)
 
 AC_CHECK_FUNCS([strtoll strtoq])
-AC_CHECK_FUNCS([setenv putenv])    # MinGW has putenv but not setenv
 
 AX_C___ATTRIBUTE__
 # We only care about __attribute__ ((unused))

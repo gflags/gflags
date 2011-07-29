@@ -54,15 +54,23 @@
 #include <windows.h>
 #include <direct.h>          /* for mkdir */
 #include <stdio.h>           /* need this to override stdio's snprintf */
+#include <stdarg.h>          /* util.h uses va_copy */
+#include <string.h>          /* for _stricmp */
 
-#define putenv  _putenv
-
-// ----------------------------------- STRING ROUTINES
-
-// We can't just use _snprintf as a drop-in-replacement, because it
-// doesn't always NUL-terminate. :-(
+/* We can't just use _vsnprintf and _snprintf as drop-in-replacements,
+ * because they don't always NUL-terminate. :-(  We also can't use the
+ * name vsnprintf, since windows defines that (but not snprintf (!)).
+ */
+#if !defined(__MINGW32__) && !defined(__MINGW64__)  /* mingw already defines */
 extern GFLAGS_DLL_DECL int snprintf(char *str, size_t size,
-                                    const char *format, ...);
+                                       const char *format, ...);
+extern int GFLAGS_DLL_DECL safe_vsnprintf(char *str, size_t size,
+                                             const char *format, va_list ap);
+#define vsnprintf(str, size, format, ap)  safe_vsnprintf(str, size, format, ap)
+#define va_copy(dst, src)  (dst) = (src)
+#endif  /* #if !defined(__MINGW32__) && !defined(__MINGW64__) */
+
+extern void GFLAGS_DLL_DECL setenv(const char* name, const char* value, int);
 
 #define strcasecmp   _stricmp
 

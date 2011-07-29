@@ -28,19 +28,21 @@
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 //
 // ---
-// Author: Craig Silverstein
+// Author: csilvers@google.com (Craig Silverstein)
 //
 // A simple program that uses STRIP_FLAG_HELP.  We'll have a shell
 // script that runs 'strings' over this program and makes sure
 // that the help string is not in there.
 
 #include "config_for_unittests.h"
-#include <stdio.h>
 #define STRIP_FLAG_HELP 1
-#include "gflags/gflags.h"
+#include <gflags/gflags.h>
+
+#include <stdio.h>
 
 using GOOGLE_NAMESPACE::SetUsageMessage;
 using GOOGLE_NAMESPACE::ParseCommandLineFlags;
+
 
 DEFINE_bool(test, true, "This text should be stripped out");
 
@@ -53,6 +55,7 @@ int main(int argc, char** argv) {
   // under a different name.  We need the 'real' executable name to run
   // 'strings' on it, so we construct this binary to print the real
   // name (argv[0]) on stdout when run.
-  printf("%s\n", argv[0]);
+  puts(argv[0]);
+
   return 0;
 }

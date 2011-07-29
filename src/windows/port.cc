@@ -37,20 +37,49 @@
 
 #include <config.h>
 #include <string.h>    // for strlen(), memset(), memcmp()
+#include <stdlib.h>    // for _putenv, etc.
 #include <assert.h>
 #include <stdarg.h>    // for va_list, va_start, va_end
 #include <windows.h>
 #include "port.h"
 
-#ifndef HAVE_SNPRINTF
-int snprintf(char *str, size_t size, const char *format, ...) {
+// These call the windows _vsnprintf, but always NUL-terminate.
+#if !defined(__MINGW32__) && !defined(__MINGW64__)  /* mingw already defines */
+int safe_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
   if (size == 0)        // not even room for a \0?
     return -1;          // not what C99 says to do, but what windows does
+  str[size-1] = '\0';
+  return _vsnprintf(str, size-1, format, ap);
+}
+
+int snprintf(char *str, size_t size, const char *format, ...) {
+  int r;
   va_list ap;
   va_start(ap, format);
-  const int r = _vsnprintf(str, size-1, format, ap);
+  r = vsnprintf(str, size, format, ap);
   va_end(ap);
-  str[size-1] = '\0';
   return r;
 }
-#endif
+#endif  /* #if !defined(__MINGW32__) && !defined(__MINGW64__) */
+
+void setenv(const char* name, const char* value, int) {
+  // In windows, it's impossible to set a variable to the empty string.
+  // We handle this by setting it to "0" and the NUL-ing out the \0.
+  // That is, we putenv("FOO=0") and then find out where in memory the
+  // putenv wrote "FOO=0", and change it in-place to "FOO=\0".
+  // c.f. http://svn.apache.org/viewvc/stdcxx/trunk/tests/src/environ.cpp?r1=611451&r2=637508&pathrev=637508
+  static const char* const kFakeZero = "0";
+  if (*value == '\0')
+    value = kFakeZero;
+  // Apparently the semantics of putenv() is that the input
+  // must live forever, so we leak memory here. :-(
+  const int nameval_len = strlen(name) + 1 + strlen(value) + 1;
+  char* nameval = reinterpret_cast<char*>(malloc(nameval_len));
+  snprintf(nameval, nameval_len, "%s=%s", name, value);
+  _putenv(nameval);
+  if (value == kFakeZero) {
+    nameval[nameval_len - 2] = '\0';   // works when putenv() makes no copy
+    if (*getenv(name) != '\0')
+      *getenv(name) = '\0';            // works when putenv() copies nameval
+  }
+}
