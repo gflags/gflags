@@ -227,22 +227,28 @@ class Test {};
 
 // Tries to create the directory path as a temp-dir.  If it fails,
 // changes path to some directory it *can* create.
-inline void MakeTmpdir(std::string* path) {
 #if defined(__MINGW32__)
+#include <io.h>
+inline void MakeTmpdir(std::string* path) {
   // I had trouble creating a directory in /tmp from mingw
   *path = "./gflags_unittest_testdir";
   mkdir(path->c_str());   // mingw has a weird one-arg mkdir
+}
 #elif defined(_MSC_VER)
+#include <direct.h>
+inline void MakeTmpdir(std::string* path) {
   char tmppath_buffer[1024];
   int tmppath_len = GetTempPathA(sizeof(tmppath_buffer), tmppath_buffer);
   assert(tmppath_len > 0 && tmppath_len < sizeof(tmppath_buffer));
   assert(tmppath_buffer[tmppath_len - 1] == '\\');   // API guarantees it
   *path = std::string(tmppath_buffer) + "gflags_unittest_testdir";
   _mkdir(path->c_str());
-#else
-  mkdir(path->c_str(), 0755);
-#endif
 }
+#else
+inline void MakeTmpdir(std::string* path) {
+  mkdir(path->c_str(), 0755);
+}
+#endif
 
 // -- string routines --------------------------------------------------------
 

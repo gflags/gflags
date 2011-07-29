@@ -23,6 +23,15 @@ AC_PROG_CXX
 AM_CONDITIONAL(GCC, test "$GCC" = yes)   # let the Makefile know if we're gcc
 AC_CANONICAL_HOST
 
+# MinGW uses autoconf, but also needs the windows shim routines
+# (since it doesn't have its own support for, say, pthreads).
+# This requires us to #include a special header file, and also to
+# link in some windows versions of .o's instead of the unix versions.
+AH_BOTTOM([
+#if defined( __MINGW32__) || defined(__MINGW64__)
+#include "windows/port.h"
+#endif
+])
 # Populate $host_cpu, $host_os, etc.
 AC_CANONICAL_HOST
 case $host_os in
