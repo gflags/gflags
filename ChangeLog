@@ -1,3 +1,15 @@
+Fri Jul 29 19:05:21 2011  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.6
+	* BUGFIX: Fix a bug where we were leaving out a required $(top_srcdir)
+	* Fix definition of clstring (jyrki)
+	* Split up flag declares into its own file (jyrki)
+	* Add --version support (csilvers)
+	* Update the README for gflags with static libs
+	* Update acx_pthread.m4 for nostdlib
+	* Change ReparseCommandLineFlags to return void (csilvers)
+	* Some doc typofixes and example augmentation (various)
+
 Mon Jan 24 16:11:35 2011  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.5

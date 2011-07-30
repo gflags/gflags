@@ -1,4 +1,27 @@
-== 24 January 2011 ==
+== 29 July 2011 ==
+
+I've just released gflags 1.6.  The major new feature in this release
+is support for setting version info, so that --version does something
+useful.
+
+One minor change has required bumping the library number:
+`ReparseCommandlineFlags` now returns `void` instead of `int` (the int
+return value was always meaningless).  Though I doubt anyone ever used
+this (meaningless) return value, technically it's a change to the ABI
+that requires a version bump.  A bit sad.
+
+There's also a procedural change with this release: I've changed the
+internal tools used to integrate Google-supplied patches for gflags
+into the opensource release.  These new tools should result in more
+frequent updates with better change descriptions.  They will also
+result in future `ChangeLog` entries being much more verbose (for better
+or for worse).
+
+See the
+[http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.6/ChangeLog ChangeLog]
+for a full list of changes for this release.
+
+=== 24 January 2011 ===
 
 I've just released gflags 1.5.  This release has only minor changes
 from 1.4, including some slightly better reporting in --help, and
