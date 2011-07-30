@@ -119,7 +119,7 @@ $ complete -o bashdefault -o default -o nospace -C                            \
 // appropriate munging for windows, which needs to add GFLAGS_DLL_DECL.
 //
 #ifndef GFLAGS_DLL_DECL
-# ifdef _WIN32
+# ifdef _MSC_VER
 #   define GFLAGS_DLL_DECL  __declspec(dllimport)
 # else
 #   define GFLAGS_DLL_DECL  /**/

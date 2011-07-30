@@ -71,7 +71,8 @@ typedef unsigned __int64 uint64;
 
 
 // Annoying stuff for windows -- makes sure clients can import these functions
-#if defined(_WIN32)
+// TODO(csilvers): add this only for the windows version of the file.
+#if defined(_MSC_VER)
 # ifndef GFLAGS_DLL_DECL
 #   define GFLAGS_DLL_DECL  __declspec(dllimport)
 # endif
