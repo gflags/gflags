@@ -287,7 +287,7 @@ inline void InternalStringPrintf(std::string* output, const char* format,
     va_end(backup_ap);
 
     if ((bytes_written >= 0) && (bytes_written < length)) {
-      output->append(space, bytes_written);
+      output->append(buf, bytes_written);
       delete[] buf;
       return;
     }
