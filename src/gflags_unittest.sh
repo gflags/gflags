@@ -111,6 +111,9 @@ Expect $LINENO 0 "PASS" ""
 # --help should show all flags, including flags from gflags_reporting
 Expect $LINENO 1 "/gflags_reporting.cc" "" --help
 
+# Make sure that --help prints even very long helpstrings.
+Expect $LINENO 1 "end of a long helpstring" "" --help
+
 # Make sure --help reflects flag changes made before flag-parsing
 Expect $LINENO 1 \
      "-changed_bool1 (changed) type: bool default: true" "" --help

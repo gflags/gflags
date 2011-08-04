@@ -127,6 +127,19 @@ DEFINE_string(unused_string, "unused", "");
 // These flags are used by gflags_unittest.sh
 DEFINE_bool(changed_bool1, false, "changed");
 DEFINE_bool(changed_bool2, false, "changed");
+DEFINE_bool(long_helpstring, false,
+            "This helpstring goes on forever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever and ever and ever and ever and ever and ever and ever and "
+            "ever.  This is the end of a long helpstring");
+
 
 static bool AlwaysFail(const char* flag, bool value) { return value == false; }
 DEFINE_bool(always_fail, false, "will fail to validate when you set it");
