@@ -88,9 +88,13 @@ namespace google {
 // them.  Our automated opensourcing tools use this as a signal to do
 // appropriate munging for windows, which needs to add GFLAGS_DLL_DECL.
 //
-#ifdef SWIG  // it apparently can't see the define in gflags_declare.h
-# define GFLAGS_DLL_DECL  /**/
+#if defined(_MSC_VER) && !defined(GFLAGS_DLL_DECL)
+# define GFLAGS_DLL_DECL  __declspec(dllimport)
 #endif
+#if defined(_MSC_VER) && !defined(GFLAGS_DLL_DEFINE_FLAG)
+# define GFLAGS_DLL_DEFINE_FLAG  __declspec(dllexport)
+#endif
+
 
 // --------------------------------------------------------------------
 // To actually define a flag in a file, use DEFINE_bool,

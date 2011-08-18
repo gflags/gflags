@@ -88,9 +88,9 @@
 // them.  Our automated opensourcing tools use this as a signal to do
 // appropriate munging for windows, which needs to add GFLAGS_DLL_DECL.
 //
-#ifdef SWIG  // it apparently can't see the define in gflags_declare.h
-# define GFLAGS_DLL_DECL  /**/
-#endif
+#define GFLAGS_DLL_DECL  /* rewritten to be non-empty in windows dir */
+#define GFLAGS_DLL_DEFINE_FLAG  /* rewritten to be non-empty in windows dir */
+
 
 // --------------------------------------------------------------------
 // To actually define a flag in a file, use DEFINE_bool,

@@ -118,13 +118,8 @@ $ complete -o bashdefault -o default -o nospace -C                            \
 // them.  Our automated opensourcing tools use this as a signal to do
 // appropriate munging for windows, which needs to add GFLAGS_DLL_DECL.
 //
-#ifndef GFLAGS_DLL_DECL
-# ifdef _MSC_VER
-#   define GFLAGS_DLL_DECL  __declspec(dllimport)
-# else
-#   define GFLAGS_DLL_DECL  /**/
-# endif
-#endif
+#define GFLAGS_DLL_DECL  /* rewritten to be non-empty in windows dir */
+
 
 @ac_google_start_namespace@
 

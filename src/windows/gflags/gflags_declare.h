@@ -70,28 +70,8 @@ typedef unsigned __int64 uint64;
 }
 
 
-// Annoying stuff for windows -- makes sure clients can import these functions
-// TODO(csilvers): add this only for the windows version of the file.
-#if defined(_MSC_VER)
-# ifndef GFLAGS_DLL_DECL
-#   define GFLAGS_DLL_DECL  __declspec(dllimport)
-# endif
-# ifndef GFLAGS_DLL_DECLARE_FLAG
-#   define GFLAGS_DLL_DECLARE_FLAG  __declspec(dllimport)
-# endif
-# ifndef GFLAGS_DLL_DEFINE_FLAG
-#   define GFLAGS_DLL_DEFINE_FLAG   __declspec(dllexport)
-# endif
-#else
-# ifndef GFLAGS_DLL_DECL
-#   define GFLAGS_DLL_DECL  /**/
-# endif
-# ifndef GFLAGS_DLL_DECLARE_FLAG
-#   define GFLAGS_DLL_DECLARE_FLAG  /**/
-# endif
-# ifndef GFLAGS_DLL_DEFINE_FLAG
-#   define GFLAGS_DLL_DEFINE_FLAG  /**/
-# endif
+#if defined(_MSC_VER) && !defined(GFLAGS_DLL_DECLARE_FLAG)
+# define GFLAGS_DLL_DECLARE_FLAG  __declspec(dllimport)
 #endif
 
 namespace fLS {
