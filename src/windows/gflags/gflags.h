@@ -436,6 +436,11 @@ class GFLAGS_DLL_DECL FlagRegisterer {
                  const char* help, const char* filename,
                  void* current_storage, void* defvalue_storage,
                  const fL::OptionalDefineArgs& optional_args);
+  // TODO(csilvers): remove this (and its impl in the .cc file),
+  // once all callers have been updated to the new form:
+  FlagRegisterer(const char* name, const char* type,
+                 const char* help, const char* filename,
+                 void* current_storage, void* defvalue_storage);
 };
 
 // If your application #defines STRIP_FLAG_HELP to a non-zero value

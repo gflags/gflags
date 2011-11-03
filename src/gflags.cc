@@ -1421,6 +1421,25 @@ FlagRegisterer::FlagRegisterer(const char* name, const char* type,
   FlagRegistry::GlobalRegistry()->RegisterFlag(flag);   // default registry
 }
 
+// TODO(csilvers): remove this by 1 Sept 2011.
+FlagRegisterer::FlagRegisterer(const char* name, const char* type,
+                               const char* help, const char* filename,
+                               void* current_storage, void* defvalue_storage) {
+  if (help == NULL)
+    help = "";
+  // FlagValue expects the type-name to not include any namespace
+  // components, so we get rid of those, if any.
+  if (strchr(type, ':'))
+    type = strrchr(type, ':') + 1;
+  FlagValue* current = new FlagValue(current_storage, type, false);
+  FlagValue* defvalue = new FlagValue(defvalue_storage, type, false);
+  // Importantly, flag_ will never be deleted, so storage is always good.
+  CommandLineFlag* flag = new CommandLineFlag(name, help, filename,
+                                              NULL, current, defvalue);
+  FlagRegistry::GlobalRegistry()->RegisterFlag(flag);   // default registry
+}
+
+
 // --------------------------------------------------------------------
 // GetAllFlags()
 //    The main way the FlagRegistry class exposes its data.  This
