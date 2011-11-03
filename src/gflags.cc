@@ -112,8 +112,6 @@
 #include "mutex.h"
 #include "util.h"
 
-using fL::OptionalDefineArgs;
-
 #ifndef PATH_SEPARATOR
 #define PATH_SEPARATOR  '/'
 #endif
@@ -484,14 +482,12 @@ class CommandLineFlag {
  public:
   // Note: we take over memory-ownership of current_val and default_val.
   CommandLineFlag(const char* name, const char* help, const char* filename,
-                  const char* categories,
                   FlagValue* current_val, FlagValue* default_val);
   ~CommandLineFlag();
 
   const char* name() const { return name_; }
   const char* help() const { return help_; }
   const char* filename() const { return file_; }
-  const char* categories() const { return categories_ ? categories_ : ""; }
   const char* CleanFileName() const;  // nixes irrelevant prefix such as homedir
   string current_value() const { return current_->ToString(); }
   string default_value() const { return defvalue_->ToString(); }
@@ -520,7 +516,6 @@ class CommandLineFlag {
   const char* const name_;     // Flag name
   const char* const help_;     // Help message
   const char* const file_;     // Which file did this come from?
-  const char* categories_;     // Comma-separated list of flag's 'categories'
   bool modified_;              // Set after default assignment?
   FlagValue* defvalue_;        // Default value for flag
   FlagValue* current_;         // Current value for flag
@@ -535,11 +530,10 @@ class CommandLineFlag {
 };
 
 CommandLineFlag::CommandLineFlag(const char* name, const char* help,
-                                 const char* filename, const char* categories,
+                                 const char* filename,
                                  FlagValue* current_val, FlagValue* default_val)
-    : name_(name), help_(help), file_(filename), categories_(categories),
-      modified_(false), defvalue_(default_val), current_(current_val),
-      validate_fn_proto_(NULL) {
+    : name_(name), help_(help), file_(filename), modified_(false),
+      defvalue_(default_val), current_(current_val), validate_fn_proto_(NULL) {
 }
 
 CommandLineFlag::~CommandLineFlag() {
@@ -575,7 +569,6 @@ void CommandLineFlag::FillCommandLineFlagInfo(
   result->name = name();
   result->type = type_name();
   result->description = help();
-  result->categories = categories();
   result->current_value = current_value();
   result->default_value = default_value();
   result->filename = CleanFileName();
@@ -1407,8 +1400,7 @@ bool AddFlagValidator(const void* flag_ptr, ValidateFnProto validate_fn_proto) {
 
 FlagRegisterer::FlagRegisterer(const char* name, const char* type,
                                const char* help, const char* filename,
-                               void* current_storage, void* defvalue_storage,
-                               const OptionalDefineArgs& optional_args) {
+                               void* current_storage, void* defvalue_storage) {
   if (help == NULL)
     help = "";
   // FlagValue expects the type-name to not include any namespace
@@ -1419,7 +1411,25 @@ FlagRegisterer::FlagRegisterer(const char* name, const char* type,
   FlagValue* defvalue = new FlagValue(defvalue_storage, type, false);
   // Importantly, flag_ will never be deleted, so storage is always good.
   CommandLineFlag* flag = new CommandLineFlag(name, help, filename,
-                                              optional_args.categories,
+                                              current, defvalue);
+  FlagRegistry::GlobalRegistry()->RegisterFlag(flag);   // default registry
+}
+
+// TODO(csilvers): remove
+FlagRegisterer::FlagRegisterer(const char* name, const char* type,
+                               const char* help, const char* filename,
+                               void* current_storage, void* defvalue_storage,
+                               const fL::OptionalDefineArgs& optional_args) {
+  if (help == NULL)
+    help = "";
+  // FlagValue expects the type-name to not include any namespace
+  // components, so we get rid of those, if any.
+  if (strchr(type, ':'))
+    type = strrchr(type, ':') + 1;
+  FlagValue* current = new FlagValue(current_storage, type, false);
+  FlagValue* defvalue = new FlagValue(defvalue_storage, type, false);
+  // Importantly, flag_ will never be deleted, so storage is always good.
+  CommandLineFlag* flag = new CommandLineFlag(name, help, filename,
                                               current, defvalue);
   FlagRegistry::GlobalRegistry()->RegisterFlag(flag);   // default registry
 }
@@ -1664,7 +1674,7 @@ class FlagSaverImpl {
       const CommandLineFlag* main = it->second;
       // Sets up all the const variables in backup correctly
       CommandLineFlag* backup = new CommandLineFlag(
-          main->name(), main->help(), main->filename(), main->categories(),
+          main->name(), main->help(), main->filename(),
           main->current_->New(), main->defvalue_->New());
       // Sets up all the non-const variables in backup correctly
       backup->CopyFrom(*main);

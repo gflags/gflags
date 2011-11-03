@@ -77,8 +77,7 @@ DEFINE_string(srcdir, StringFromEnv("SRCDIR", "."),
 
 DECLARE_string(tryfromenv);   // in gflags.cc
 
-// This 4th arg specifies the 'categories' the flag belongs to.
-DEFINE_bool(test_bool, false, "tests bool-ness", "important,has_category");
+DEFINE_bool(test_bool, false, "tests bool-ness");
 DEFINE_int32(test_int32, -1, "");
 DEFINE_int64(test_int64, -2, "");
 DEFINE_uint64(test_uint64, 2, "");
@@ -96,7 +95,6 @@ DEFINE_bool(test_bool_with_quite_quite_quite_quite_quite_quite_quite_quite_quite
 DEFINE_string(test_str1, "initial", "");
 DEFINE_string(test_str2, "initial", "");
 DEFINE_string(test_str3, "initial", "");
-DEFINE_string(test_str_with_category, "", "", "required,filename");
 
 // This is used to test setting tryfromenv manually
 DEFINE_string(test_tryfromenv, "initial", "");
@@ -218,8 +216,6 @@ MAKEFLAG100(15);
 #undef MAKEFLAG10
 #undef MAKEFLAG
 
-static fL::OptionalDefineArgs no_optional_args = { };
-
 // This is a pseudo-flag -- we want to register a flag with a filename
 // at the top level, but there is no way to do this except by faking
 // the filename.
@@ -230,7 +226,7 @@ namespace fLI {
   static FlagRegisterer o_tldflag1(
     "tldflag1", "int32",
     "should show up in --helpshort", "gflags_unittest.cc",
-    &FLAGS_tldflag1, &FLAGS_notldflag1, no_optional_args);
+    &FLAGS_tldflag1, &FLAGS_notldflag1);
 }
 using fLI::FLAGS_tldflag1;
 
@@ -241,7 +237,7 @@ namespace fLI {
   static FlagRegisterer o_tldflag2(
     "tldflag2", "int32",
     "should show up in --helpshort", "gflags_unittest.",
-    &FLAGS_tldflag2, &FLAGS_notldflag2, no_optional_args);
+    &FLAGS_tldflag2, &FLAGS_notldflag2);
 }
 using fLI::FLAGS_tldflag2;
 
@@ -991,24 +987,11 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("test_int32", info.name);
   EXPECT_EQ("int32", info.type);
   EXPECT_EQ("", info.description);
-  EXPECT_EQ("", info.categories);
   EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
   EXPECT_TRUE(info.is_default);
   EXPECT_FALSE(info.has_validator_fn);
   EXPECT_EQ(&FLAGS_test_int32, info.flag_ptr);
-
-  r = GetCommandLineFlagInfo("test_str_with_category", &info);
-  EXPECT_TRUE(r);
-  EXPECT_EQ("test_str_with_category", info.name);
-  EXPECT_EQ("string", info.type);
-  EXPECT_EQ("", info.description);
-  EXPECT_EQ("required,filename", info.categories);
-  EXPECT_EQ("", info.current_value);
-  EXPECT_EQ("", info.default_value);
-  EXPECT_TRUE(info.is_default);
-  EXPECT_FALSE(info.has_validator_fn);
-  EXPECT_EQ(&FLAGS_test_str_with_category, info.flag_ptr);
 
   FLAGS_test_bool = true;
   r = GetCommandLineFlagInfo("test_bool", &info);
@@ -1016,7 +999,6 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
-  EXPECT_EQ("important,has_category", info.categories);
   EXPECT_EQ("true", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_FALSE(info.is_default);
@@ -1029,7 +1011,6 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
   EXPECT_EQ("tests bool-ness", info.description);
-  EXPECT_EQ("important,has_category", info.categories);
   EXPECT_EQ("false", info.current_value);
   EXPECT_EQ("false", info.default_value);
   EXPECT_FALSE(info.is_default);  // value is same, but flag *was* modified
@@ -1364,7 +1345,7 @@ TEST(ParseCommandLineFlagsWrongFields,
   static bool current_storage;
   static bool defvalue_storage;
   FlagRegisterer fr("flag_name", "bool", 0, "filename",
-                    &current_storage, &defvalue_storage, no_optional_args);
+                    &current_storage, &defvalue_storage);
   CommandLineFlagInfo fi;
   EXPECT_TRUE(GetCommandLineFlagInfo("flag_name", &fi));
   EXPECT_EQ("", fi.description);
