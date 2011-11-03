@@ -185,6 +185,7 @@ static void ReportError(DieWhenReporting should_die, const char* format, ...) {
   vsnprintf(error_message, sizeof(error_message), format, ap);
   va_end(ap);
   fprintf(stderr, "%s", error_message);
+  fflush(stderr);   // should be unnecessary, but cygwin's rxvt buffers stderr
   if (should_die == DIE) gflags_exitfunc(1);
 }
 
