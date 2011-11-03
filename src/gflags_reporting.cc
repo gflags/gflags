@@ -212,6 +212,7 @@ static string DescribeOneFlagInXML(const CommandLineFlagInfo& flag) {
   AddXMLTag(&r, "file", flag.filename);
   AddXMLTag(&r, "name", flag.name);
   AddXMLTag(&r, "meaning", flag.description);
+  AddXMLTag(&r, "categories", flag.categories);
   AddXMLTag(&r, "default", flag.default_value);
   AddXMLTag(&r, "current", flag.current_value);
   AddXMLTag(&r, "type", flag.type);

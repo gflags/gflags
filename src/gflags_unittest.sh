@@ -182,6 +182,8 @@ Expect $LINENO 1 "/gflags_reporting.cc" "" --helppackage
 # xml!
 Expect $LINENO 1 "/gflags_unittest.cc</file>" \
   "/gflags_unittest.cc:" --helpxml
+Expect $LINENO 1 "<name>test_bool</name><meaning>tests bool-ness</meaning><categories>important,has_category</categories><default>false</default><current>false</current><type>bool</type>" \
+  "/gflags_unittest.cc:" --helpxml
 
 # just print the version info and exit
 Expect $LINENO 0 "gflags_unittest" "gflags_unittest.cc" --version
