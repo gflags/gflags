@@ -40,7 +40,7 @@
 //
 //    DEFINE_int32(end, 1000, "The last record to read");
 //
-//    DEFINE_string(filename, "my_file.txt", "The file to read");
+//    DEFINE_string(filename, "my_file.txt", "The file to read", "important");
 //    // Crash if the specified file does not exist.
 //    static bool dummy = RegisterFlagValidator(&FLAGS_filename,
 //                                              &ValidateIsFile);
@@ -81,7 +81,6 @@
 #include <string>
 #include <vector>
 #include <gflags/gflags_declare.h>  // IWYU pragma: export
-namespace google {
 
 //
 // NOTE: all functions below MUST have an explicit 'extern' before
@@ -95,6 +94,10 @@ namespace google {
 # define GFLAGS_DLL_DEFINE_FLAG  __declspec(dllexport)
 #endif
 
+namespace fL { struct OptionalDefineArgs; }   // defined below
+
+
+namespace google {
 
 // --------------------------------------------------------------------
 // To actually define a flag in a file, use DEFINE_bool,
@@ -155,6 +158,7 @@ struct GFLAGS_DLL_DECL CommandLineFlagInfo {
   std::string name;            // the name of the flag
   std::string type;            // the type of the flag: int32, etc
   std::string description;     // the "help text" associated with the flag
+  std::string categories;      // the value of the "categories" arg to DEFINE_*()
   std::string current_value;   // the current value, as a string
   std::string default_value;   // the default value, as a string
   std::string filename;        // 'cleaned' version of filename holding the flag
@@ -430,7 +434,8 @@ class GFLAGS_DLL_DECL FlagRegisterer {
  public:
   FlagRegisterer(const char* name, const char* type,
                  const char* help, const char* filename,
-                 void* current_storage, void* defvalue_storage);
+                 void* current_storage, void* defvalue_storage,
+                 const fL::OptionalDefineArgs& optional_args);
 };
 
 // If your application #defines STRIP_FLAG_HELP to a non-zero value
@@ -452,6 +457,19 @@ extern GFLAGS_DLL_DECL const char kStrippedFlagHelp[];
 #define MAYBE_STRIPPED_HELP(txt) txt
 #endif
 
+// This holds all the optional macro argument fields that *may* be
+// present in DEFINE_* after the helpstring, but are not required to
+// be.  We use static initialization, so they must all be POD types,
+// and if not specified they default to 0.
+namespace fL {
+struct OptionalDefineArgs {
+  // A comma-separated list of "categories" this flag falls into.
+  // For details on categories, see gflags_categories.h.
+  const char* categories;
+};
+typedef OptionalDefineArgs ODA;   // used in macros to save on code size
+}
+
 // Each command-line flag has two variables associated with it: one
 // with the current value, and one with the default value.  However,
 // we have a third variable, which is where value is assigned; it's a
@@ -463,15 +481,18 @@ extern GFLAGS_DLL_DECL const char kStrippedFlagHelp[];
 // FLAGS_no<name>.  This serves the second purpose of assuring a
 // compile error if someone tries to define a flag named no<name>
 // which is illegal (--foo and --nofoo both affect the "foo" flag).
-#define DEFINE_VARIABLE(type, shorttype, name, value, help)             \
+// The ... maps to the fields in OptionalDefineArgs, above.  It may
+// be omitted entirely if no optional args need to be specified.
+#define DEFINE_VARIABLE(type, shorttype, name, value, help, ...)        \
   namespace fL##shorttype {                                             \
-    static const type FLAGS_nono##name = value;                         \
+    static const type v_##name = value;                                 \
+    static const ::fL::ODA e_##name = { __VA_ARGS__ };                  \
     /* We always want to export defined variables, dll or no */         \
-    GFLAGS_DLL_DEFINE_FLAG type FLAGS_##name = FLAGS_nono##name;        \
-    type FLAGS_no##name = FLAGS_nono##name;                             \
+    GFLAGS_DLL_DEFINE_FLAG type FLAGS_##name = v_##name;                \
+    type FLAGS_no##name = v_##name;                                     \
     static ::google::FlagRegisterer o_##name( \
       #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,                \
-      &FLAGS_##name, &FLAGS_no##name);                                  \
+      &FLAGS_##name, &FLAGS_no##name, e_##name);                        \
   }                                                                     \
   using fL##shorttype::FLAGS_##name
 
@@ -494,27 +515,28 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 // Here are the actual DEFINE_*-macros. The respective DECLARE_*-macros
 // are in a separate include, gflags_declare.h, for reducing
 // the physical transitive size for DECLARE use.
-#define DEFINE_bool(name, val, txt)                                     \
+// As always, the ... maps to the fields in OptionalDefineArgs, above.
+#define DEFINE_bool(name, val, txt, ...)                                \
   namespace fLB {                                                       \
     typedef ::fLB::CompileAssert FLAG_##name##_value_is_not_a_bool[     \
             (sizeof(::fLB::IsBoolFlag(val)) != sizeof(double)) ? 1 : -1]; \
   }                                                                     \
-  DEFINE_VARIABLE(bool, B, name, val, txt)
+  DEFINE_VARIABLE(bool, B, name, val, txt, __VA_ARGS__)
 
-#define DEFINE_int32(name, val, txt) \
+#define DEFINE_int32(name, val, txt, ...)                           \
    DEFINE_VARIABLE(::google::int32, I, \
-                   name, val, txt)
+                   name, val, txt, __VA_ARGS__)
 
-#define DEFINE_int64(name, val, txt) \
+#define DEFINE_int64(name, val, txt, ...)                             \
    DEFINE_VARIABLE(::google::int64, I64, \
-                   name, val, txt)
+                   name, val, txt, __VA_ARGS__)
 
-#define DEFINE_uint64(name,val, txt) \
+#define DEFINE_uint64(name,val, txt, ...)                              \
    DEFINE_VARIABLE(::google::uint64, U64, \
-                   name, val, txt)
+                   name, val, txt, __VA_ARGS__)
 
-#define DEFINE_double(name, val, txt) \
-   DEFINE_VARIABLE(double, D, name, val, txt)
+#define DEFINE_double(name, val, txt, ...)                      \
+   DEFINE_VARIABLE(double, D, name, val, txt, __VA_ARGS__)
 
 // Strings are trickier, because they're not a POD, so we can't
 // construct them at static-initialization time (instead they get
@@ -544,16 +566,19 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
 // The weird 'using' + 'extern' inside the fLS namespace is to work around
 // an unknown compiler bug/issue with the gcc 4.2.1 on SUSE 10.  See
 //    http://code.google.com/p/google-gflags/issues/detail?id=20
-#define DEFINE_string(name, val, txt)                                       \
+// As always, the ... maps to the fields in OptionalDefineArgs, above.
+#define DEFINE_string(name, val, txt, ...)                                  \
   namespace fLS {                                                           \
     using ::fLS::clstring;                                                  \
     static union { void* align; char s[sizeof(clstring)]; } s_##name[2];    \
     clstring* const FLAGS_no##name = ::fLS::                                \
                                    dont_pass0toDEFINE_string(s_##name[0].s, \
                                                              val);          \
+    static const ::fL::ODA e_##name = { __VA_ARGS__ };                      \
     static ::google::FlagRegisterer o_##name(  \
         #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
-        s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
+        s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name),       \
+        e_##name);                                                          \
     extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \
     using fLS::FLAGS_##name;                                                \
     clstring& FLAGS_##name = *FLAGS_no##name;                               \
