@@ -83,8 +83,6 @@
 #include <gflags/gflags_declare.h>    // IWYU pragma: export
 namespace google {
 
-namespace fL { struct OptionalDefineArgs { }; }  // TODO(csilvers): remove
-
 //
 // NOTE: all functions below MUST have an explicit 'extern' before
 // them.  Our automated opensourcing tools use this as a signal to do
@@ -435,11 +433,6 @@ class GFLAGS_DLL_DECL FlagRegisterer {
   FlagRegisterer(const char* name, const char* type,
                  const char* help, const char* filename,
                  void* current_storage, void* defvalue_storage);
-  // TODO(csilvers): remove this once
-  FlagRegisterer(const char* name, const char* type,
-                 const char* help, const char* filename,
-                 void* current_storage, void* defvalue_storage,
-                 const fL::OptionalDefineArgs& optional_args);
 };
 
 // If your application #defines STRIP_FLAG_HELP to a non-zero value
