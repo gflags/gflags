@@ -155,7 +155,6 @@ struct GFLAGS_DLL_DECL CommandLineFlagInfo {
   std::string name;            // the name of the flag
   std::string type;            // the type of the flag: int32, etc
   std::string description;     // the "help text" associated with the flag
-  std::string categories;      // unused (TODO(csilvers): remove this)
   std::string current_value;   // the current value, as a string
   std::string default_value;   // the default value, as a string
   std::string filename;        // 'cleaned' version of filename holding the flag
