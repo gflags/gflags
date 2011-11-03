@@ -166,6 +166,7 @@ struct GFLAGS_DLL_DECL CommandLineFlagInfo {
   bool is_default;        // true if the flag has the default value and
                           // has not been set explicitly from the cmdline
                           // or via SetCommandLineOption
+  const void* flag_ptr;   // pointer to the flag's current value (i.e. FLAGS_foo)
 };
 
 // Using this inside of a validator is a recipe for a deadlock.

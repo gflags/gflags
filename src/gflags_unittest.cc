@@ -871,6 +871,7 @@ TEST(GetAllFlagsTest, BaseTest) {
       found_test_bool = true;
       EXPECT_EQ(i->type, "bool");
       EXPECT_EQ(i->default_value, "false");
+      EXPECT_EQ(i->flag_ptr, &FLAGS_test_bool);
       break;
     }
   }
@@ -995,6 +996,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("-1", info.default_value);
   EXPECT_TRUE(info.is_default);
   EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_int32, info.flag_ptr);
 
   r = GetCommandLineFlagInfo("test_str_with_category", &info);
   EXPECT_TRUE(r);
@@ -1006,6 +1008,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("", info.default_value);
   EXPECT_TRUE(info.is_default);
   EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_str_with_category, info.flag_ptr);
 
   FLAGS_test_bool = true;
   r = GetCommandLineFlagInfo("test_bool", &info);
@@ -1018,6 +1021,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("false", info.default_value);
   EXPECT_FALSE(info.is_default);
   EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_bool, info.flag_ptr);
 
   FLAGS_test_bool = false;
   r = GetCommandLineFlagInfo("test_bool", &info);
@@ -1030,6 +1034,7 @@ TEST(GetCommandLineFlagInfoTest, FlagExists) {
   EXPECT_EQ("false", info.default_value);
   EXPECT_FALSE(info.is_default);  // value is same, but flag *was* modified
   EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_bool, info.flag_ptr);
 }
 
 TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
@@ -1042,6 +1047,7 @@ TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
   info.filename = "/";
   info.is_default = false;
   info.has_validator_fn = true;
+  info.flag_ptr = NULL;
   bool r = GetCommandLineFlagInfo("test_int3210", &info);
   EXPECT_FALSE(r);
   EXPECT_EQ("name", info.name);
@@ -1052,6 +1058,7 @@ TEST(GetCommandLineFlagInfoTest, FlagDoesNotExist) {
   EXPECT_EQ("/", info.filename);
   EXPECT_FALSE(info.is_default);
   EXPECT_TRUE(info.has_validator_fn);
+  EXPECT_EQ(NULL, info.flag_ptr);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
@@ -1063,6 +1070,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
   EXPECT_EQ("-1", info.current_value);
   EXPECT_EQ("-1", info.default_value);
   EXPECT_TRUE(info.is_default);
+  EXPECT_EQ(&FLAGS_test_int32, info.flag_ptr);
   info = GetCommandLineFlagInfoOrDie("test_bool");
   EXPECT_EQ("test_bool", info.name);
   EXPECT_EQ("bool", info.type);
@@ -1071,6 +1079,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndIsDefault) {
   EXPECT_EQ("false", info.default_value);
   EXPECT_TRUE(info.is_default);
   EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_bool, info.flag_ptr);
 }
 
 TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
@@ -1083,6 +1092,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ("400", info.current_value);
   EXPECT_EQ("-1", info.default_value);
   EXPECT_FALSE(info.is_default);
+  EXPECT_EQ(&FLAGS_test_int32, info.flag_ptr);
   FLAGS_test_bool = true;
   info = GetCommandLineFlagInfoOrDie("test_bool");
   EXPECT_EQ("test_bool", info.name);
@@ -1092,6 +1102,7 @@ TEST(GetCommandLineFlagInfoOrDieTest, FlagExistsAndWasAssigned) {
   EXPECT_EQ("false", info.default_value);
   EXPECT_FALSE(info.is_default);
   EXPECT_FALSE(info.has_validator_fn);
+  EXPECT_EQ(&FLAGS_test_bool, info.flag_ptr);
 }
 
 #ifdef GTEST_HAS_DEATH_TEST
@@ -1357,6 +1368,7 @@ TEST(ParseCommandLineFlagsWrongFields,
   CommandLineFlagInfo fi;
   EXPECT_TRUE(GetCommandLineFlagInfo("flag_name", &fi));
   EXPECT_EQ("", fi.description);
+  EXPECT_EQ(&current_storage, fi.flag_ptr);
 }
 
 static bool ValidateTestFlagIs5(const char* flagname, int32 flagval) {
