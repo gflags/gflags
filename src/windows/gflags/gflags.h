@@ -271,7 +271,10 @@ extern GFLAGS_DLL_DECL std::string SetCommandLineOptionWithMode(const char* name
 // usage example above, the compiler would complain that it's an
 // unused variable.
 //
-// This class is thread-safe.
+// This class is thread-safe.  However, its destructor writes to
+// exactly the set of flags that have changed value during its
+// lifetime, so concurrent _direct_ access to those flags
+// (i.e. FLAGS_foo instead of {Get,Set}CommandLineOption()) is unsafe.
 
 class GFLAGS_DLL_DECL FlagSaver {
  public:
