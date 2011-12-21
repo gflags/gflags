@@ -1,3 +1,12 @@
+Tue Dec 20 19:48:57 2011  Google Inc. <opensource@google.com>
+
+	* google-gflags: version 1.7
+	* Add CommandLineFlagInfo::flag_ptr pointing to current storage (musji)
+	* PORTING: flush after writing to stderr, needed on cygwin
+	* PORTING: Clean up the GFLAGS_DLL_DECL stuff better
+	* Fix a bug in StringPrintf() that affected large strings (csilvers)
+	* Die at configure-time when g++ isn't installed
+
 Fri Jul 29 19:05:21 2011  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.6

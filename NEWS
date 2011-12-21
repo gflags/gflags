@@ -1,4 +1,13 @@
-== 29 July 2011 ==
+== 20 December 2011 ==
+
+I've just released gflags 1.7.  This is a minor release; the major
+change is that CommandLineFlagInfo now exports the address in memory
+where the flag is located.  There has also been a bugfix involving
+very long --help strings, and some other minor
+[http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.7/ChangeLog changes].
+
+
+=== 29 July 2011 ===
 
 I've just released gflags 1.6.  The major new feature in this release
 is support for setting version info, so that --version does something
