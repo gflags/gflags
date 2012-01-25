@@ -40,7 +40,7 @@ dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
 ## The libraries (.so's) you want to install
 lib_LTLIBRARIES =
 ## The location of the windows project file for each binary we make
-WINDOWS_PROJECTS = google-gflags.sln
+WINDOWS_PROJECTS = gflags.sln
 
 ## unittests you want to run when people type 'make check'.
 ## TESTS is for binary unittests, check_SCRIPTS for script-based unittests.

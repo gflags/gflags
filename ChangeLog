@@ -1,3 +1,10 @@
+Wed Jan 25 15:09:14 2012  Google Inc. <google-gflags@googlegroups.com>
+
+	* gflags: version 2.0
+	* Changed the 'official' gflags email in setup.py/etc
+	* Renamed google-gflags.sln to gflags.sln
+	* Changed copyright text to reflect Google's relinquished ownership
+
 Tue Dec 20 19:48:57 2011  Google Inc. <opensource@google.com>
 
 	* google-gflags: version 1.7

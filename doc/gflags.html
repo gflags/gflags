@@ -2,11 +2,9 @@
 
 <html>
 <head>
-<title>How To Use Google Commandline Flags</title>
+<title>How To Use Gflags (formerly Google Commandline Flags)</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-<link href="http://www.google.com/favicon.ico" type="image/x-icon"
-      rel="shortcut icon">
 <link href="designstyle.css" type="text/css" rel="stylesheet">
 <style type="text/css">
 <!--
@@ -28,7 +26,7 @@
 
 <body>
 
-<h1>How To Use Google Commandline Flags (gflags)</h1>
+<h1>How To Use Gflags (formerly Google Commandline Flags)</h1>
 <small>(as of
 <script type=text/javascript>
   var lm = new Date(document.lastModified);
@@ -72,13 +70,14 @@ string (in particular, a filename) as an argument.  Users can use a
 library to help parse the commandline and store the flags in some data
 structure.</p>
 
-<p>Google's commandline flags library differs from other libraries,
+<p>Gflags, the commandline flags library used within Google,
+differs from other libraries,
 such as <code>getopt()</code>, in that flag definitions can be
 scattered around the source code, and not just listed in one place
 such as <code>main()</code>.  In practice, this means that a single
 source-code file will define and use flags that are meaningful to that
 file.  Any application that links in that file will get the flags, and
-the google commandline flags library will automatically handle that
+the gflags library will automatically handle that
 flag appropriately.</p>
 
 <p>There's significant gain in flexibility, and ease of code reuse,

@@ -53,7 +53,7 @@ DEFINE_bool(some_bool_flag_3,
             "false",
             "false in in quotes, which is wrong");
 
-#elif defined(SANITY)
+#elif defined(TEST_SANITY)
 
 DEFINE_bool(some_bool_flag_4,
             true,

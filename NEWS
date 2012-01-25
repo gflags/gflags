@@ -1,11 +1,41 @@
-== 20 December 2011 ==
+== 25 January 2012 ==
+
+I've just released gflags 2.0.
+
+The `google-gflags` project has been renamed to `gflags`.  I
+(csilvers) am stepping down as maintainer, to be replaced by Andreas
+Schuh.  Welcome to the team, Andreas!  I've seen the energy you have
+around gflags and the ideas you have for the project going forward,
+and look forward to having you on the team.
+
+I bumped the major version number up to 2 to reflect the new community
+ownership of the project.  All the
+[http://gflags.googlecode.com/svn/tags/gflags-2.0/ChangeLog changes]
+are related to the renaming.  There are no functional changes from
+gflags 1.7.  In particular, I've kept the code in the namespace
+`google`, though in a future version it should be renamed to `gflags`.
+I've also kept the `/usr/local/include/google/` subdirectory as
+synonym of `/usr/local/include/gflags/`, though the former name has
+been obsolete for some time now.
+
+
+=== 18 January 2011 ===
+
+The `google-gflags` Google Code page has been renamed to
+`gflags`, in preparation for the project being renamed to
+`gflags`.  In the coming weeks, I'll be stepping down as
+maintainer for the gflags project, and as part of that Google is
+relinquishing ownership of the project; it will now be entirely
+community run.  The name change reflects that shift.
+
+
+=== 20 December 2011 ===
 
 I've just released gflags 1.7.  This is a minor release; the major
-change is that CommandLineFlagInfo now exports the address in memory
+change is that `CommandLineFlagInfo` now exports the address in memory
 where the flag is located.  There has also been a bugfix involving
 very long --help strings, and some other minor
 [http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.7/ChangeLog changes].
-
 
 === 29 July 2011 ===
 

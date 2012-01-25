@@ -4,7 +4,7 @@
 # make sure we're interpreted by some minimal autoconf
 AC_PREREQ(2.57)
 
-AC_INIT(gflags, 1.7, opensource@google.com)
+AC_INIT(gflags, 2.0, google-gflags@googlegroups.com)
 # Update this value for every release!  (A:B:C will map to foo.so.(A-C).C.B)
 # http://www.gnu.org/software/libtool/manual/html_node/Updating-version-info.html
 SO_VERSION=3:0:1
@@ -88,6 +88,7 @@ ACX_PTHREAD
 # Find out what namespace 'normal' STL code lives in, and also what namespace
 # the user wants our classes to be defined in
 AC_CXX_STL_NAMESPACE
+# TODO(csilvers): this should be renamed to gflags.
 AC_DEFINE_GOOGLE_NAMESPACE(google)
 
 # Solaris 10 6/06 has a bug where /usr/sfw/lib/libstdc++.la is empty.

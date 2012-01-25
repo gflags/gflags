@@ -347,8 +347,7 @@ dist_doc_DATA = AUTHORS COPYING ChangeLog INSTALL NEWS README \
 	README_windows.txt doc/designstyle.css doc/gflags.html
 
 lib_LTLIBRARIES = libgflags.la libgflags_nothreads.la
-WINDOWS_PROJECTS = google-gflags.sln \
-	vsprojects/libgflags/libgflags.vcproj \
+WINDOWS_PROJECTS = gflags.sln vsprojects/libgflags/libgflags.vcproj \
 	vsprojects/gflags_unittest/gflags_unittest.vcproj
 TESTS_ENVIRONMENT = SRCDIR="$(top_srcdir)"
 
