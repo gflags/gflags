@@ -34,8 +34,8 @@
 // This is the file that should be included by any file which declares
 // command line flag.
 
-#ifndef BASE_COMMANDLINEFLAGS_DECLARE_H_
-#define BASE_COMMANDLINEFLAGS_DECLARE_H_
+#ifndef GFLAGS_DECLARE_H_
+#define GFLAGS_DECLARE_H_
 
 #include <string>
 #if @ac_cv_have_stdint_h@
@@ -109,4 +109,4 @@ typedef std::string clstring;
   }                                     \
   using fLS::FLAGS_##name
 
-#endif  // BASE_COMMANDLINEFLAGS_DECLARE_H_
+#endif  // GFLAGS_DECLARE_H_

@@ -109,8 +109,8 @@ $ complete -o bashdefault -o default -o nospace -C                            \
 // produce the expected completion output.
 
 
-#ifndef BASE_COMMANDLINEFLAGS_COMPLETIONS_H_
-#define BASE_COMMANDLINEFLAGS_COMPLETIONS_H_
+#ifndef GFLAGS_COMPLETIONS_H_
+#define GFLAGS_COMPLETIONS_H_
 
 // Annoying stuff for windows -- makes sure clients can import these functions
 //
@@ -127,4 +127,4 @@ extern void HandleCommandLineCompletions(void);
 
 @ac_google_end_namespace@
 
-#endif  // BASE_COMMANDLINEFLAGS_COMPLETIONS_H_
+#endif  // GFLAGS_COMPLETIONS_H_
