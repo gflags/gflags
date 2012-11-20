@@ -1,0 +1,25 @@
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual Studio 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgflags", "vsprojects\libgflags\libgflags-vs2010.vcxproj", "{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}"
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gflags_unittest", "vsprojects\gflags_unittest\gflags_unittest-vs2010.vcxproj", "{4B263748-5F0F-468C-8C5C-ED2682BB6BE3}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Win32 = Debug|Win32
+		Release|Win32 = Release|Win32
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}.Debug|Win32.ActiveCfg = Debug|Win32
+		{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}.Debug|Win32.Build.0 = Debug|Win32
+		{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}.Release|Win32.ActiveCfg = Release|Win32
+		{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}.Release|Win32.Build.0 = Release|Win32
+		{4B263748-5F0F-468C-8C5C-ED2682BB6BE3}.Debug|Win32.ActiveCfg = Debug|Win32
+		{4B263748-5F0F-468C-8C5C-ED2682BB6BE3}.Debug|Win32.Build.0 = Debug|Win32
+		{4B263748-5F0F-468C-8C5C-ED2682BB6BE3}.Release|Win32.ActiveCfg = Release|Win32
+		{4B263748-5F0F-468C-8C5C-ED2682BB6BE3}.Release|Win32.Build.0 = Release|Win32
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+EndGlobal

@@ -48,9 +48,9 @@
 #include <windows.h>
 #include <direct.h>          /* for mkdir */
 #include <stdlib.h>          /* for _putenv, getenv */
-#include <stdio.h>           /* need this to override stdio's snprintf */
+#include <stdio.h>           /* need this to override stdio's snprintf, also defines _unlink used by unit tests */
 #include <stdarg.h>          /* util.h uses va_copy */
-#include <string.h>          /* for _stricmp */
+#include <string.h>          /* for _stricmp and _strdup */
 
 /* We can't just use _vsnprintf and _snprintf as drop-in-replacements,
  * because they don't always NUL-terminate. :-(  We also can't use the
@@ -87,7 +87,12 @@ inline void setenv(const char* name, const char* value, int) {
   }
 }
 
-#define strcasecmp   _stricmp
+#define strcasecmp _stricmp
+
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+#define strdup   _strdup
+#define unlink   _unlink
+#endif
 
 #define PRId32  "d"
 #define PRIu32  "u"

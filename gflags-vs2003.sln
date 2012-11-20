@@ -1,9 +1,9 @@
 Microsoft Visual Studio Solution File, Format Version 8.00
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgflags", "vsprojects\libgflags\libgflags.vcproj", "{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libgflags", "vsprojects\libgflags\libgflags-vs2003.vcproj", "{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}"
 	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gflags_unittest", "vsprojects\gflags_unittest\gflags_unittest.vcproj", "{4B263748-5F0F-468C-8C5C-ED2682BB6BE3}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "gflags_unittest", "vsprojects\gflags_unittest\gflags_unittest-vs2003.vcproj", "{4B263748-5F0F-468C-8C5C-ED2682BB6BE3}"
 	ProjectSection(ProjectDependencies) = postProject
 		{FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC} = {FB27FBDB-E6C0-4D00-A7F8-1EEEF1B48ABC}
 	EndProjectSection
