@@ -264,7 +264,7 @@ inline void InternalStringPrintf(std::string* output, const char* format,
   int bytes_written = vsnprintf(space, sizeof(space), format, backup_ap);
   va_end(backup_ap);
 
-  if ((bytes_written >= 0) && (bytes_written < sizeof(space))) {
+  if ((bytes_written >= 0) && (static_cast<size_t>(bytes_written) < sizeof(space))) {
     output->append(space, bytes_written);
     return;
   }
