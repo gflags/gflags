@@ -143,9 +143,7 @@ DEFINE_bool(long_helpstring, false,
 
 static bool AlwaysFail(const char* flag, bool value) { return value == false; }
 DEFINE_bool(always_fail, false, "will fail to validate when you set it");
-namespace {
-bool dummy = RegisterFlagValidator(&FLAGS_always_fail, AlwaysFail);
-}
+DEFINE_validator(always_fail, AlwaysFail);
 
 // See the comment by GetAllFlags in gflags.h
 static bool DeadlockIfCantLockInValidators(const char* flag, bool value) {
@@ -160,10 +158,7 @@ DEFINE_bool(deadlock_if_cant_lock,
             false,
             "will deadlock if set to true and "
             "if locking of registry in validators fails.");
-namespace {
-bool dummy1 = RegisterFlagValidator(&FLAGS_deadlock_if_cant_lock,
-                                    DeadlockIfCantLockInValidators);
-}
+DEFINE_validator(deadlock_if_cant_lock, DeadlockIfCantLockInValidators);
 
 #define MAKEFLAG(x) DEFINE_int32(test_flag_num##x, x, "Test flag")
 
