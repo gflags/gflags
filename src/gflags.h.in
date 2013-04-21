@@ -103,7 +103,9 @@
 
 #include <string>
 #include <vector>
-#include <gflags/gflags_declare.h>    // IWYU pragma: export
+
+#include <@GFLAGS_NAMESPACE@/gflags_declare.h> // IWYU pragma: export
+
 
 namespace @GFLAGS_NAMESPACE@ {
 

@@ -87,18 +87,14 @@
 // other hand, hooks into CommandLineFlagParser.  Other API functions
 // are, similarly, mostly hooks into the functionality described above.
 
-// This comes first to ensure we define __STDC_FORMAT_MACROS in time.
-#include <config.h>
-#if HAVE_INTTYPES_H && !defined(__STDC_FORMAT_MACROS)
-# define __STDC_FORMAT_MACROS 1   // gcc requires this to get PRId64, etc.
-#endif
+#include "config.h"
+#include "gflags.h"
 
-#include <gflags/gflags.h>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
 #if HAVE_FNMATCH_H
-# include <fnmatch.h>
+#  include <fnmatch.h>
 #endif
 #include <stdarg.h> // For va_list and related operations
 #include <stdio.h>
@@ -109,12 +105,9 @@
 #include <string>
 #include <utility>     // for pair<>
 #include <vector>
+
 #include "mutex.h"
 #include "util.h"
-
-#ifndef PATH_SEPARATOR
-#  define PATH_SEPARATOR  '/'
-#endif
 
 
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.

@@ -73,9 +73,9 @@ endif ()
 # ----------------------------------------------------------------------------
 # source files - excluding root subdirectory and/or .in suffix
 set (PUBLIC_HDRS
-  "gflags/gflags.h"
-  "gflags/gflags_declare.h"
-  "gflags/gflags_completions.h"
+  "gflags.h"
+  "gflags_declare.h"
+  "gflags_completions.h"
 )
 
 set (PRIVATE_HDRS
@@ -96,23 +96,22 @@ else ()
   set (__ATTRIBUTE__UNUSED)
 endif ()
 
-function (configure_sources out subdir)
+function (configure_sources out)
   set (tmp)
   foreach (src IN LISTS ARGN)
-    set (src "${subdir}/${src}")
-    if (EXISTS "${PROJECT_SOURCE_DIR}/${src}.in")
-      configure_file ("${PROJECT_SOURCE_DIR}/${src}.in" "${PROJECT_BINARY_DIR}/${src}" @ONLY)
-      list (APPEND tmp "${PROJECT_BINARY_DIR}/${src}")
+    if (src MATCHES ".h$" AND EXISTS "${PROJECT_SOURCE_DIR}/src/${src}.in")
+      configure_file ("${PROJECT_SOURCE_DIR}/src/${src}.in" "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}" @ONLY)
+      list (APPEND tmp "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}")
     else ()
-      list (APPEND tmp "${PROJECT_SOURCE_DIR}/${src}")
+      list (APPEND tmp "${PROJECT_SOURCE_DIR}/src/${src}")
     endif ()
   endforeach ()
   set (${out} "${tmp}" PARENT_SCOPE)
 endfunction ()
 
-configure_sources (PUBLIC_HDRS  include ${PUBLIC_HDRS})
-configure_sources (PRIVATE_HDRS src     ${PRIVATE_HDRS})
-configure_sources (GFLAGS_SRCS  src     ${GFLAGS_SRCS})
+configure_sources (PUBLIC_HDRS  ${PUBLIC_HDRS})
+configure_sources (PRIVATE_HDRS ${PRIVATE_HDRS})
+configure_sources (GFLAGS_SRCS  ${GFLAGS_SRCS})
 
 # ----------------------------------------------------------------------------
 # output directories
@@ -122,20 +121,14 @@ set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib")
 
 # ----------------------------------------------------------------------------
 # add library target
-include_directories (
-  "${PROJECT_BINARY_DIR}/include"
-  "${PROJECT_SOURCE_DIR}/include"
-  "${PROJECT_BINARY_DIR}/src"
-  "${PROJECT_SOURCE_DIR}/src"
-)
-
 if (WIN32)
   add_definitions (-DGFLAGS_DLL_EXPORT)
 endif ()
-
+include_directories ("${PROJECT_BINARY_DIR}/include")
+include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}")
 add_library (gflags ${GFLAGS_SRCS})
 
 # ----------------------------------------------------------------------------
 # installation
 install (TARGETS gflags DESTINATION lib)
-install (FILES ${PUBLIC_HDRS} DESTINATION include/gflags)
+install (FILES ${PUBLIC_HDRS} DESTINATION include/${GFLAGS_NAMESPACE})

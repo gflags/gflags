@@ -47,7 +47,8 @@
 //     5b) Trim most flag's descriptions to fit on a single terminal line
 
 
-#include <config.h>
+#include "config.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>   // for strlen
@@ -57,7 +58,7 @@
 #include <utility>
 #include <vector>
 
-#include <gflags/gflags.h>
+#include "gflags.h"
 #include "util.h"
 
 using std::set;

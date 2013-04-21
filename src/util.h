@@ -34,6 +34,8 @@
 #ifndef GFLAGS_UTIL_H_
 #define GFLAGS_UTIL_H_
 
+#include "config.h"
+
 #include <assert.h>
 #include <config.h>
 #if HAVE_INTTYPES_H

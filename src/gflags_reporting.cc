@@ -48,15 +48,17 @@
 // called after all flag-values have been assigned, that is, after
 // parsing the command-line.
 
-#include <config.h>
+#include "config.h"
+
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <assert.h>
 #include <string>
 #include <vector>
-#include <gflags/gflags.h>
-#include <gflags/gflags_completions.h>
+
+#include "gflags.h"
+#include "gflags_completions.h"
 #include "util.h"
 
 
