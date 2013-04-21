@@ -1,5 +1,4 @@
-cmake_minimum_required(VERSION 2.6 FATAL_ERROR)
-
+cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 # ----------------------------------------------------------------------------
 # package information
@@ -19,23 +18,13 @@ option (BUILD_SHARED_LIBS "Request build of shared libraries." OFF)
 set (GFLAGS_NAMESPACE "gflags" CACHE STRING "C++ namespace identifier of gflags library.")
 mark_as_advanced (GFLAGS_NAMESPACE)
 
-# ----------------------------------------------------------------------------
-# source files - excluding root subdirectory and/or .in suffix
-set (PUBLIC_HDRS
-  "gflags/gflags.h"
-  "gflags/gflags_declare.h"
-  "gflags/gflags_completions.h"
-)
-
-set (PRIVATE_HDRS
-  "config.h"
-)
-
-set (GFLAGS_SRCS
-  "gflags.cc"
-  "gflags_reporting.cc"
-  "gflags_completions.cc"
-)
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS AND NOT CMAKE_C_FLAGS)
+  set (
+    CMAKE_BUILD_TYPE "Release"
+    CACHE STRING "Choose the type of build, options are: None (CMAKE_C_FLAGS and CMAKE_CXX_FLAGS used) Debug Release RelWithDebInfo MinSizeRel."
+    FORCE
+  )
+endif ()
 
 # ----------------------------------------------------------------------------
 # system checks
@@ -80,6 +69,24 @@ if (Threads_FOUND)
     set (HAVE_PTHREAD 0)
   endif ()
 endif ()
+
+# ----------------------------------------------------------------------------
+# source files - excluding root subdirectory and/or .in suffix
+set (PUBLIC_HDRS
+  "gflags/gflags.h"
+  "gflags/gflags_declare.h"
+  "gflags/gflags_completions.h"
+)
+
+set (PRIVATE_HDRS
+  "config.h"
+)
+
+set (GFLAGS_SRCS
+  "gflags.cc"
+  "gflags_reporting.cc"
+  "gflags_completions.cc"
+)
 
 # ----------------------------------------------------------------------------
 # configure source files
