@@ -78,18 +78,34 @@
 #ifndef GFLAGS_GFLAGS_H_
 #define GFLAGS_GFLAGS_H_
 
+
+#if !defined(GFLAGS_DLL_DECL)
+#  if defined(_MSC_VER)
+#    if defined(GFLAGS_DLL_EXPORT)
+#      define GFLAGS_DLL_DECL __declspec(dllexport)
+#    else
+#      define GFLAGS_DLL_DECL __declspec(dllimport)
+#    endif
+#  else
+#    define GFLAGS_DLL_DECL
+#  endif
+#endif
+
+// We always want to export defined variables, dll or no
+#if !defined(GFLAGS_DLL_DEFINE_FLAG)
+#  if defined(_MSC_VER)
+#    define GFLAGS_DLL_DEFINE_FLAG __declspec(dllimport)
+#  else
+#    define GFLAGS_DLL_DEFINE_FLAG
+#  endif
+#endif
+
+
 #include <string>
 #include <vector>
 #include <gflags/gflags_declare.h>    // IWYU pragma: export
-@ac_google_start_namespace@
 
-//
-// NOTE: all functions below MUST have an explicit 'extern' before
-// them.  Our automated opensourcing tools use this as a signal to do
-// appropriate munging for windows, which needs to add GFLAGS_DLL_DECL.
-//
-#define GFLAGS_DLL_DECL  /* rewritten to be non-empty in windows dir */
-#define GFLAGS_DLL_DEFINE_FLAG  /* rewritten to be non-empty in windows dir */
+namespace @GFLAGS_NAMESPACE@ {
 
 
 // --------------------------------------------------------------------
@@ -138,7 +154,7 @@ extern bool RegisterFlagValidator(const std::string* flag,
 // Convenience macro for the registration of a flag validator
 #define DEFINE_validator(name, validator) \
     static const bool name##_validator_registered = \
-            @ac_google_namespace@::RegisterFlagValidator(&FLAGS_##name, validator)
+            @GFLAGS_NAMESPACE@::RegisterFlagValidator(&FLAGS_##name, validator)
 
 
 // --------------------------------------------------------------------
@@ -288,7 +304,7 @@ class GFLAGS_DLL_DECL FlagSaver {
   FlagSaver(const FlagSaver&);  // no copying!
   void operator=(const FlagSaver&);
 }
-@ac_cv___attribute__unused@;
+@__ATTRIBUTE__UNUSED@;
 
 // --------------------------------------------------------------------
 // Some deprecated or hopefully-soon-to-be-deprecated functions.
@@ -445,14 +461,16 @@ class GFLAGS_DLL_DECL FlagRegisterer {
 
 extern const char kStrippedFlagHelp[];
 
-@ac_google_end_namespace@
+
+} // namespace @GFLAGS_NAMESPACE@
+
 
 #ifndef SWIG  // In swig, ignore the main flag declarations
 
 #if defined(STRIP_FLAG_HELP) && STRIP_FLAG_HELP > 0
 // Need this construct to avoid the 'defined but not used' warning.
 #define MAYBE_STRIPPED_HELP(txt) \
-   (false ? (txt) : @ac_google_namespace@::kStrippedFlagHelp)
+   (false ? (txt) : @GFLAGS_NAMESPACE@::kStrippedFlagHelp)
 #else
 #define MAYBE_STRIPPED_HELP(txt) txt
 #endif
@@ -474,7 +492,7 @@ extern const char kStrippedFlagHelp[];
     /* We always want to export defined variables, dll or no */         \
     GFLAGS_DLL_DEFINE_FLAG type FLAGS_##name = FLAGS_nono##name;        \
     type FLAGS_no##name = FLAGS_nono##name;                             \
-    static @ac_google_namespace@::FlagRegisterer o_##name( \
+    static @GFLAGS_NAMESPACE@::FlagRegisterer o_##name( \
       #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,                \
       &FLAGS_##name, &FLAGS_no##name);                                  \
   }                                                                     \
@@ -507,15 +525,15 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
   DEFINE_VARIABLE(bool, B, name, val, txt)
 
 #define DEFINE_int32(name, val, txt) \
-   DEFINE_VARIABLE(@ac_google_namespace@::int32, I, \
+   DEFINE_VARIABLE(@GFLAGS_NAMESPACE@::int32, I, \
                    name, val, txt)
 
 #define DEFINE_int64(name, val, txt) \
-   DEFINE_VARIABLE(@ac_google_namespace@::int64, I64, \
+   DEFINE_VARIABLE(@GFLAGS_NAMESPACE@::int64, I64, \
                    name, val, txt)
 
 #define DEFINE_uint64(name,val, txt) \
-   DEFINE_VARIABLE(@ac_google_namespace@::uint64, U64, \
+   DEFINE_VARIABLE(@GFLAGS_NAMESPACE@::uint64, U64, \
                    name, val, txt)
 
 #define DEFINE_double(name, val, txt) \
@@ -556,7 +574,7 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
     clstring* const FLAGS_no##name = ::fLS::                                \
                                    dont_pass0toDEFINE_string(s_##name[0].s, \
                                                              val);          \
-    static @ac_google_namespace@::FlagRegisterer o_##name(  \
+    static @GFLAGS_NAMESPACE@::FlagRegisterer o_##name(                     \
         #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
         s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
     extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \

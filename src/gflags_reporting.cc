@@ -59,9 +59,6 @@
 #include <gflags/gflags_completions.h>
 #include "util.h"
 
-#ifndef PATH_SEPARATOR
-#define PATH_SEPARATOR  '/'
-#endif
 
 // The 'reporting' flags.  They all call gflags_exitfunc().
 DEFINE_bool(help, false,
@@ -81,7 +78,9 @@ DEFINE_bool(helpxml, false,
 DEFINE_bool(version, false,
             "show version and build info and exit");
 
-_START_GOOGLE_NAMESPACE_
+
+namespace GFLAGS_NAMESPACE {
+
 
 using std::string;
 using std::vector;
@@ -444,4 +443,5 @@ void HandleCommandLineHelpFlags() {
   }
 }
 
-_END_GOOGLE_NAMESPACE_
+
+} // namespace GFLAGS_NAMESPACE

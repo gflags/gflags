@@ -89,7 +89,7 @@
 
 // This comes first to ensure we define __STDC_FORMAT_MACROS in time.
 #include <config.h>
-#if defined(HAVE_INTTYPES_H) && !defined(__STDC_FORMAT_MACROS)
+#if HAVE_INTTYPES_H && !defined(__STDC_FORMAT_MACROS)
 # define __STDC_FORMAT_MACROS 1   // gcc requires this to get PRId64, etc.
 #endif
 
@@ -97,7 +97,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#ifdef HAVE_FNMATCH_H
+#if HAVE_FNMATCH_H
 # include <fnmatch.h>
 #endif
 #include <stdarg.h> // For va_list and related operations
@@ -113,7 +113,7 @@
 #include "util.h"
 
 #ifndef PATH_SEPARATOR
-#define PATH_SEPARATOR  '/'
+#  define PATH_SEPARATOR  '/'
 #endif
 
 
@@ -133,7 +133,7 @@ DEFINE_string(undefok, "",
               "with that name.  IMPORTANT: flags in this list that have "
               "arguments MUST use the flag=value format");
 
-_START_GOOGLE_NAMESPACE_
+namespace GFLAGS_NAMESPACE {
 
 using std::map;
 using std::pair;
@@ -206,7 +206,7 @@ class FlagValue {
 
  private:
   friend class CommandLineFlag;  // for many things, including Validate()
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // calls New()
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // calls New()
   friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
   template <typename T> friend T GetFromEnv(const char*, const char*, T);
   friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
@@ -504,7 +504,7 @@ class CommandLineFlag {
  private:
   // for SetFlagLocked() and setting flags_by_ptr_
   friend class FlagRegistry;
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // for cloning the values
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // for cloning the values
   // set validate_fn
   friend bool AddFlagValidator(const void*, ValidateFnProto);
 
@@ -671,9 +671,9 @@ class FlagRegistry {
   static FlagRegistry* GlobalRegistry();   // returns a singleton registry
 
  private:
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // reads all the flags in order to copy them
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // reads all the flags in order to copy them
   friend class CommandLineFlagParser;    // for ValidateAllFlags
-  friend void GOOGLE_NAMESPACE::GetAllFlags(vector<CommandLineFlagInfo>*);
+  friend void GFLAGS_NAMESPACE::GetAllFlags(vector<CommandLineFlagInfo>*);
 
   // The map from name to flag, for FindFlagLocked().
   typedef map<const char*, CommandLineFlag*, StringCmp> FlagMap;
@@ -1318,7 +1318,7 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
         // We try matching both against the full argv0 and basename(argv0)
         if (glob == ProgramInvocationName()       // small optimization
             || glob == ProgramInvocationShortName()
-#ifdef HAVE_FNMATCH_H
+#if HAVE_FNMATCH_H
             || fnmatch(glob.c_str(),
                        ProgramInvocationName(),
                        FNM_PATHNAME) == 0
@@ -1505,7 +1505,7 @@ const char* ProgramInvocationName() {             // like the GNU libc fn
 }
 const char* ProgramInvocationShortName() {        // like the GNU libc fn
   const char* slash = strrchr(argv0, '/');
-#ifdef OS_WINDOWS
+#ifdef WINDOWS
   if (!slash)  slash = strrchr(argv0, '\\');
 #endif
   return slash ? slash + 1 : argv0;
@@ -1957,4 +1957,5 @@ void ShutDownCommandLineFlags() {
   FlagRegistry::DeleteGlobalRegistry();
 }
 
-_END_GOOGLE_NAMESPACE_
+
+} // namespace GFLAGS_NAMESPACE

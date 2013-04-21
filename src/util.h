@@ -36,46 +36,48 @@
 
 #include <assert.h>
 #include <config.h>
-#ifdef HAVE_INTTYPES_H
-# include <inttypes.h>
+#if HAVE_INTTYPES_H
+#  include <inttypes.h>
 #endif
 #include <stdarg.h>     // for va_*
 #include <stdlib.h>
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#ifdef HAVE_SYS_STAT_H
-# include <sys/stat.h>
+#if HAVE_SYS_STAT_H
+#  include <sys/stat.h>
 #endif   // for mkdir()
 
-_START_GOOGLE_NAMESPACE_
+
+namespace GFLAGS_NAMESPACE {
+
 
 // This is used for unittests for death-testing.  It is defined in gflags.cc.
 extern GFLAGS_DLL_DECL void (*gflags_exitfunc)(int);
 
 // Work properly if either strtoll or strtoq is on this system
-#ifdef HAVE_STRTOLL
-# define strto64  strtoll
-# define strtou64  strtoull
+#if HAVE_STRTOLL
+#  define strto64  strtoll
+#  define strtou64  strtoull
 #elif HAVE_STRTOQ
-# define strto64  strtoq
-# define strtou64  strtouq
+#  define strto64  strtoq
+#  define strtou64  strtouq
 #else
 // Neither strtoll nor strtoq are defined.  I hope strtol works!
-# define strto64 strtol
-# define strtou64 strtoul
+#  define strto64 strtol
+#  define strtou64 strtoul
 #endif
 
 // If we have inttypes.h, it will have defined PRId32/etc for us.  If
 // not, take our best guess.
 #ifndef PRId32
-# define PRId32 "d"
+#  define PRId32 "d"
 #endif
 #ifndef PRId64
-# define PRId64 "lld"
+#  define PRId64 "lld"
 #endif
 #ifndef PRIu64
-# define PRIu64 "llu"
+#  define PRIu64 "llu"
 #endif
 
 typedef signed char int8;
@@ -320,6 +322,8 @@ inline std::string StringPrintf(const char* format, ...) {
   return output;
 }
 
-_END_GOOGLE_NAMESPACE_
+
+} // namespace GFLAGS_NAMESPACE
+
 
 #endif  // GFLAGS_UTIL_H_
