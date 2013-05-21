@@ -88,6 +88,11 @@ set (GFLAGS_SRCS
   "gflags_completions.cc"
 )
 
+if (WIN32)
+  list (APPEND PRIVATE_HDRS "src/windows_port.h")
+  list (APPEND GFLAGS_SRCS  "src/windows_port.cc")
+endif ()
+
 # ----------------------------------------------------------------------------
 # configure source files
 if (CMAKE_COMPILER_IS_GNUCXX)

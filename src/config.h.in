@@ -80,6 +80,11 @@
 #  endif
 #endif
 
-#if defined( __MINGW32__) || defined(__MINGW64__)
-#  include "windows/port.h"
+#if WINDOWS
+// This must be defined before the windows.h is included.
+// It's needed for mutex.h, to give access to the TryLock method.
+#  if !defined(_WIN32_WINNT) && !(defined( __MINGW32__) || defined(__MINGW64__))
+#    define _WIN32_WINNT 0x0400
+#  endif
+#  include "windows_port.h"
 #endif
