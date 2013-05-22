@@ -89,8 +89,8 @@ set (GFLAGS_SRCS
 )
 
 if (WIN32)
-  list (APPEND PRIVATE_HDRS "src/windows_port.h")
-  list (APPEND GFLAGS_SRCS  "src/windows_port.cc")
+  list (APPEND PRIVATE_HDRS "windows_port.h")
+  list (APPEND GFLAGS_SRCS  "windows_port.cc")
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -129,6 +129,7 @@ set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib")
 if (WIN32)
   add_definitions (-DGFLAGS_DLL_EXPORT)
 endif ()
+include_directories ("${PROJECT_SOURCE_DIR}/src")
 include_directories ("${PROJECT_BINARY_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}")
 add_library (gflags ${GFLAGS_SRCS})
