@@ -139,6 +139,11 @@ extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const std::string* flag,
                                   bool (*validate_fn)(const char*,
                                                       const std::string&));
 
+// Convenience macro for the registration of a flag validator
+#define DEFINE_validator(name, validator) \
+    static const bool name##_validator_registered = \
+            ::google::RegisterFlagValidator(&FLAGS_##name, validator)
+
 
 // --------------------------------------------------------------------
 // These methods are the best way to get access to info about the
@@ -526,19 +531,54 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 // try to avoid crashes in that case, we use a char buffer to store
 // the string, which we can static-initialize, and then placement-new
 // into it later.  It's not perfect, but the best we can do.
-
+//
+// This does have a caveat however: destructor must be called explicitly
+// on objects created by placement-new. For a long time, those strings were not
+// released, thus causing leaks. This clutters debuggers and has been reported
+// as a bug. The goal of the original author was to allow global destructors to
+// access the flag value but the value of this practice could be debated; the
+// library now always releases strings, even when allocated by placement-new.
 namespace fLS {
 
-inline clstring* dont_pass0toDEFINE_string(char *stringspot,
-                                           const char *value) {
-  return new(stringspot) clstring(value);
-}
-inline clstring* dont_pass0toDEFINE_string(char *stringspot,
-                                           const clstring &value) {
-  return new(stringspot) clstring(value);
-}
-inline clstring* dont_pass0toDEFINE_string(char *stringspot,
-                                           int value);
+// Keep track of when strings are allocated using placement-new so we can
+// release them properly. Objects of this kind are instantiated near the flag
+// being accessed and thus get destroyed after all destructors using the flag
+// have been executed (DEFINE is assumed to happen before objects using it are
+// defined). It would still be possible to route pointers through user programs
+// so dtors access a flag after this has been destroyed however
+// 1- use case appears contrived, furthermore if you want to escape standard
+//   C++ scope rules, you should be taking care of it, not us. And not at the
+//   expense of typical users.
+// 2- it is somewhat coherent with construction rules. You can get a pointer to
+//   them but they'll likely be rubbish.
+// It's not perfect, but the best we can do.
+// Hopefully the 1-byte per-string-flag overhead won't push anyone off a cliff.
+class ResettingStringBuffer {
+  // Previously in DEFINE_string macro
+  union { void* align; char s[sizeof(clstring)]; } mem;
+  bool clear; // for exceptions, remember if your memory is NOT garbage.
+public:
+  ResettingStringBuffer() : clear(false) { }
+  clstring* str() { return reinterpret_cast<clstring*>(&mem.s[0]); }
+  ~ResettingStringBuffer() {
+    if(clear) str()->~clstring();
+  }
+  clstring* dont_pass0toDEFINE_string(const char *value) {
+    new(str()) clstring(value);
+	clear = true;
+	return str();
+  }
+  clstring* dont_pass0toDEFINE_string(const clstring &value) {
+    new(str()) clstring(value);
+	clear = true;
+	return str();
+  }
+private:
+  // Bail out. We don't want you to do anything else. It's a string!
+  template<typename BLAH>
+  clstring* dont_pass0toDEFINE_string(BLAH value);
+};
+
 }  // namespace fLS
 
 // We need to define a var named FLAGS_no##name so people don't define
@@ -551,13 +591,14 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
 #define DEFINE_string(name, val, txt)                                       \
   namespace fLS {                                                           \
     using ::fLS::clstring;                                                  \
-    static union { void* align; char s[sizeof(clstring)]; } s_##name[2];    \
+    static ResettingStringBuffer s_def_val_for_##name;                      \
+    static ResettingStringBuffer s_cur_val_for_##name;                      \
     clstring* const FLAGS_no##name = ::fLS::                                \
-                                   dont_pass0toDEFINE_string(s_##name[0].s, \
-                                                             val);          \
-    static ::google::FlagRegisterer o_##name(  \
+                       s_def_val_for_##name.dont_pass0toDEFINE_string(val); \
+    static ::google::FlagRegisterer o_##name(                               \
         #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
-        s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
+        s_def_val_for_##name.str(),                                         \
+        s_cur_val_for_##name.dont_pass0toDEFINE_string(*FLAGS_no##name));   \
     extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \
     using fLS::FLAGS_##name;                                                \
     clstring& FLAGS_##name = *FLAGS_no##name;                               \
