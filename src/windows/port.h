@@ -65,6 +65,11 @@ extern int GFLAGS_DLL_DECL safe_vsnprintf(char *str, size_t size,
 #define va_copy(dst, src)  (dst) = (src)
 #endif  /* #if !defined(__MINGW32__) && !defined(__MINGW64__) */
 
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+#pragma warning(push)
+#pragma warning(disable:4996) // getenv
+#endif/
+
 inline void setenv(const char* name, const char* value, int) {
   // In windows, it's impossible to set a variable to the empty string.
   // We handle this by setting it to "0" and the NUL-ing out the \0.
@@ -90,6 +95,7 @@ inline void setenv(const char* name, const char* value, int) {
 #define strcasecmp _stricmp
 
 #if defined(_MSC_VER) && _MSC_VER >= 1400
+#pragma warning(pop)
 #define strdup   _strdup
 #define unlink   _unlink
 #endif
