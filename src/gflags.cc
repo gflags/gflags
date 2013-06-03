@@ -1532,16 +1532,16 @@ const char* ProgramUsage() {
 // VersionString()
 // --------------------------------------------------------------------
 
-static const char* version_string = NULL;
+static string version_string;
 
 void SetVersionString(const string& version) {
-  if (version_string != NULL)
+  if (version_string.empty() == false)
     ReportError(DIE, "ERROR: SetVersionString() called twice\n");
-  version_string = strdup(version.c_str());   // small memory leak
+  version_string = version;
 }
 
 const char* VersionString() {
-  return version_string ? version_string : "";
+  return version_string.c_str();
 }
 
 
