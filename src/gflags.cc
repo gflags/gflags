@@ -1463,11 +1463,16 @@ void GetAllFlags(vector<CommandLineFlagInfo>* OUTPUT) {
 
 // These values are not protected by a Mutex because they are normally
 // set only once during program startup.
-static const char* argv0 = "UNKNOWN";      // just the program name
-static const char* cmdline = "";           // the entire command-line
+//
+// For some reason those were raw const char* allocated in SetArgv and nobody
+// cared about releasing them. Oddly enough, SetArgv itself populates argvs
+// which is a vector of std::string so it appears there's no real problem in
+// using objects here.
+static string argv0("UNKNOWN");      // just the program name
+static string cmdline("");           // the entire command-line
 static vector<string> argvs;
-static uint32 argv_sum = 0;
-static const char* program_usage = NULL;
+static uint32 argv_sum = 0; // ?what is this for?
+static string program_usage;
 
 void SetArgv(int argc, const char** argv) {
   static bool called_set_argv = false;
@@ -1477,8 +1482,7 @@ void SetArgv(int argc, const char** argv) {
   called_set_argv = true;
 
   assert(argc > 0);            // every program has at least a progname
-  argv0 = strdup(argv[0]);     // small memory leak, but fn only called once
-  assert(argv0);
+  argv0 = argv[0];
 
   string cmdline_string;       // easier than doing strcats
   for (int i = 0; i < argc; i++) {
@@ -1488,38 +1492,37 @@ void SetArgv(int argc, const char** argv) {
     cmdline_string += argv[i];
     argvs.push_back(argv[i]);
   }
-  cmdline = strdup(cmdline_string.c_str());  // another small memory leak
-  assert(cmdline);
+  cmdline = cmdline_string.c_str();
 
   // Compute a simple sum of all the chars in argv
-  for (const char* c = cmdline; *c; c++)
+  for (string::const_iterator c = cmdline.cbegin(); c != cmdline.cend(); ++c)
     argv_sum += *c;
 }
 
 const vector<string>& GetArgvs() { return argvs; }
-const char* GetArgv()            { return cmdline; }
-const char* GetArgv0()           { return argv0; }
+const char* GetArgv()            { return cmdline.c_str(); }
+const char* GetArgv0()           { return argv0.c_str(); }
 uint32 GetArgvSum()              { return argv_sum; }
 const char* ProgramInvocationName() {             // like the GNU libc fn
   return GetArgv0();
 }
 const char* ProgramInvocationShortName() {        // like the GNU libc fn
-  const char* slash = strrchr(argv0, '/');
+  const char* slash = strrchr(argv0.c_str(), '/');
 #ifdef OS_WINDOWS
   if (!slash)  slash = strrchr(argv0, '\\');
 #endif
-  return slash ? slash + 1 : argv0;
+  return slash ? slash + 1 : argv0.c_str();
 }
 
 void SetUsageMessage(const string& usage) {
-  if (program_usage != NULL)
+  if (program_usage.length())
     ReportError(DIE, "ERROR: SetUsageMessage() called twice\n");
-  program_usage = strdup(usage.c_str());      // small memory leak
+  program_usage = usage;      // small memory leak
 }
 
 const char* ProgramUsage() {
-  if (program_usage) {
-    return program_usage;
+  if (program_usage.length()) {
+    return program_usage.c_str();
   }
   return "Warning: SetUsageMessage() never called";
 }
@@ -1529,16 +1532,16 @@ const char* ProgramUsage() {
 // VersionString()
 // --------------------------------------------------------------------
 
-static const char* version_string = NULL;
+static string version_string;
 
 void SetVersionString(const string& version) {
-  if (version_string != NULL)
+  if (version_string.empty() == false)
     ReportError(DIE, "ERROR: SetVersionString() called twice\n");
-  version_string = strdup(version.c_str());   // small memory leak
+  version_string = version;
 }
 
 const char* VersionString() {
-  return version_string ? version_string : "";
+  return version_string.c_str();
 }
 
 
