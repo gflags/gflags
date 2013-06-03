@@ -79,6 +79,13 @@ inline void setenv(const char* name, const char* value, int) {
   static const char* const kFakeZero = "0";
   if (*value == '\0')
     value = kFakeZero;
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+  // putenv_s does not need us to malloc anything, therefore no more
+  // leaks for modern MS toolchain.
+  _putenv_s(name, value);
+  if (value == kFakeZero)
+    *getenv(name) = '\0';
+#else
   // Apparently the semantics of putenv() is that the input
   // must live forever, so we leak memory here. :-(
   const int nameval_len = strlen(name) + 1 + strlen(value) + 1;
@@ -90,6 +97,7 @@ inline void setenv(const char* name, const char* value, int) {
     if (*getenv(name) != '\0')
       *getenv(name) = '\0';            // works when putenv() copies nameval
   }
+#endif /* defined(_MSC_VER) && _MSC_VER >= 1400 */
 }
 
 #define strcasecmp _stricmp
