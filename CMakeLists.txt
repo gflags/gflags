@@ -156,7 +156,7 @@ if (WIN32)
 else ()
   set (LIBRARY_INSTALL_DIR lib)
   set (INCLUDE_INSTALL_DIR include)
-  set (CONFIG_INSTALL_DIR  cmake/${PACKAGE_NAME})
+  set (CONFIG_INSTALL_DIR  lib/cmake/${PACKAGE_NAME})
 endif ()
 
 install (TARGETS ${PACKAGE_NAME} DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
