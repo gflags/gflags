@@ -1,15 +1,7 @@
-## @file  utils.cmake
-#  @brief Utility CMake functions.
+## Utility CMake functions.
 
 # ----------------------------------------------------------------------------
-## @brief Extract version numbers from version string.
-#
-# @param [in]  VERSION Version string in the format "MAJOR[.MINOR[.PATCH]]".
-# @param [out] MAJOR   Major version number if given or 0.
-# @param [out] MINOR   Minor version number if given or 0.
-# @param [out] PATCH   Patch number if given or 0.
-#
-# @returns See @c [out] parameters.
+## Extract version numbers from version string.
 function (version_numbers VERSION MAJOR MINOR PATCH)
   if (VERSION MATCHES "([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(rc[1-9][0-9]*|[a-z]+)?")
     if (CMAKE_MATCH_1)
@@ -37,4 +29,19 @@ function (version_numbers VERSION MAJOR MINOR PATCH)
   set ("${MAJOR}" "${VERSION_MAJOR}" PARENT_SCOPE)
   set ("${MINOR}" "${VERSION_MINOR}" PARENT_SCOPE)
   set ("${PATCH}" "${VERSION_PATCH}" PARENT_SCOPE)
+endfunction ()
+
+# ----------------------------------------------------------------------------
+## Configure source files with .in suffix
+function (configure_sources out)
+  set (tmp)
+  foreach (src IN LISTS ARGN)
+    if (src MATCHES ".h$" AND EXISTS "${PROJECT_SOURCE_DIR}/src/${src}.in")
+      configure_file ("${PROJECT_SOURCE_DIR}/src/${src}.in" "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}" @ONLY)
+      list (APPEND tmp "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}")
+    else ()
+      list (APPEND tmp "${PROJECT_SOURCE_DIR}/src/${src}")
+    endif ()
+  endforeach ()
+  set (${out} "${tmp}" PARENT_SCOPE)
 endfunction ()
