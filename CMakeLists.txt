@@ -1,6 +1,12 @@
 cmake_minimum_required(VERSION 2.8 FATAL_ERROR)
 
 # ----------------------------------------------------------------------------
+# includes
+set (CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+
+include (utils)
+
+# ----------------------------------------------------------------------------
 # package information
 set (PROJECT_NAME      "gflags")
 set (PACKAGE_NAME      "${PROJECT_NAME}")
@@ -10,6 +16,13 @@ set (PACKAGE_TARNAME   "${PROJECT_NAME}-${PACKAGE_VERSION}")
 set (PACKAGE_BUGREPORT "https://code.google.com/p/gflags/issues/")
 
 project (${PROJECT_NAME})
+
+version_numbers (
+  ${PACKAGE_VERSION}
+    PACKAGE_VERSION_MAJOR
+    PACKAGE_VERSION_MINOR
+    PACKAGE_VERSION_PATCH
+)
 
 # ----------------------------------------------------------------------------
 # configure options
@@ -136,5 +149,38 @@ add_library (gflags ${GFLAGS_SRCS})
 
 # ----------------------------------------------------------------------------
 # installation
-install (TARGETS gflags DESTINATION lib)
-install (FILES ${PUBLIC_HDRS} DESTINATION include/${GFLAGS_NAMESPACE})
+if (WIN32)
+  set (LIBRARY_INSTALL_DIR Lib)
+  set (INCLUDE_INSTALL_DIR Include)
+  set (CONFIG_INSTALL_DIR  CMake)
+else ()
+  set (LIBRARY_INSTALL_DIR lib)
+  set (INCLUDE_INSTALL_DIR include)
+  set (CONFIG_INSTALL_DIR  cmake/${PACKAGE_NAME})
+endif ()
+
+install (TARGETS ${PACKAGE_NAME} DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+install (FILES   ${PUBLIC_HDRS}  DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_NAMESPACE})
+
+file (RELATIVE_PATH INSTALL_PREFIX_REL2CONFIG_DIR "${CMAKE_INSTALL_PREFIX}" "${CMAKE_INSTALL_PREFIX}/${CONFIG_INSTALL_DIR}")
+configure_file (cmake/config.cmake.in  "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake" @ONLY)
+configure_file (cmake/version.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake" @ONLY)
+
+install (
+  FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake"
+  RENAME ${PACKAGE_NAME}-config.cmake
+  DESTINATION ${CONFIG_INSTALL_DIR}
+)
+
+install (
+  FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake"
+  DESTINATION ${CONFIG_INSTALL_DIR}
+)
+
+install (EXPORT gflags-lib DESTINATION ${CONFIG_INSTALL_DIR} FILE ${PACKAGE_NAME}-export.cmake)
+
+# ----------------------------------------------------------------------------
+# support direct use of build tree
+set (INSTALL_PREFIX_REL2CONFIG_DIR .)
+export (TARGETS gflags FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-export.cmake")
+configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake" @ONLY)
