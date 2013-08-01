@@ -137,10 +137,12 @@ add_library (gflags ${GFLAGS_SRCS})
 # ----------------------------------------------------------------------------
 # installation
 if (WIN32)
+  set (RUNTIME_INSTALL_DIR Bin)
   set (LIBRARY_INSTALL_DIR Lib)
   set (INCLUDE_INSTALL_DIR Include)
   set (CONFIG_INSTALL_DIR  CMake)
 else ()
+  set (RUNTIME_INSTALL_DIR bin)
   set (LIBRARY_INSTALL_DIR lib)
   set (INCLUDE_INSTALL_DIR include)
   set (CONFIG_INSTALL_DIR  lib/cmake/${PACKAGE_NAME})
@@ -165,6 +167,10 @@ install (
 )
 
 install (EXPORT gflags-lib DESTINATION ${CONFIG_INSTALL_DIR} FILE ${PACKAGE_NAME}-export.cmake)
+
+if (UNIX)
+  install (PROGRAMS src/gflags_completions.sh DESTINATION ${RUNTIME_INSTALL_DIR})
+endif ()
 
 # ----------------------------------------------------------------------------
 # support direct use of build tree
