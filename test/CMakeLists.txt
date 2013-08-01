@@ -9,13 +9,19 @@ set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing/lib")
 set (TEMPDIR "${PROJECT_BINARY_DIR}/Testing/Temporary")
 
 # ----------------------------------------------------------------------------
-# common link libraries
+# common include directories and link libraries
+include_directories ("${CMAKE_CURRENT_SOURCE_DIR}")
 link_libraries (gflags)
 
 # ----------------------------------------------------------------------------
 # test executables
+configure_file (gflags_unittest.cc gflags_unittest-main.cc COPYONLY)
+configure_file (gflags_unittest.cc gflags_unittest_main.cc COPYONLY)
+
 add_executable (strip_flags gflags_strip_flags_test.cc)
 add_executable (unittest    gflags_unittest.cc)
+add_executable (unittest2   gflags_unittest-main.cc)
+add_executable (unittest3   gflags_unittest_main.cc)
 
 # ----------------------------------------------------------------------------
 # test commands
