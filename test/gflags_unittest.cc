@@ -53,18 +53,18 @@ EXPECT_DEATH_INIT
 // works.  But don't bother on windows; the windows port is so new
 // it never had the old location-names.
 #ifndef _MSC_VER
-#include <google/gflags_completions.h>
-void (*unused_fn)() = &GOOGLE_NAMESPACE::HandleCommandLineCompletions;
+#include <gflags/gflags_completions.h>
+void (*unused_fn)() = &GFLAGS_NAMESPACE::HandleCommandLineCompletions;
 #endif
 
 using std::string;
 using std::vector;
-using GOOGLE_NAMESPACE::int32;
-using GOOGLE_NAMESPACE::FlagRegisterer;
-using GOOGLE_NAMESPACE::StringFromEnv;
-using GOOGLE_NAMESPACE::RegisterFlagValidator;
-using GOOGLE_NAMESPACE::CommandLineFlagInfo;
-using GOOGLE_NAMESPACE::GetAllFlags;
+using GFLAGS_NAMESPACE::int32;
+using GFLAGS_NAMESPACE::FlagRegisterer;
+using GFLAGS_NAMESPACE::StringFromEnv;
+using GFLAGS_NAMESPACE::RegisterFlagValidator;
+using GFLAGS_NAMESPACE::CommandLineFlagInfo;
+using GFLAGS_NAMESPACE::GetAllFlags;
 
 DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
 #ifdef _MSC_VER  // in MSVC, we run from the vsprojects directory
@@ -236,7 +236,7 @@ namespace fLI {
 }
 using fLI::FLAGS_tldflag2;
 
-_START_GOOGLE_NAMESPACE_
+namespace GFLAGS_NAMESPACE {
 
 namespace {
 
@@ -253,9 +253,9 @@ static string TmpFile(const string& basename) {
 // Must be called after ParseCommandLineFlags().
 static const char* GetFlagFileFlag() {
 #ifdef _MSC_VER
-  static const string flagfile = FLAGS_srcdir + "\\src\\gflags_unittest_flagfile";
+  static const string flagfile = FLAGS_srcdir + "\\gflags_unittest_flagfile";
 #else
-  static const string flagfile = FLAGS_srcdir + "/src/gflags_unittest_flagfile";
+  static const string flagfile = FLAGS_srcdir + "/gflags_unittest_flagfile";
 #endif
   static const string flagfile_flag = string("--flagfile=") + flagfile;
   return flagfile_flag.c_str();
@@ -1526,9 +1526,9 @@ int main(int argc, char **argv) {
   return exit_status;
 }
 
-_END_GOOGLE_NAMESPACE_
+} // GFLAGS_NAMESPACE
 
 int main(int argc, char** argv) {
-  return GOOGLE_NAMESPACE::main(argc, argv);
+  return GFLAGS_NAMESPACE::main(argc, argv);
 }
 

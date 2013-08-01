@@ -135,6 +135,20 @@ include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}")
 add_library (gflags ${GFLAGS_SRCS})
 
 # ----------------------------------------------------------------------------
+# testing
+
+# TODO(andreas) Replace Bash scripts such that tests can be run on Windows (e.g., Python).
+#               The gflags_unittest.sh script should best be replaced by multiple
+#               add_test commands in the test/CMakeLists.txt file.
+if (UNIX)
+  include (CTest)
+  if (BUILD_TESTING)
+    enable_testing ()
+    add_subdirectory (test)
+  endif ()
+endif ()
+
+# ----------------------------------------------------------------------------
 # installation
 if (WIN32)
   set (RUNTIME_INSTALL_DIR Bin)

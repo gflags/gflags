@@ -40,8 +40,8 @@
 
 #include <stdio.h>
 
-using GOOGLE_NAMESPACE::SetUsageMessage;
-using GOOGLE_NAMESPACE::ParseCommandLineFlags;
+using GFLAGS_NAMESPACE::SetUsageMessage;
+using GFLAGS_NAMESPACE::ParseCommandLineFlags;
 
 
 DEFINE_bool(test, true, "This text should be stripped out");
