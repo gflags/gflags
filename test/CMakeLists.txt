@@ -11,7 +11,7 @@ set (TEMPDIR "${PROJECT_BINARY_DIR}/Testing/Temporary")
 # ----------------------------------------------------------------------------
 # common include directories and link libraries
 include_directories ("${CMAKE_CURRENT_SOURCE_DIR}")
-link_libraries (gflags)
+link_libraries (gflags_nothreads)
 
 # ----------------------------------------------------------------------------
 # test executables

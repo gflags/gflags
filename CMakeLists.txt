@@ -132,7 +132,10 @@ endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/src")
 include_directories ("${PROJECT_BINARY_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}")
-add_library (gflags ${GFLAGS_SRCS})
+
+add_library (gflags           ${GFLAGS_SRCS})
+add_library (gflags_nothreads ${GFLAGS_SRCS})
+set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS NO_THREADS)
 
 # ----------------------------------------------------------------------------
 # testing
