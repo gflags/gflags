@@ -1,5 +1,7 @@
 ## gflags tests
 
+find_package (PythonInterp)
+
 # ----------------------------------------------------------------------------
 # output directories
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing/bin")
@@ -18,10 +20,30 @@ link_libraries (gflags_nothreads)
 configure_file (gflags_unittest.cc gflags_unittest-main.cc COPYONLY)
 configure_file (gflags_unittest.cc gflags_unittest_main.cc COPYONLY)
 
+set (SRCDIR "${CMAKE_CURRENT_SOURCE_DIR}/nc")
+configure_file (gflags_nc.py.in "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nc.py" @ONLY)
+
 add_executable (strip_flags gflags_strip_flags_test.cc)
 add_executable (unittest    gflags_unittest.cc)
 add_executable (unittest2   gflags_unittest-main.cc)
 add_executable (unittest3   gflags_unittest_main.cc)
+
+# ----------------------------------------------------------------------------
+# (negative) compilation tests
+if (PYTHON_EXECUTABLE)
+  macro (add_nc_test name)
+    add_test (
+      NAME nc_${name}
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nc.py" ${name}
+    )
+  endmacro ()
+
+  add_nc_test (sanity)
+  add_nc_test (swapped_args)
+  add_nc_test (int_instead_of_bool)
+  add_nc_test (bool_in_quotes)
+  add_nc_test (define_string_with_0)
+endif ()
 
 # ----------------------------------------------------------------------------
 # test commands

@@ -66,3 +66,8 @@ DEFINE_string(some_string_flag,
               "Trying to construct a string by passing 0 would cause a crash.");
 
 #endif
+
+int main(int, char **)
+{
+  return 0;
+}

@@ -138,20 +138,6 @@ add_library (gflags_nothreads ${GFLAGS_SRCS})
 set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS NO_THREADS)
 
 # ----------------------------------------------------------------------------
-# testing
-
-# TODO(andreas) Replace Bash scripts such that tests can be run on Windows (e.g., Python).
-#               The gflags_unittest.sh script should best be replaced by multiple
-#               add_test commands in the test/CMakeLists.txt file.
-if (UNIX)
-  include (CTest)
-  if (BUILD_TESTING)
-    enable_testing ()
-    add_subdirectory (test)
-  endif ()
-endif ()
-
-# ----------------------------------------------------------------------------
 # installation
 if (WIN32)
   set (RUNTIME_INSTALL_DIR Bin)
@@ -165,8 +151,8 @@ else ()
   set (CONFIG_INSTALL_DIR  lib/cmake/${PACKAGE_NAME})
 endif ()
 
-install (TARGETS gflags         DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
-install (FILES   ${PUBLIC_HDRS} DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_NAMESPACE})
+install (TARGETS gflags gflags_nothreads DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+install (FILES   ${PUBLIC_HDRS}          DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_NAMESPACE})
 
 file (RELATIVE_PATH INSTALL_PREFIX_REL2CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/${CONFIG_INSTALL_DIR}" "${CMAKE_INSTALL_PREFIX}")
 configure_file (cmake/config.cmake.in  "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake" @ONLY)
@@ -192,5 +178,19 @@ endif ()
 # ----------------------------------------------------------------------------
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
-export (TARGETS gflags FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-export.cmake")
+export (TARGETS gflags gflags_nothreads FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-export.cmake")
 configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake" @ONLY)
+
+# ----------------------------------------------------------------------------
+# testing - MUST follow the generation of the build tree config file
+
+# TODO(andreas) Replace Bash scripts such that tests can be run on Windows (e.g., Python).
+#               The gflags_unittest.sh script should best be replaced by multiple
+#               add_test commands in the test/CMakeLists.txt file.
+if (UNIX)
+  include (CTest)
+  if (BUILD_TESTING)
+    enable_testing ()
+    add_subdirectory (test)
+  endif ()
+endif ()
