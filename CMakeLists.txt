@@ -179,6 +179,7 @@ endif ()
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
 export (TARGETS gflags gflags_nothreads FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-export.cmake")
+export (PACKAGE gflags)
 configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake" @ONLY)
 
 # ----------------------------------------------------------------------------
