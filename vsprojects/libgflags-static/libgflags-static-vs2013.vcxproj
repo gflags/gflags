@@ -112,6 +112,9 @@
       <ImportLibrary>$(OutDir)libgflags-static-debug.lib</ImportLibrary>
       <TargetMachine>MachineX86</TargetMachine>
     </Link>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)-debug$(TargetExt)</OutputFile>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <ClCompile>
@@ -131,6 +134,9 @@
       <SubSystem>Windows</SubSystem>
       <ImportLibrary>$(OutDir)libgflags-static-debug.lib</ImportLibrary>
     </Link>
+    <Lib>
+      <OutputFile>$(OutDir)$(TargetName)-debug$(TargetExt)</OutputFile>
+    </Lib>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
