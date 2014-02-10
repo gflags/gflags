@@ -1,0 +1,73 @@
+nuget
+{
+    nuspec
+    {
+        id = gflags;
+        version : 2.0.1.0;
+        title: gflags;
+        authors: { Guillaume Dumont };      
+        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause";
+        projectUrl: "https://code.google.com/p/gflags/";     
+        iconUrl: "https://ssl.gstatic.com/codesite/ph/images/defaultlogo.png"        
+        requireLicenseAcceptance:false;
+        summary:Commandline flags module for C++;
+
+        /* if you need to span several lines you can prefix a string with 
+         an @ symbol (exactly like c# does). */
+         
+         description: @"The gflags package contains a library that implements commandline flags processing. 
+         As such it's a replacement for getopt(). It has increased flexibility, including built-in support 
+         for C++ types like string, and the ability to define flags in the source file in which they're used";
+               
+        releaseNotes: "Initial version.";
+        copyright: Copyright 2013;
+        tags: { nativepackage, CoApp, gflags };
+    };
+    
+    files
+    {        
+        nestedInclude: {
+            #destination = ${d_include}\gflags;
+            "..\..\src\windows\gflags\*"
+        };    
+
+        ("Win32,x64", "v100,v110,v120", "Debug,Release", "static") => {
+                        [${0},${1},${2},${3}] {
+                                lib:     { ..\..\${0}\${1}\${2}\libgflags-static*.lib };                                
+                        };
+                };           
+        
+        ("Win32,x64", "v100,v110,v120", "Debug", "dynamic") => {
+                        [${0},${1},${2},${3}] {
+                                lib:     { ..\..\${0}\${1}\${2}\libgflags-debug.lib };
+                                bin:     { ..\..\${0}\${1}\${2}\libgflags-debug.dll };
+                                symbols: { ..\..\${0}\${1}\${2}\libgflags-debug.pdb };
+                        };
+                };                     
+
+        ("Win32,x64", "v100,v110,v120", "Release", "dynamic") => {
+                        [${0},${1},${2},${3}] {
+                                lib:     { ..\..\${0}\${1}\${2}\libgflags.lib };
+                                bin:     { ..\..\${0}\${1}\${2}\libgflags.dll };
+                                symbols: { ..\..\${0}\${1}\${2}\libgflags.pdb };
+                        };
+                };                                     
+                
+                        
+    };
+    
+    targets
+    {
+        // workaround for nestedInclude as reported in https://github.com/coapp/coapp.powershell/issues/45
+        Includes += ${pkg_root}${d_include}; 
+        
+        [static] {
+            // define GFLAGS_DLL_DECL to nothing when linking statically
+            Defines += GFLAGS_DLL_DECL=;
+            Defines += GFLAGS_DLL_DECLARE_FLAG=;
+            Defines += GFLAGS_DLL_DEFINE_FLAG=;
+            Defines += GFLAGS_DLL_DECL_FOR_UNITTESTS=;
+        };
+                    
+    };
+}
