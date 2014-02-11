@@ -4,3 +4,4 @@ ipch
 *.opensdf
 *.sdf
 *.suo
+*.nupkg

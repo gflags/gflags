@@ -136,9 +136,14 @@ extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const uint64* flag,
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const double* flag,
                                   bool (*validate_fn)(const char*, double));
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const std::string* flag,
-                                  bool (*validate_fn)(const char*,
-                                                      const std::string&));
+    bool(*validate_fn)(const char*,
+    const std::string&));
 
+// Convenience macro for the registration of a flag validator
+#define DEFINE_validator(name, validator) \
+    static const bool name##_validator_registered = \
+    google::RegisterFlagValidator(&FLAGS_##name, validator)
+    
 
 // --------------------------------------------------------------------
 // These methods are the best way to get access to info about the
