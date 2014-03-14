@@ -1,7 +1,11 @@
-/* Generated from config.h.in during configuration using CMake. */
+/* Generated from config.h.in during build configuration using CMake. */
+
+// Note: This header file is only used internally. It is not part of public interface!
+
+#include "gflags_config.h"
 
 // ---------------------------------------------------------------------------
-// Meta-information
+// Additional meta-information
 
 // Name of package.
 #define PACKAGE @PROJECT_NAME@
@@ -25,14 +29,7 @@
 #define PACKAGE_BUGREPORT @PACKAGE_BUGREPORT@
 
 // ---------------------------------------------------------------------------
-// Namespace for gflags symbols.
-#define GFLAGS_NAMESPACE @GFLAGS_NAMESPACE@
-
-// ---------------------------------------------------------------------------
 // Available system headers
-
-// Whether sources are compiled on a Windows system
-#define WINDOWS (defined(_WIN32) || defined(WIN32) || defined(_WINDOWS))
 
 // Define to 1 if you have the <fnmatch.h> header file.
 #define HAVE_FNMATCH_H @HAVE_FNMATCH_H@
@@ -62,29 +59,18 @@
 
 // ---------------------------------------------------------------------------
 // Path separator
-#ifndef PATH_SEPARATOR
-#  define PATH_SEPARATOR  '/'
-#endif
+#define PATH_SEPARATOR  '/'
 
 // ---------------------------------------------------------------------------
-// Windows-specific definitions
-#if !defined(GFLAGS_DLL_DECL)
-#  if defined(_MSC_VER)
-#    if defined(GFLAGS_DLL_EXPORT)
-#      define GFLAGS_DLL_DECL __declspec(dllexport)
-#    else
-#      define GFLAGS_DLL_DECL __declspec(dllimport)
-#    endif
-#  else
-#    define GFLAGS_DLL_DECL
-#  endif
-#endif
-
-#if WINDOWS
+// Windows port
+#ifdef _WIN32
 // This must be defined before the windows.h is included.
 // It's needed for mutex.h, to give access to the TryLock method.
 #  if !defined(_WIN32_WINNT) && !(defined( __MINGW32__) || defined(__MINGW64__))
 #    define _WIN32_WINNT 0x0400
+#  endif
+#  if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
+#    define _CRT_SECURE_NO_WARNINGS
 #  endif
 #  include "windows_port.h"
 #endif

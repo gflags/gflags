@@ -40,8 +40,6 @@
 #ifndef GFLAGS_WINDOWS_PORT_H_
 #define GFLAGS_WINDOWS_PORT_H_
 
-#ifdef _WIN32
-
 #ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN  /* We always want minimal includes */
 #endif
@@ -76,7 +74,7 @@ inline void setenv(const char* name, const char* value, int) {
     value = kFakeZero;
   // Apparently the semantics of putenv() is that the input
   // must live forever, so we leak memory here. :-(
-  const int nameval_len = strlen(name) + 1 + strlen(value) + 1;
+  const size_t nameval_len = strlen(name) + 1 + strlen(value) + 1;
   char* nameval = reinterpret_cast<char*>(malloc(nameval_len));
   snprintf(nameval, nameval_len, "%s=%s", name, value);
   _putenv(nameval);
@@ -110,7 +108,5 @@ inline void setenv(const char* name, const char* value, int) {
 #ifndef PATH_MAX
 #define PATH_MAX 1024
 #endif
-
-#endif  /* _WIN32 */
 
 #endif  /* GFLAGS_WINDOWS_PORT_H_ */

@@ -1,0 +1,47 @@
+/* Generated from gflags_config.h.in during build configuration using CMake. */
+
+#ifndef GFLAGS_GFLAGS_CONFIG_H_
+#define GFLAGS_GFLAGS_CONFIG_H_
+
+// ---------------------------------------------------------------------------
+// Meta-information
+
+// Version number of gflags library.
+#define GFLAGS_VERSION_STRING "@PACKAGE_VERSION@"
+
+#define GFLAGS_VERSION_MAJOR @PACKAGE_VERSION_MAJOR@ ///< Major version number.
+#define GFLAGS_VERSION_MINOR @PACKAGE_VERSION_MINOR@ ///< Minor version number.
+#define GFLAGS_VERSION_PATCH @PACKAGE_VERSION_PATCH@ ///< Version patch number.
+
+// Whether gflags library is shared. Used for DLL import declaration.
+#cmakedefine GFLAGS_SHARED_LIBS
+
+// ---------------------------------------------------------------------------
+// Namespace for gflags symbols.
+#define GFLAGS_NAMESPACE @GFLAGS_NAMESPACE@
+
+// ---------------------------------------------------------------------------
+// Unused attribute declaration for GNU GCC.
+#define GFLAGS__ATTRIBUTE__UNUSED @GFLAGS__ATTRIBUTE_UNUSED@
+
+// ---------------------------------------------------------------------------
+// Windows DLL import/export.
+#if defined(_MSC_VER) && defined(GFLAGS_SHARED_LIBS)
+#  ifdef GFLAGS_DLL_EXPORT
+#    define GFLAGS_DLL_DECL __declspec(dllexport)
+#  else
+#    define GFLAGS_DLL_DECL __declspec(dllimport)
+#  endif
+#else
+#  define GFLAGS_DLL_DECL
+#endif
+
+// We always want to export defined variables, dll or no
+#if defined(_MSC_VER)
+#  define GFLAGS_DLL_DEFINE_FLAG __declspec(dllexport)
+#else
+#  define GFLAGS_DLL_DEFINE_FLAG
+#endif
+
+
+#endif // GFLAGS_GFLAGS_CONFIG_H_

@@ -1498,7 +1498,7 @@ const char* ProgramInvocationName() {             // like the GNU libc fn
 }
 const char* ProgramInvocationShortName() {        // like the GNU libc fn
   const char* slash = strrchr(argv0, '/');
-#ifdef WINDOWS
+#ifdef _WINDOWS
   if (!slash)  slash = strrchr(argv0, '\\');
 #endif
   return slash ? slash + 1 : argv0;

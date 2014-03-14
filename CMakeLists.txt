@@ -27,6 +27,7 @@ version_numbers (
 # ----------------------------------------------------------------------------
 # configure options
 option (BUILD_SHARED_LIBS "Request build of shared libraries." OFF)
+set (GFLAGS_SHARED_LIBS ${BUILD_SHARED_LIBS})
 
 set (GFLAGS_NAMESPACE "gflags" CACHE STRING "C++ namespace identifier of gflags library.")
 mark_as_advanced (GFLAGS_NAMESPACE)
@@ -83,10 +84,17 @@ if (Threads_FOUND)
   endif ()
 endif ()
 
+if (BUILD_SHARED_LIBS)
+  set (GFLAGS_SHARED 1)
+else ()
+  set (GFLAGS_SHARED 0)
+endif ()
+
 # ----------------------------------------------------------------------------
 # source files - excluding root subdirectory and/or .in suffix
 set (PUBLIC_HDRS
   "gflags.h"
+  "gflags_config.h"
   "gflags_declare.h"
   "gflags_completions.h"
 )
@@ -126,7 +134,7 @@ set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib")
 
 # ----------------------------------------------------------------------------
 # add library target
-if (WIN32)
+if (WIN32 AND BUILD_SHARED_LIBS)
   add_definitions (-DGFLAGS_DLL_EXPORT)
 endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/src")
