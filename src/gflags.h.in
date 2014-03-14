@@ -85,6 +85,14 @@
 #include "gflags_declare.h" // IWYU pragma: export
 
 
+// Export/import STL instantiations used as data members of exported classes
+// \sa http://support.microsoft.com/default.aspx?scid=KB;EN-US;168958
+#ifdef GFLAGS_EXTERN_STL
+  GFLAGS_EXTERN_STL template class GFLAGS_DLL_DECL std::allocator<char>;
+  GFLAGS_EXTERN_STL template class GFLAGS_DLL_DECL std::basic_string<char>;
+#endif
+
+
 namespace GFLAGS_NAMESPACE {
 
 

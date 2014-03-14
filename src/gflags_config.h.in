@@ -43,5 +43,15 @@
 #  define GFLAGS_DLL_DEFINE_FLAG
 #endif
 
+// Export/import of STL class instantiations
+// \sa http://support.microsoft.com/default.aspx?scid=KB;EN-US;168958
+#if defined(GFLAGS_SHARED_LIBS) && defined(_MSC_VER) && _MSC_VER >= 1100
+#  ifdef GFLAGS_DLL_EXPORT
+#    define GFLAGS_EXTERN_STL
+#  else
+#    define GFLAGS_EXTERN_STL extern
+#  endif
+#endif
+
 
 #endif // GFLAGS_GFLAGS_CONFIG_H_
