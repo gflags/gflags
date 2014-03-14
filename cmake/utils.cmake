@@ -32,6 +32,22 @@ function (version_numbers VERSION MAJOR MINOR PATCH)
 endfunction ()
 
 # ----------------------------------------------------------------------------
+## Configure public header files
+function (configure_headers out)
+  set (tmp)
+  foreach (src IN LISTS ARGN)
+    if (EXISTS "${PROJECT_SOURCE_DIR}/src/${src}.in")
+      configure_file ("${PROJECT_SOURCE_DIR}/src/${src}.in" "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}" @ONLY)
+      list (APPEND tmp "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}")
+    else ()
+	    configure_file ("${PROJECT_SOURCE_DIR}/src/${src}" "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}" COPYONLY)
+      list (APPEND tmp "${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}/${src}")
+    endif ()
+  endforeach ()
+  set (${out} "${tmp}" PARENT_SCOPE)
+endfunction ()
+
+# ----------------------------------------------------------------------------
 ## Configure source files with .in suffix
 function (configure_sources out)
   set (tmp)
@@ -45,3 +61,22 @@ function (configure_sources out)
   endforeach ()
   set (${out} "${tmp}" PARENT_SCOPE)
 endfunction ()
+
+# ----------------------------------------------------------------------------
+## Add usage test
+#
+# Using PASS_REGULAR_EXPRESSION and FAIL_REGULAR_EXPRESSION would
+# do as well, but CMake/CTest does not allow us to specify an
+# expected exist status. Moreover, the execute_test.cmake script
+# sets environment variables needed by the --fromenv/--tryfromenv tests.
+macro (add_gflags_test name expected_rc expected_output unexpected_output cmd)
+  add_test (
+    NAME    ${name}
+    COMMAND "${CMAKE_COMMAND}" "-DCOMMAND:STRING=$<TARGET_FILE:${cmd}>;${ARGN}"
+                               "-DEXPECTED_RC:STRING=${expected_rc}"
+                               "-DEXPECTED_OUTPUT:STRING=${expected_output}"
+                               "-DUNEXPECTED_OUTPUT:STRING=${unexpected_output}"
+                               -P "${PROJECT_SOURCE_DIR}/test/execute_test.cmake"
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/test"
+  )
+endmacro ()

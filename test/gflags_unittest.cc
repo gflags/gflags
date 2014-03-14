@@ -39,8 +39,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
+#if HAVE_UNISTD_H
+#  include <unistd.h>
 #endif     // for unlink()
 #include <vector>
 #include <string>
@@ -414,7 +414,7 @@ TEST(FlagFileTest, FilenamesOurfileFirst) {
       -1.0);
 }
 
-#ifdef HAVE_FNMATCH_H  // otherwise glob isn't supported
+#if HAVE_FNMATCH_H  // otherwise glob isn't supported
 TEST(FlagFileTest, FilenamesOurfileGlob) {
   FLAGS_test_string = "initial";
   FLAGS_test_bool = false;
@@ -1493,6 +1493,11 @@ TEST(FlagsValidator, FlagSaver) {
 }  // unnamed namespace
 
 int main(int argc, char **argv) {
+
+  // Run unit tests only if called without arguments, otherwise this program
+  // is used by an "external" usage test
+  const bool run_tests = (argc == 1);
+
   // We need to call SetArgv before parsing flags, so our "test" argv will
   // win out over this executable's real argv.  That makes running this
   // test with a real --help flag kinda annoying, unfortunately.
@@ -1521,7 +1526,11 @@ int main(int argc, char **argv) {
   ParseCommandLineFlags(&argc, &argv, true);
   MakeTmpdir(&FLAGS_test_tmpdir);
 
-  const int exit_status = RUN_ALL_TESTS();
+  int exit_status = 0;
+  if (run_tests) {
+	  fprintf(stdout, "Running the unit tests now...\n\n"); fflush(stdout);
+	  exit_status = RUN_ALL_TESTS();
+  } else fprintf(stderr, "\n\nPASS\n");
   ShutDownCommandLineFlags();
   return exit_status;
 }

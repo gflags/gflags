@@ -29,9 +29,14 @@ version_numbers (
 option (BUILD_SHARED_LIBS "Request build of shared libraries." OFF)
 set (GFLAGS_SHARED_LIBS ${BUILD_SHARED_LIBS})
 
+option (BUILD_NEGATIVE_COMPILATION_TESTS "Request addition of negative compilation tests." OFF)
+mark_as_advanced(BUILD_NEGATIVE_COMPILATION_TESTS)
+
 set (GFLAGS_NAMESPACE "gflags" CACHE STRING "C++ namespace identifier of gflags library.")
 mark_as_advanced (GFLAGS_NAMESPACE)
 
+mark_as_advanced (CLEAR CMAKE_INSTALL_PREFIX)
+mark_as_advanced (CMAKE_CONFIGURATION_TYPES)
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS AND NOT CMAKE_C_FLAGS)
   set (
     CMAKE_BUILD_TYPE "Release"
@@ -121,7 +126,7 @@ else ()
   set (__ATTRIBUTE__UNUSED)
 endif ()
 
-configure_sources (PUBLIC_HDRS  ${PUBLIC_HDRS})
+configure_headers (PUBLIC_HDRS  ${PUBLIC_HDRS})
 configure_sources (PRIVATE_HDRS ${PRIVATE_HDRS})
 configure_sources (GFLAGS_SRCS  ${GFLAGS_SRCS})
 
@@ -133,16 +138,19 @@ set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib")
 
 # ----------------------------------------------------------------------------
 # add library target
-if (WIN32 AND BUILD_SHARED_LIBS)
-  add_definitions (-DGFLAGS_DLL_EXPORT)
-endif ()
 include_directories ("${PROJECT_SOURCE_DIR}/src")
 include_directories ("${PROJECT_BINARY_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}")
 
 add_library (gflags           ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
 add_library (gflags_nothreads ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
-set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS NO_THREADS)
+
+if (WIN32 AND BUILD_SHARED_LIBS)
+  set_target_properties (gflags           PROPERTIES COMPILE_DEFINITIONS GFLAGS_DLL_EXPORT)
+  set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS "GFLAGS_DLL_EXPORT;NO_THREADS")
+else ()
+  set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS NO_THREADS)
+endif ()
 
 # ----------------------------------------------------------------------------
 # installation
@@ -191,14 +199,8 @@ configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-con
 
 # ----------------------------------------------------------------------------
 # testing - MUST follow the generation of the build tree config file
-
-# TODO(andreas) Replace Bash scripts such that tests can be run on Windows (e.g., Python).
-#               The gflags_unittest.sh script should best be replaced by multiple
-#               add_test commands in the test/CMakeLists.txt file.
-if (UNIX)
-  include (CTest)
-  if (BUILD_TESTING)
-    enable_testing ()
-    add_subdirectory (test)
-  endif ()
+include (CTest)
+if (BUILD_TESTING)
+  enable_testing ()
+  add_subdirectory (test)
 endif ()
