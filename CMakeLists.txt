@@ -94,7 +94,6 @@ endif ()
 # source files - excluding root subdirectory and/or .in suffix
 set (PUBLIC_HDRS
   "gflags.h"
-  "gflags_config.h"
   "gflags_declare.h"
   "gflags_completions.h"
 )

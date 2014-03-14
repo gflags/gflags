@@ -2,8 +2,6 @@
 
 // Note: This header file is only used internally. It is not part of public interface!
 
-#include "gflags_config.h"
-
 // ---------------------------------------------------------------------------
 // Additional meta-information
 

@@ -40,6 +40,19 @@
 #ifndef GFLAGS_WINDOWS_PORT_H_
 #define GFLAGS_WINDOWS_PORT_H_
 
+#ifndef GFLAGS_DLL_DECL
+#  if defined(_MSC_VER) && defined(GFLAGS_SHARED_LIBS)
+#    ifdef GFLAGS_DLL_EXPORT
+#      define GFLAGS_DLL_DECL __declspec(dllexport)
+#    else
+#      define GFLAGS_DLL_DECL __declspec(dllimport)
+#    endif
+#  else
+#    define GFLAGS_DLL_DECL
+#  endif
+#endif
+
+
 #ifndef WIN32_LEAN_AND_MEAN
 #  define WIN32_LEAN_AND_MEAN  /* We always want minimal includes */
 #endif
