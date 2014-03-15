@@ -126,6 +126,9 @@
 // Define if you have the <pthread.h> header file.
 #cmakedefine GFLAGS_HAVE_PTHREAD
 
+// Define if your pthread library defines the type pthread_rwlock_t
+#cmakedefine GFLAGS_HAVE_RWLOCK
+
 // Backwards compatibility in case users defined these macros themselves
 // or allow users to use these more general macros if the gflags library
 // is build as part of a user project, e.g., included as Git submodule

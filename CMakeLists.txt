@@ -60,11 +60,13 @@ endif ()
 
 # ----------------------------------------------------------------------------
 # system checks
+include (CheckTypeSize)
+include (CheckIncludeFileCXX)
+include (CheckCxxSymbolExists)
+
 set (GFLAGS_INTTYPES_FORMAT "" CACHE STRING "Format of integer types: \"C99\" (uint32_t), \"BSD\" (u_int32_t), \"VC7\" (__int32)")
 mark_as_advanced(GFLAGS_INTTYPES_FORMAT)
-
 if (NOT GFLAGS_INTTYPES_FORMAT)
-  include (CheckTypeSize)
   foreach (type IN ITEMS uint32_t u_int32_t __int32)
     check_type_size (${type} SIZE LANGUAGE CXX)
     if (SIZE)
@@ -87,17 +89,14 @@ if (NOT GFLAGS_INTTYPES_FORMAT)
                          " Set GFLAGS_INTTYPES_FORMAT to either C99, BSD, or VC7 and try again.")
   endif ()
 endif ()
-
 set ("GFLAGS_INTTYPES_FORMAT_${GFLAGS_INTTYPES_FORMAT}" TRUE)
 
-include (CheckIncludeFileCXX)
 foreach (fname IN ITEMS stdint sys/types fnmatch inttypes unistd sys/stat)
   string (TOUPPER "${fname}" FNAME)
   string (REGEX REPLACE "/" "_" FNAME "${FNAME}")
   check_include_file_cxx ("${fname}.h" GFLAGS_HAVE_${FNAME}_H)
 endforeach ()
 
-include (CheckCxxSymbolExists)
 foreach (fname IN ITEMS strtoll strtoq)
   string (TOUPPER "${fname}" FNAME)
   check_cxx_symbol_exists ("${fname}" stdlib.h GFLAGS_HAVE_${FNAME})
@@ -107,6 +106,7 @@ set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package (ThreadsCxx)
 if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   set (GFLAGS_HAVE_PTHREAD TRUE)
+  check_type_size (pthread_rwlock_t GFLAGS_HAVE_RWLOCK LANGUAGE CXX)
 else ()
   set (GFLAGS_HAVE_PTHREAD FALSE)
 endif ()

@@ -129,7 +129,7 @@
   typedef CRITICAL_SECTION MutexType;
 #elif defined(GFLAGS_HAVE_PTHREAD) && defined(GFLAGS_HAVE_RWLOCK)
   // Needed for pthread_rwlock_*.  If it causes problems, you could take it
-  // out, but then you'd have to unset GFLAGS_HAVE_RWLOCK (at least on linux -- it
+  // out, but then you'd have to unset HAVE_RWLOCK (at least on linux -- it
   // *does* cause problems for FreeBSD, or MacOSX, but isn't needed
   // for locking there.)
 # ifdef __linux__
