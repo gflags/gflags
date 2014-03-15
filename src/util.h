@@ -38,7 +38,7 @@
 
 #include <assert.h>
 #include <config.h>
-#if HAVE_INTTYPES_H
+#ifdef GFLAGS_HAVE_INTTYPES_H
 #  include <inttypes.h>
 #endif
 #include <stdarg.h>     // for va_*
@@ -46,9 +46,9 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
-#if HAVE_SYS_STAT_H
-#  include <sys/stat.h>
-#endif   // for mkdir()
+#ifdef GFLAGS_HAVE_SYS_STAT_H
+#  include <sys/stat.h> // for mkdir
+#endif
 
 
 namespace GFLAGS_NAMESPACE {
@@ -58,20 +58,20 @@ namespace GFLAGS_NAMESPACE {
 extern GFLAGS_DLL_DECL void (*gflags_exitfunc)(int);
 
 // Work properly if either strtoll or strtoq is on this system
-#if HAVE_STRTOLL
+#if defined(GFLAGS_HAVE_STRTOLL)
 #  define strto64  strtoll
-#  define strtou64  strtoull
-#elif HAVE_STRTOQ
+#  define strtou64 strtoull
+#elif defined(GFLAGS_HAVE_STRTOQ)
 #  define strto64  strtoq
-#  define strtou64  strtouq
+#  define strtou64 strtouq
 #else
 // Neither strtoll nor strtoq are defined.  I hope strtol works!
-#  define strto64 strtol
+#  define strto64  strtol
 #  define strtou64 strtoul
 #endif
 
-// If we have inttypes.h, it will have defined PRId32/etc for us.  If
-// not, take our best guess.
+// If we have inttypes.h, it will have defined PRId32/etc for us.
+// If not, take our best guess.
 #ifndef PRId32
 #  define PRId32 "d"
 #endif

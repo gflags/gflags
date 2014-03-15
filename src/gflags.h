@@ -270,8 +270,8 @@ extern std::string SetCommandLineOptionWithMode(const char* name, const char* va
 //     // without worrying about restoring the FLAG values.
 //   }
 //
-// Note: This class is marked with ATTRIBUTE_UNUSED because all the
-// work is done in the constructor and destructor, so in the standard
+// Note: This class is marked with GFLAGS_ATTRIBUTE_UNUSED because all
+// the work is done in the constructor and destructor, so in the standard
 // usage example above, the compiler would complain that it's an
 // unused variable.
 //
@@ -291,7 +291,7 @@ class GFLAGS_DLL_DECL FlagSaver {
   FlagSaver(const FlagSaver&);  // no copying!
   void operator=(const FlagSaver&);
 }
-GFLAGS__ATTRIBUTE__UNUSED;
+GFLAGS_ATTRIBUTE_UNUSED;
 
 // --------------------------------------------------------------------
 // Some deprecated or hopefully-soon-to-be-deprecated functions.

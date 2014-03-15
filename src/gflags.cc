@@ -93,7 +93,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#if HAVE_FNMATCH_H
+#ifdef HAVE_FNMATCH_H
 #  include <fnmatch.h>
 #endif
 #include <stdarg.h> // For va_list and related operations
@@ -111,20 +111,16 @@
 
 
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
-DEFINE_string(flagfile, "",
-              "load flags from file");
-DEFINE_string(fromenv, "",
-              "set flags from the environment"
-              " [use 'export FLAGS_flag1=value']");
-DEFINE_string(tryfromenv, "",
-              "set flags from the environment if present");
+DEFINE_string(flagfile,   "", "load flags from file");
+DEFINE_string(fromenv,    "", "set flags from the environment"
+                              " [use 'export FLAGS_flag1=value']");
+DEFINE_string(tryfromenv, "", "set flags from the environment if present");
 
 // Special flags, type 2: the 'parsing' flags.  They modify how we parse.
-DEFINE_string(undefok, "",
-              "comma-separated list of flag names that it is okay to specify "
-              "on the command line even if the program does not define a flag "
-              "with that name.  IMPORTANT: flags in this list that have "
-              "arguments MUST use the flag=value format");
+DEFINE_string(undefok, "", "comma-separated list of flag names that it is okay to specify "
+                           "on the command line even if the program does not define a flag "
+                           "with that name.  IMPORTANT: flags in this list that have "
+                           "arguments MUST use the flag=value format");
 
 namespace GFLAGS_NAMESPACE {
 

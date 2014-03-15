@@ -39,9 +39,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#if HAVE_UNISTD_H
-#  include <unistd.h>
-#endif     // for unlink()
+#ifdef GFLAGS_HAVE_UNISTD_H
+#  include <unistd.h>   // for unlink()
+#endif
 #include <vector>
 #include <string>
 #include "util.h"

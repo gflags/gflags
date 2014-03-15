@@ -56,7 +56,7 @@
 
 // ---------------------------------------------------------------------------
 // Unused attribute declaration for GNU GCC.
-#define GFLAGS__ATTRIBUTE__UNUSED @GFLAGS__ATTRIBUTE_UNUSED@
+#define GFLAGS_ATTRIBUTE_UNUSED @GFLAGS_ATTRIBUTE_UNUSED@
 
 // ---------------------------------------------------------------------------
 // Windows DLL import/export.
@@ -97,32 +97,102 @@
 #endif
 
 // ---------------------------------------------------------------------------
-// Types
-#include <string>
-#if @HAVE_STDINT_H@
-#  include <stdint.h>         // the normal place uint16_t is defined
+// Available system headers
+
+// Define if you have the <stdint.h> header file.
+#cmakedefine GFLAGS_HAVE_STDINT_H
+
+// Define if you have the <sys/types.h> header file.
+#cmakedefine GFLAGS_HAVE_SYS_TYPES_H
+
+// Define if you have the <inttypes.h> header file.
+#cmakedefine GFLAGS_HAVE_INTTYPES_H
+
+// Define if you have the <sys/stat.h> header file.
+#cmakedefine GFLAGS_HAVE_SYS_STAT_H
+
+// Define if you have the <unistd.h> header file.
+#cmakedefine GFLAGS_HAVE_UNISTD_H
+
+// Define if you have the <fnmatch.h> header file.
+#cmakedefine GFLAGS_HAVE_FNMATCH_H
+
+// Define if you have the strtoll function.
+#cmakedefine GFLAGS_HAVE_STRTOLL
+
+// Define if you have the strtoq function.
+#cmakedefine GFLAGS_HAVE_STRTOQ
+
+// Define if you have the <pthread.h> header file.
+#cmakedefine GFLAGS_HAVE_PTHREAD
+
+// Backwards compatibility in case users defined these macros themselves
+// or allow users to use these more general macros if the gflags library
+// is build as part of a user project, e.g., included as Git submodule
+#if defined(HAVE_STDINT_H) && !defined(GFLAGS_HAVE_STDINT_H)
+#  define GFLAGS_HAVE_STDINT_H
 #endif
-#if @HAVE_SYS_TYPES_H@
-#  include <sys/types.h>      // the normal place u_int16_t is defined
+#if defined(HAVE_SYS_TYPES_H) && !defined(GFLAGS_HAVE_SYS_TYPES_H)
+#  define GFLAGS_HAVE_SYS_TYPES_H
 #endif
-#if @HAVE_INTTYPES_H@
-#  include <inttypes.h>       // a third place for uint16_t or u_int16_t
+#if defined(HAVE_INTTYPES_H)  && !defined(GFLAGS_HAVE_INTTYPES_H)
+#  define GFLAGS_HAVE_INTTYPES_H
+#endif
+#if defined(HAVE_SYS_STAT_H)  && !defined(GFLAGS_HAVE_SYS_STAT_H)
+#  define GFLAGS_HAVE_SYS_STAT_H
+#endif
+#if defined(HAVE_UNISTD_H)    && !defined(GFLAGS_HAVE_UNISTD_H)
+#  define GFLAGS_HAVE_UNISTD_H
+#endif
+#if defined(HAVE_FNMATCH_H)   && !defined(GFLAGS_HAVE_FNMATCH_H)
+#  define GFLAGS_HAVE_FNMATCH_H
+#endif
+#if defined(HAVE_STRTOLL)     && !defined(GFLAGS_HAVE_STRTOLL)
+#  define GFLAGS_HAVE_STRTOLL
+#endif
+#if defined(HAVE_STRTOLQ)     && !defined(GFLAGS_HAVE_STRTOLQ)
+#  define GFLAGS_HAVE_STRTOLQ
+#endif
+#if defined(HAVE_PTHREAD)     && !defined(GFLAGS_HAVE_PTHREAD)
+#  define GFLAGS_HAVE_PTHREAD
+#endif
+#if defined(HAVE_RWLOCK)      && !defined(GFLAGS_HAVE_RWLOCK)
+#  define GFLAGS_HAVE_RWLOCK
 #endif
 
+// gcc requires this to get PRId64, etc.
+#if defined(GFLAGS_HAVE_INTTYPES_H) && !defined(__STDC_FORMAT_MACROS)
+#  define __STDC_FORMAT_MACROS 1
+#endif
+
+// ---------------------------------------------------------------------------
+// Flag types
+#include <string>
+#if defined(GFLAGS_HAVE_STDINT_H)
+#  include <stdint.h>                   // the normal place uint32_t is defined
+#elif defined(GFLAGS_HAVE_SYS_TYPES_H)
+#  include <sys/types.h>                // the normal place u_int32_t is defined
+#elif defined(GFLAGS_HAVE_INTTYPES_H)
+#  include <inttypes.h>                 // a third place for uint32_t or u_int32_t
+#endif
+
+#cmakedefine GFLAGS_INTTYPES_FORMAT_C99
+#cmakedefine GFLAGS_INTTYPES_FORMAT_BSD
+#cmakedefine GFLAGS_INTTYPES_FORMAT_VC7
 
 namespace GFLAGS_NAMESPACE {
 
-#if @HAVE_uint16_t@         // the C99 format
-typedef int32_t  int32;
-typedef uint32_t uint32;
-typedef int64_t  int64;
-typedef uint64_t uint64;
-#elif @HAVE_u_int16_t@      // the BSD format
-typedef int32_t   int32;
-typedef u_int32_t uint32;
-typedef int64_t   int64;
-typedef u_int64_t uint64;
-#elif @HAVE___int16@        // the windows (vc7) format
+#if   defined(GFLAGS_INTTYPES_FORMAT_C99)
+typedef int32_t          int32;
+typedef uint32_t         uint32;
+typedef int64_t          int64;
+typedef uint64_t         uint64;
+#elif defined(GFLAGS_INTTYPES_FORMAT_BSD)
+typedef int32_t          int32;
+typedef u_int32_t        uint32;
+typedef int64_t          int64;
+typedef u_int64_t        uint64;
+#elif defined(GFLAGS_INTTYPES_FORMAT_VC7) // Windows
 typedef __int32          int32;
 typedef unsigned __int32 uint32;
 typedef __int64          int64;
@@ -154,13 +224,13 @@ typedef std::string clstring;
   DECLARE_VARIABLE(bool, B, name)
 
 #define DECLARE_int32(name) \
-  DECLARE_VARIABLE(@ac_google_namespace@::int32, I, name)
+  DECLARE_VARIABLE(GFLAGS_NAMESPACE::int32, I, name)
 
 #define DECLARE_int64(name) \
-  DECLARE_VARIABLE(@ac_google_namespace@::int64, I64, name)
+  DECLARE_VARIABLE(GFLAGS_NAMESPACE::int64, I64, name)
 
 #define DECLARE_uint64(name) \
-  DECLARE_VARIABLE(@ac_google_namespace@::uint64, U64, name)
+  DECLARE_VARIABLE(GFLAGS_NAMESPACE::uint64, U64, name)
 
 #define DECLARE_double(name) \
   DECLARE_VARIABLE(double, D, name)

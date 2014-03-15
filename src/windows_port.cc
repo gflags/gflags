@@ -32,14 +32,14 @@
  */
 
 #ifndef _WIN32
-# error You should only be including windows/port.cc in a windows environment!
+#  error You should only be including windows/port.cc in a windows environment!
 #endif
 
-#include <config.h>
 #include <string.h>    // for strlen(), memset(), memcmp()
 #include <assert.h>
 #include <stdarg.h>    // for va_list, va_start, va_end
 #include <windows.h>
+
 #include "windows_port.h"
 
 // These call the windows _vsnprintf, but always NUL-terminate.

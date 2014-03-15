@@ -48,8 +48,6 @@
 // called after all flag-values have been assigned, that is, after
 // parsing the command-line.
 
-#include "config.h"
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
@@ -57,28 +55,21 @@
 #include <string>
 #include <vector>
 
+#include "config.h"
 #include "gflags.h"
 #include "gflags_completions.h"
 #include "util.h"
 
 
 // The 'reporting' flags.  They all call gflags_exitfunc().
-DEFINE_bool(help, false,
-            "show help on all flags [tip: all flags can have two dashes]");
-DEFINE_bool(helpfull, false,
-            "show help on all flags -- same as -help");
-DEFINE_bool(helpshort, false,
-            "show help on only the main module for this program");
-DEFINE_string(helpon, "",
-              "show help on the modules named by this flag value");
-DEFINE_string(helpmatch, "",
-              "show help on modules whose name contains the specified substr");
-DEFINE_bool(helppackage, false,
-            "show help on all modules in the main package");
-DEFINE_bool(helpxml, false,
-            "produce an xml version of help");
-DEFINE_bool(version, false,
-            "show version and build info and exit");
+DEFINE_bool  (help,        false, "show help on all flags [tip: all flags can have two dashes]");
+DEFINE_bool  (helpfull,    false, "show help on all flags -- same as -help");
+DEFINE_bool  (helpshort,   false, "show help on only the main module for this program");
+DEFINE_string(helpon,      "",    "show help on the modules named by this flag value");
+DEFINE_string(helpmatch,   "",    "show help on modules whose name contains the specified substr");
+DEFINE_bool  (helppackage, false, "show help on all modules in the main package");
+DEFINE_bool  (helpxml,     false, "produce an xml version of help");
+DEFINE_bool  (version,     false, "show version and build info and exit");
 
 
 namespace GFLAGS_NAMESPACE {

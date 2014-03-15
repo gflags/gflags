@@ -106,10 +106,10 @@
 #ifndef GFLAGS_MUTEX_H_
 #define GFLAGS_MUTEX_H_
 
-#include "config.h"           // to figure out pthreads support
+#include "gflags_declare.h"     // to figure out pthreads support
 
 #if defined(NO_THREADS)
-  typedef int MutexType;      // to keep a lock-count
+  typedef int MutexType;        // to keep a lock-count
 #elif defined(_WIN32) || defined(__CYGWIN32__) || defined(__CYGWIN64__)
 # ifndef WIN32_LEAN_AND_MEAN
 #   define WIN32_LEAN_AND_MEAN  // We only need minimal includes
@@ -127,9 +127,9 @@
 # endif
 # include <windows.h>
   typedef CRITICAL_SECTION MutexType;
-#elif defined(HAVE_PTHREAD) && defined(HAVE_RWLOCK)
+#elif defined(GFLAGS_HAVE_PTHREAD) && defined(GFLAGS_HAVE_RWLOCK)
   // Needed for pthread_rwlock_*.  If it causes problems, you could take it
-  // out, but then you'd have to unset HAVE_RWLOCK (at least on linux -- it
+  // out, but then you'd have to unset GFLAGS_HAVE_RWLOCK (at least on linux -- it
   // *does* cause problems for FreeBSD, or MacOSX, but isn't needed
   // for locking there.)
 # ifdef __linux__
@@ -140,7 +140,7 @@
 # endif
 # include <pthread.h>
   typedef pthread_rwlock_t MutexType;
-#elif HAVE_PTHREAD
+#elif defined(GFLAGS_HAVE_PTHREAD)
 # include <pthread.h>
   typedef pthread_mutex_t MutexType;
 #else
@@ -247,7 +247,7 @@ bool Mutex::TryLock()      { return is_safe_ ?
 void Mutex::ReaderLock()   { Lock(); }      // we don't have read-write locks
 void Mutex::ReaderUnlock() { Unlock(); }
 
-#elif defined(HAVE_PTHREAD) && defined(HAVE_RWLOCK)
+#elif defined(GFLAGS_HAVE_PTHREAD) && defined(GFLAGS_HAVE_RWLOCK)
 
 #define SAFE_PTHREAD(fncall)  do {   /* run fncall if is_safe_ is true */  \
   if (is_safe_ && fncall(&mutex_) != 0) abort();                           \
@@ -272,7 +272,7 @@ void Mutex::ReaderLock()   { SAFE_PTHREAD(pthread_rwlock_rdlock); }
 void Mutex::ReaderUnlock() { SAFE_PTHREAD(pthread_rwlock_unlock); }
 #undef SAFE_PTHREAD
 
-#elif defined(HAVE_PTHREAD)
+#elif defined(GFLAGS_HAVE_PTHREAD)
 
 #define SAFE_PTHREAD(fncall)  do {   /* run fncall if is_safe_ is true */  \
   if (is_safe_ && fncall(&mutex_) != 0) abort();                           \

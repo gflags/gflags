@@ -15,7 +15,7 @@ set (PACKAGE_STRING    "${PROJECT_NAME} ${PACKAGE_VERSION}")
 set (PACKAGE_TARNAME   "${PROJECT_NAME}-${PACKAGE_VERSION}")
 set (PACKAGE_BUGREPORT "https://code.google.com/p/gflags/issues/")
 
-project (${PROJECT_NAME})
+project (${PROJECT_NAME} CXX)
 
 version_numbers (
   ${PACKAGE_VERSION}
@@ -28,6 +28,13 @@ version_numbers (
 # configure options
 option (BUILD_SHARED_LIBS "Request build of shared libraries." OFF)
 set (GFLAGS_SHARED_LIBS ${BUILD_SHARED_LIBS})
+
+option (BUILD_gflags_LIB           "Request build of the multi-threaded gflags library."  ON)
+option (BUILD_gflags_nothreads_LIB "Request build of the single-threaded gflags library." ON)
+
+if (NOT BUILD_gflags_LIB AND NOT BUILD_gflags_nothreads_LIB)
+ message (FATAL_ERROR "At least one of BUILD_gflags_LIB and BUILD_gflags_nothreads_LIB must be ON.")
+endif ()
 
 option (BUILD_NEGATIVE_COMPILATION_TESTS "Request addition of negative compilation tests." OFF)
 mark_as_advanced(BUILD_NEGATIVE_COMPILATION_TESTS)
@@ -45,54 +52,69 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS AND NOT CMAKE_C_FLAGS)
   )
 endif ()
 
+if (APPLE)
+  mark_as_advanced(CMAKE_OSX_ARCHITECTURES
+                   CMAKE_OSX_DEPLOYMENT_TARGET
+                   CMAKE_OSX_SYSROOT)
+endif ()
+
 # ----------------------------------------------------------------------------
 # system checks
-include (CheckTypeSize)
-foreach (type IN ITEMS uint16_t u_int16_t __int16)
-  CHECK_TYPE_SIZE (${type} SIZE)
-  if (SIZE)
-    set (HAVE_${type} 1)
-  else ()
-    set (HAVE_${type} 0)
-  endif ()
-endforeach ()
+set (GFLAGS_INTTYPES_FORMAT "" CACHE STRING "Format of integer types: \"C99\" (uint32_t), \"BSD\" (u_int32_t), \"VC7\" (__int32)")
+mark_as_advanced(GFLAGS_INTTYPES_FORMAT)
 
-include (CheckIncludeFileCXX)
-foreach (fname IN ITEMS fnmatch inttypes unistd sys/stat)
-  string (TOUPPER "${fname}" FNAME)
-  string (REGEX REPLACE "/" "_" FNAME "${FNAME}")
-  CHECK_INCLUDE_FILE_CXX ("${fname}.h" HAVE_${FNAME}_H)
-  if (HAVE_${FNAME}_H)
-    set (HAVE_${FNAME}_H 1)
+if (NOT GFLAGS_INTTYPES_FORMAT)
+  include (CheckTypeSize)
+  foreach (type IN ITEMS uint32_t u_int32_t __int32)
+    check_type_size (${type} SIZE LANGUAGE CXX)
+    if (SIZE)
+      set (HAVE_${type} TRUE)
+    else ()
+      set (HAVE_${type} FALSE)
+    endif ()
+  endforeach ()
+  if (HAVE_uint32_t)
+    set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY VALUE C99)
+  elseif (HAVE_u_int32_t)
+    set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY VALUE BSD)
+    set (GFLAGS_INTTYPES_FORMAT BSD)
+  elseif (HAVE___int32)
+    set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY VALUE VC7)
   else ()
-    set (HAVE_${FNAME}_H 0)
-  endif ()
-endforeach ()
-
-include (CheckSymbolExists)
-foreach (fname IN ITEMS strtoll strtoq)
-  string (TOUPPER "${fname}" FNAME)
-  CHECK_SYMBOL_EXISTS ("${fname}" stdlib.h HAVE_${FNAME})
-  if (HAVE_${FNAME})
-    set (HAVE_${FNAME} 1)
-  else ()
-    set (HAVE_${FNAME} 0)
-  endif ()
-endforeach ()
-
-find_package (Threads)
-if (Threads_FOUND)
-  if (CMAKE_USE_PTHREADS_INIT)
-    set (HAVE_PTHREAD 1)
-  else  ()
-    set (HAVE_PTHREAD 0)
+    mark_as_advanced (CLEAR GFLAGS_INTTYPES_FORMAT)
+    message (FATAL_ERROR "Do not know how to define a 32-bit integer quantity on your system!"
+                         " Neither uint32_t, u_int32_t, nor __int32 seem to be available."
+                         " Set GFLAGS_INTTYPES_FORMAT to either C99, BSD, or VC7 and try again.")
   endif ()
 endif ()
 
-if (BUILD_SHARED_LIBS)
-  set (GFLAGS_SHARED 1)
+set ("GFLAGS_INTTYPES_FORMAT_${GFLAGS_INTTYPES_FORMAT}" TRUE)
+
+include (CheckIncludeFileCXX)
+foreach (fname IN ITEMS stdint sys/types fnmatch inttypes unistd sys/stat)
+  string (TOUPPER "${fname}" FNAME)
+  string (REGEX REPLACE "/" "_" FNAME "${FNAME}")
+  check_include_file_cxx ("${fname}.h" GFLAGS_HAVE_${FNAME}_H)
+endforeach ()
+
+include (CheckCxxSymbolExists)
+foreach (fname IN ITEMS strtoll strtoq)
+  string (TOUPPER "${fname}" FNAME)
+  check_cxx_symbol_exists ("${fname}" stdlib.h GFLAGS_HAVE_${FNAME})
+endforeach ()
+
+set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
+find_package (ThreadsCxx)
+if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+  set (GFLAGS_HAVE_PTHREAD TRUE)
 else ()
-  set (GFLAGS_SHARED 0)
+  set (GFLAGS_HAVE_PTHREAD FALSE)
+endif ()
+
+if (UNIX AND NOT GFLAGS_HAVE_PTHREAD AND BUILD_gflags_LIB)
+  set_property (CACHE BUILD_gflags_LIB PROPERTY VALUE OFF)
+  message (WARNING "Could not find the <pthread.h> header file."
+                   " Disabling the build of the multi-threaded gflags library.")
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -121,9 +143,9 @@ endif ()
 # ----------------------------------------------------------------------------
 # configure source files
 if (CMAKE_COMPILER_IS_GNUCXX)
-  set (__ATTRIBUTE__UNUSED "__attribute((unused))")
+  set (GFLAGS_ATTRIBUTE_UNUSED "__attribute((unused))")
 else ()
-  set (__ATTRIBUTE__UNUSED)
+  set (GFLAGS_ATTRIBUTE_UNUSED)
 endif ()
 
 configure_headers (PUBLIC_HDRS  ${PUBLIC_HDRS})
@@ -142,14 +164,22 @@ include_directories ("${PROJECT_SOURCE_DIR}/src")
 include_directories ("${PROJECT_BINARY_DIR}/include")
 include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}")
 
-add_library (gflags           ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
-add_library (gflags_nothreads ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
-
-if (WIN32 AND BUILD_SHARED_LIBS)
-  set_target_properties (gflags           PROPERTIES COMPILE_DEFINITIONS GFLAGS_DLL_EXPORT)
-  set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS "GFLAGS_DLL_EXPORT;NO_THREADS")
-else ()
-  set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS NO_THREADS)
+set (LIB_TARGETS)
+if (BUILD_gflags_LIB)
+  add_library (gflags ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
+  if (WIN32 AND BUILD_SHARED_LIBS)
+    set_target_properties (gflags           PROPERTIES COMPILE_DEFINITIONS GFLAGS_DLL_EXPORT)
+  endif ()
+  list (APPEND LIB_TARGETS gflags)
+endif ()
+if (BUILD_gflags_nothreads_LIB)
+  add_library (gflags_nothreads ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
+  if (WIN32 AND BUILD_SHARED_LIBS)
+    set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS "GFLAGS_DLL_EXPORT;NO_THREADS")
+  else ()
+    set_target_properties (gflags_nothreads PROPERTIES COMPILE_DEFINITIONS NO_THREADS)
+  endif ()
+  list (APPEND LIB_TARGETS gflags_nothreads)
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -166,8 +196,8 @@ else ()
   set (CONFIG_INSTALL_DIR  lib/cmake/${PACKAGE_NAME})
 endif ()
 
-install (TARGETS gflags gflags_nothreads DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
-install (FILES   ${PUBLIC_HDRS}          DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_NAMESPACE})
+install (TARGETS ${LIB_TARGETS} DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+install (FILES   ${PUBLIC_HDRS} DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_NAMESPACE})
 
 file (RELATIVE_PATH INSTALL_PREFIX_REL2CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/${CONFIG_INSTALL_DIR}" "${CMAKE_INSTALL_PREFIX}")
 configure_file (cmake/config.cmake.in  "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake" @ONLY)
@@ -193,7 +223,7 @@ endif ()
 # ----------------------------------------------------------------------------
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
-export (TARGETS gflags gflags_nothreads FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-export.cmake")
+export (TARGETS ${LIB_TARGETS} FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-export.cmake")
 export (PACKAGE gflags)
 configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake" @ONLY)
 

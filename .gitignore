@@ -2,7 +2,6 @@
 CMakeCache.txt
 DartConfiguration.tcl
 Makefile
-*.cmake
 CMakeFiles/
 /Testing/
 /include/gflags/config.h

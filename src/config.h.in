@@ -2,6 +2,8 @@
 
 // Note: This header file is only used internally. It is not part of public interface!
 
+#include "gflags_declare.h" // system checks
+
 // ---------------------------------------------------------------------------
 // Additional meta-information
 
@@ -25,35 +27,6 @@
 
 // Define to the address where bug reports for this package should be sent.
 #define PACKAGE_BUGREPORT @PACKAGE_BUGREPORT@
-
-// ---------------------------------------------------------------------------
-// Available system headers
-
-// Define to 1 if you have the <fnmatch.h> header file.
-#define HAVE_FNMATCH_H @HAVE_FNMATCH_H@
-
-// Define to 1 if you have the <inttypes.h> header file.
-#define HAVE_INTTYPES_H @HAVE_INTTYPES_H@
-
-// Define to 1 if you have the <unistd.h> header file.
-#define HAVE_UNISTD_H @HAVE_UNISTD_H@
-
-// Define to 1 if you have the <sys/stat.h> header file.
-#define HAVE_SYS_STAT_H @HAVE_SYS_STAT_H@
-
-// Define to 1 if you have the strtoll function.
-#define HAVE_STRTOLL @HAVE_STRTOLL@
-
-// Define to 1 if you have the strtoq function.
-#define HAVE_STRTOQ @HAVE_STRTOQ@
-
-// Define to 1 if you have the <pthread.h> header file.
-#define HAVE_PTHREAD @HAVE_PTHREAD@
-
-// gcc requires this to get PRId64, etc.
-#if HAVE_INTTYPES_H && !defined(__STDC_FORMAT_MACROS)
-#  define __STDC_FORMAT_MACROS 1
-#endif
 
 // ---------------------------------------------------------------------------
 // Path separator
