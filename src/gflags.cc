@@ -109,6 +109,11 @@
 #include "mutex.h"
 #include "util.h"
 
+// Export the following flags only if the gflags library is a DLL
+#ifndef GFLAGS_SHARED_LIBS
+#  undef  GFLAGS_DLL_DEFINE_FLAG
+#  define GFLAGS_DLL_DEFINE_FLAG
+#endif
 
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
 DEFINE_string(flagfile,   "", "load flags from file");
@@ -395,8 +400,7 @@ const char* FlagValue::TypeName() const {
     assert(false);
     return "";
   }
-  // Directly indexing the strigns in the 'types' string, each of them
-  // is 7 bytes long.
+  // Directly indexing the strings in the 'types' string, each of them is 7 bytes long.
   return &types[type_ * 7];
 }
 

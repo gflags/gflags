@@ -72,18 +72,24 @@
 #  endif
 #endif
 
-// We always want to export defined variables, dll or no
-#if defined(_MSC_VER)
-#  define GFLAGS_DLL_DEFINE_FLAG __declspec(dllexport)
-#else
-#  define GFLAGS_DLL_DEFINE_FLAG
+// By default, we always want to export defined variables, assuming
+// that the DEFINE_FLAG macros are used within shared modules.
+#ifndef GFLAGS_DLL_DEFINE_FLAG
+#  if defined(_MSC_VER)
+#    define GFLAGS_DLL_DEFINE_FLAG __declspec(dllexport)
+#  else
+#    define GFLAGS_DLL_DEFINE_FLAG
+#  endif
 #endif
 
-// We always want to import declared variables, dll or no
-#if defined(_MSC_VER)
-#  define GFLAGS_DLL_DECLARE_FLAG __declspec(dllimport)
-#else
-#  define GFLAGS_DLL_DECLARE_FLAG
+// By default, we always want to export defined variables, assuming
+// that the DECLARE_FLAG macros are used within shared modules.
+#ifndef GFLAGS_DLL_DECLARE_FLAG
+#  if defined(_MSC_VER)
+#    define GFLAGS_DLL_DECLARE_FLAG __declspec(dllimport)
+#  else
+#    define GFLAGS_DLL_DECLARE_FLAG
+#  endif
 #endif
 
 // Export/import of STL class instantiations
