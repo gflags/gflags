@@ -237,23 +237,36 @@ class Test {};
 #if defined(__MINGW32__)
 #include <io.h>
 inline void MakeTmpdir(std::string* path) {
+  if (!path->empty()) {
+	path->append("/gflags_unittest_testdir");
+	int err = mkdir(path->c_str());
+	if (err == 0 || errno == EEXIST) return;
+  }
   // I had trouble creating a directory in /tmp from mingw
-  *path = "./gflags_unittest_testdir";
-  mkdir(path->c_str());   // mingw has a weird one-arg mkdir
+  *path = "./gflags_unittest";
+  mkdir(path->c_str());
 }
 #elif defined(_MSC_VER)
 #include <direct.h>
 inline void MakeTmpdir(std::string* path) {
+  if (!path->empty()) {
+	int err = _mkdir(path->c_str());
+	if (err == 0 || errno == EEXIST) return;
+  }
   char tmppath_buffer[1024];
   int tmppath_len = GetTempPathA(sizeof(tmppath_buffer), tmppath_buffer);
   assert(tmppath_len > 0 && tmppath_len < sizeof(tmppath_buffer));
   assert(tmppath_buffer[tmppath_len - 1] == '\\');   // API guarantees it
-  *path = std::string(tmppath_buffer) + "gflags_unittest_testdir";
+  *path = std::string(tmppath_buffer) + "gflags_unittest";
   _mkdir(path->c_str());
 }
 #else
 inline void MakeTmpdir(std::string* path) {
-  mkdir(path->c_str(), 0755);
+  if (!path->empty()) {
+	int err = mkdir(path->c_str(), 0755);
+	if (err == 0 || errno == EEXIST) return;
+  }
+  mkdir("/tmp/gflags_unittest", 0755);
 }
 #endif
 
