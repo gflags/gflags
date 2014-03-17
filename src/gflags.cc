@@ -997,7 +997,7 @@ static string ReadFileIntoString(const char* filename) {
   char buffer[kBufSize];
   string s;
   FILE* fp;
-  if ((errno = SafeFOpen(&fp, filename, "r") != 0)) PFATAL(filename);
+  if ((errno = SafeFOpen(&fp, filename, "r")) != 0) PFATAL(filename);
   size_t n;
   while ( (n=fread(buffer, 1, kBufSize, fp)) > 0 ) {
     if (ferror(fp))  PFATAL(filename);
