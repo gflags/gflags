@@ -93,7 +93,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#ifdef HAVE_FNMATCH_H
+#ifdef GFLAGS_HAVE_FNMATCH_H
 #  include <fnmatch.h>
 #endif
 #include <stdarg.h> // For va_list and related operations
@@ -1307,7 +1307,7 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
         // We try matching both against the full argv0 and basename(argv0)
         if (glob == ProgramInvocationName()       // small optimization
             || glob == ProgramInvocationShortName()
-#if HAVE_FNMATCH_H
+#ifdef GFLAGS_HAVE_FNMATCH_H
             || fnmatch(glob.c_str(),
                        ProgramInvocationName(),
                        FNM_PATHNAME) == 0
