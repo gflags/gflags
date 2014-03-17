@@ -46,6 +46,7 @@
 #include <stdio.h>
 #include <iostream>
 #include <string>
+#include <errno.h>
 #ifdef GFLAGS_HAVE_SYS_STAT_H
 #  include <sys/stat.h> // for mkdir
 #endif
@@ -356,7 +357,7 @@ inline bool SafeGetEnv(const char *varname, std::string &valstr)
 	return true;
 }
 
-inline errno_t SafeFOpen(FILE **fp, const char* fname, const char *mode)
+inline int SafeFOpen(FILE **fp, const char* fname, const char *mode)
 {
 #if defined(_MSC_VER) && _MSC_VER >= 1400
 	return fopen_s(fp, fname, mode);
