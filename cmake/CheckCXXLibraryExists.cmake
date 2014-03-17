@@ -50,10 +50,10 @@ macro(CHECK_CXX_LIBRARY_EXISTS LIBRARY FUNCTION LOCATION VARIABLE)
         ${CHECK_LIBRARY_EXISTS_LIBRARIES} ${CMAKE_REQUIRED_LIBRARIES})
     endif()
     configure_file(${CMAKE_ROOT}/Modules/CheckFunctionExists.c
-                   ${CMAKE_BINARY_DIR}/CheckFunctionExists.cxx COPYONLY)
+                   ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CheckFunctionExists.cxx COPYONLY)
     try_compile(${VARIABLE}
       ${CMAKE_BINARY_DIR}
-      ${CMAKE_BINARY_DIR}/CheckFunctionExists.cxx
+      ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CheckFunctionExists.cxx
       COMPILE_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
       LINK_LIBRARIES ${CHECK_LIBRARY_EXISTS_LIBRARIES}
       CMAKE_FLAGS
