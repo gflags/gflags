@@ -603,11 +603,8 @@ TEST(SetFlagValueTest, IllegalValues) {
   EXPECT_EQ("",
             SetCommandLineOption("test_int32", "7000000000000"));
 
-  // TODO(csilvers): uncomment this when we disallow negative numbers for uint64
-#if 0
   EXPECT_EQ("",
             SetCommandLineOption("test_uint64", "-1"));
-#endif
 
   EXPECT_EQ("",
             SetCommandLineOption("test_int64", "not a number!"));
