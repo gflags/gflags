@@ -35,7 +35,7 @@
 
 include (CheckIncludeFileCXX)
 include (CheckLibraryExists)
-include (CheckCxxSymbolExists)
+include (CheckCXXSymbolExists)
 set(Threads_FOUND FALSE)
 
 # Do we have sproc?
