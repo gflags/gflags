@@ -15,7 +15,7 @@ set (PACKAGE_STRING    "${PROJECT_NAME} ${PACKAGE_VERSION}")
 set (PACKAGE_TARNAME   "${PROJECT_NAME}-${PACKAGE_VERSION}")
 set (PACKAGE_BUGREPORT "https://code.google.com/p/gflags/issues/")
 
-project (${PROJECT_NAME} CXX C)
+project (${PROJECT_NAME} CXX)
 
 version_numbers (
   ${PACKAGE_VERSION}
