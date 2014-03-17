@@ -44,12 +44,20 @@
 
 // These call the windows _vsnprintf, but always NUL-terminate.
 #if !defined(__MINGW32__) && !defined(__MINGW64__)  /* mingw already defines */
+
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4996) // ignore _vsnprintf security warning
+#endif
 int safe_vsnprintf(char *str, size_t size, const char *format, va_list ap) {
   if (size == 0)        // not even room for a \0?
     return -1;          // not what C99 says to do, but what windows does
-  str[size-1] = '\0';
+  str[size-1] = '\0'; 
   return _vsnprintf(str, size-1, format, ap);
 }
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 int snprintf(char *str, size_t size, const char *format, ...) {
   int r;
@@ -59,4 +67,5 @@ int snprintf(char *str, size_t size, const char *format, ...) {
   va_end(ap);
   return r;
 }
+
 #endif  /* #if !defined(__MINGW32__) && !defined(__MINGW64__) */

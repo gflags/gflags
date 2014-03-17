@@ -42,8 +42,14 @@
 
 #include "config.h"
 
+// This must be defined before the windows.h is included.
+// It's needed for mutex.h, to give access to the TryLock method.
+#  if !defined(_WIN32_WINNT) && !(defined( __MINGW32__) || defined(__MINGW64__))
+#    define _WIN32_WINNT 0x0400
+#  endif
+// We always want minimal includes
 #ifndef WIN32_LEAN_AND_MEAN
-#  define WIN32_LEAN_AND_MEAN  /* We always want minimal includes */
+#  define WIN32_LEAN_AND_MEAN
 #endif
 #include <windows.h>
 #include <direct.h>          /* for mkdir */
@@ -65,6 +71,10 @@ extern int GFLAGS_DLL_DECL safe_vsnprintf(char *str, size_t size,
 #define va_copy(dst, src)  (dst) = (src)
 #endif  /* #if !defined(__MINGW32__) && !defined(__MINGW64__) */
 
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4996) // ignore getenv security warning
+#endif
 inline void setenv(const char* name, const char* value, int) {
   // In windows, it's impossible to set a variable to the empty string.
   // We handle this by setting it to "0" and the NUL-ing out the \0.
@@ -86,6 +96,9 @@ inline void setenv(const char* name, const char* value, int) {
       *getenv(name) = '\0';            // works when putenv() copies nameval
   }
 }
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 #define strcasecmp _stricmp
 

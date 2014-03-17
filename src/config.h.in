@@ -35,13 +35,5 @@
 // ---------------------------------------------------------------------------
 // Windows port
 #ifdef _WIN32
-// This must be defined before the windows.h is included.
-// It's needed for mutex.h, to give access to the TryLock method.
-#  if !defined(_WIN32_WINNT) && !(defined( __MINGW32__) || defined(__MINGW64__))
-#    define _WIN32_WINNT 0x0400
-#  endif
-#  if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
-#    define _CRT_SECURE_NO_WARNINGS
-#  endif
 #  include "windows_port.h"
 #endif

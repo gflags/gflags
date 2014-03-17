@@ -1098,7 +1098,8 @@ TEST(DeprecatedFunctionsTest, AppendFlagsIntoFile) {
   const bool r = AppendFlagsIntoFile(filename, "not the real argv0");
   EXPECT_TRUE(r);
 
-  FILE* fp = fopen(filename.c_str(), "r");
+  FILE* fp;
+  EXPECT_EQ(0, SafeFOpen(&fp, filename.c_str(), "r"));
   EXPECT_TRUE(fp != NULL);
   char line[8192];
   EXPECT_TRUE(fgets(line, sizeof(line)-1, fp) != NULL);  // get the first line
@@ -1134,7 +1135,8 @@ TEST(DeprecatedFunctionsTest, ReadFromFlagsFile) {
 TEST(DeprecatedFunctionsTest, ReadFromFlagsFileFailure) {
   FLAGS_test_int32 = -20;
   string filename(TmpFile("flagfile3"));
-  FILE* fp = fopen(filename.c_str(), "w");
+  FILE* fp;
+  EXPECT_EQ(0, SafeFOpen(&fp, filename.c_str(), "w"));
   EXPECT_TRUE(fp != NULL);
   // Note the error in the bool assignment below...
   fprintf(fp, "%s\n--test_int32=-21\n--test_bool=not_a_bool!\n", GetArgv0());

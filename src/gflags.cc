@@ -992,8 +992,8 @@ static string ReadFileIntoString(const char* filename) {
   const int kBufSize = 8092;
   char buffer[kBufSize];
   string s;
-  FILE* fp = fopen(filename, "r");
-  if (!fp)  PFATAL(filename);
+  FILE* fp;
+  if ((errno = SafeFOpen(&fp, filename, "r") != 0)) PFATAL(filename);
   size_t n;
   while ( (n=fread(buffer, 1, kBufSize, fp)) > 0 ) {
     if (ferror(fp))  PFATAL(filename);
@@ -1137,8 +1137,8 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
     }
 
     const string envname = string("FLAGS_") + string(flagname);
-    const char* envval = getenv(envname.c_str());
-    if (!envval) {
+	string envval;
+	if (!SafeGetEnv(envname.c_str(), envval)) {
       if (errors_are_fatal) {
         error_flags_[flagname] = (string(kError) + envname +
                                   " not found in environment\n");
@@ -1147,15 +1147,14 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
     }
 
     // Avoid infinite recursion.
-    if ((strcmp(envval, "fromenv") == 0) ||
-        (strcmp(envval, "tryfromenv") == 0)) {
+    if (envval == "fromenv" || envval == "tryfromenv") {
       error_flags_[flagname] =
           StringPrintf("%sinfinite recursion on environment flag '%s'\n",
-                       kError, envval);
+                       kError, envval.c_str());
       continue;
     }
 
-    msg += ProcessSingleOptionLocked(flag, envval, set_mode);
+    msg += ProcessSingleOptionLocked(flag, envval.c_str(), set_mode);
   }
   return msg;
 }
@@ -1335,14 +1334,15 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 
 template<typename T>
 T GetFromEnv(const char *varname, const char* type, T dflt) {
-  const char* const valstr = getenv(varname);
-  if (!valstr)
-    return dflt;
-  FlagValue ifv(new T, type, true);
-  if (!ifv.ParseFrom(valstr))
-    ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
-                varname, valstr);
-  return OTHER_VALUE_AS(ifv, T);
+  std::string valstr;
+  if (SafeGetEnv(varname, valstr)) {
+    FlagValue ifv(new T, type, true);
+    if (!ifv.ParseFrom(valstr.c_str())) {
+      ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
+                  varname, valstr.c_str());
+	}
+    return OTHER_VALUE_AS(ifv, T);
+  } else return dflt;
 }
 
 bool AddFlagValidator(const void* flag_ptr, ValidateFnProto validate_fn_proto) {
@@ -1754,8 +1754,8 @@ bool ReadFlagsFromString(const string& flagfilecontents,
 
 // TODO(csilvers): nix prog_name in favor of ProgramInvocationShortName()
 bool AppendFlagsIntoFile(const string& filename, const char *prog_name) {
-  FILE *fp = fopen(filename.c_str(), "a");
-  if (!fp) {
+  FILE *fp;
+  if (SafeFOpen(&fp, filename.c_str(), "a") != 0) {
     return false;
   }
 
@@ -1813,10 +1813,18 @@ uint64 Uint64FromEnv(const char *v, uint64 dflt) {
 double DoubleFromEnv(const char *v, double dflt) {
   return GetFromEnv(v, "double", dflt);
 }
+
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4996) // ignore getenv security warning
+#endif
 const char *StringFromEnv(const char *varname, const char *dflt) {
   const char* const val = getenv(varname);
   return val ? val : dflt;
 }
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 
 // --------------------------------------------------------------------
