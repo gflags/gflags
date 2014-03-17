@@ -70,13 +70,15 @@ endfunction ()
 # expected exit status. Moreover, the execute_test.cmake script
 # sets environment variables needed by the --fromenv/--tryfromenv tests.
 macro (add_gflags_test name expected_rc expected_output unexpected_output cmd)
+  set (args "--test_tmpdir=${PROJECT_BINARY_DIR}/Testing/Temporary"
+            "--srcdir=${PROJECT_SOURCE_DIR}/test")
   add_test (
     NAME    ${name}
-    COMMAND "${CMAKE_COMMAND}" "-DCOMMAND:STRING=$<TARGET_FILE:${cmd}>;${ARGN}"
+    COMMAND "${CMAKE_COMMAND}" "-DCOMMAND:STRING=$<TARGET_FILE:${cmd}>;${args};${ARGN}"
                                "-DEXPECTED_RC:STRING=${expected_rc}"
                                "-DEXPECTED_OUTPUT:STRING=${expected_output}"
                                "-DUNEXPECTED_OUTPUT:STRING=${unexpected_output}"
                                -P "${PROJECT_SOURCE_DIR}/cmake/execute_test.cmake"
-    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/test"
+    WORKING_DIRECTORY "${GFLAGS_FLAGFILES_DIR}"
   )
 endmacro ()

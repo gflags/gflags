@@ -6,7 +6,8 @@ set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing/bin")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing/lib")
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/Testing/lib")
 
-set (TEMPDIR "${PROJECT_BINARY_DIR}/Testing/Temporary")
+# set working directory of test commands
+set (GFLAGS_FLAGFILES_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 
 # ----------------------------------------------------------------------------
 # common include directories and link libraries
@@ -112,9 +113,9 @@ add_gflags_test(undefok-5 1 "unknown command line flag 'foo'" "" unittest --unde
 add_gflags_test(undefok-6 1 "unknown command line flag 'foo'" "" unittest --undefok=foot --foo --unused_bool)
 
 # See if we can successfully load our flags from the flagfile
-add_gflags_test(flagfile.1 0 "gflags_unittest" "gflags_unittest.cc" unittest "--flagfile=${CMAKE_CURRENT_LIST_DIR}/flagfile.1")
-add_gflags_test(flagfile.2 0 "PASS" "" unittest "--flagfile=${CMAKE_CURRENT_LIST_DIR}/flagfile.2")
-add_gflags_test(flagfile.3 0 "PASS" "" unittest "--flagfile=${CMAKE_CURRENT_LIST_DIR}/flagfile.3")
+add_gflags_test(flagfile.1 0 "gflags_unittest" "gflags_unittest.cc" unittest "--flagfile=flagfile.1")
+add_gflags_test(flagfile.2 0 "PASS" "" unittest "--flagfile=flagfile.2")
+add_gflags_test(flagfile.3 0 "PASS" "" unittest "--flagfile=flagfile.3")
 
 # Also try to load flags from the environment
 add_gflags_test(fromenv=version      0 "gflags_unittest" "gflags_unittest.cc" unittest --fromenv=version)

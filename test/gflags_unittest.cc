@@ -66,14 +66,8 @@ using GFLAGS_NAMESPACE::RegisterFlagValidator;
 using GFLAGS_NAMESPACE::CommandLineFlagInfo;
 using GFLAGS_NAMESPACE::GetAllFlags;
 
-DEFINE_string(test_tmpdir, "/tmp/gflags_unittest", "Dir we use for temp files");
-#ifdef _MSC_VER  // in MSVC, we run from the vsprojects directory
-DEFINE_string(srcdir, "..\\..",
-              "Source-dir root, needed to find gflags_unittest_flagfile");
-#else
-DEFINE_string(srcdir, StringFromEnv("SRCDIR", "."),
-              "Source-dir root, needed to find gflags_unittest_flagfile");
-#endif
+DEFINE_string(test_tmpdir, "", "Dir we use for temp files");
+DEFINE_string(srcdir, StringFromEnv("SRCDIR", "."), "Source-dir root, needed to find gflags_unittest_flagfile");
 
 DECLARE_string(tryfromenv);   // in gflags.cc
 
