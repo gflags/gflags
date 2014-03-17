@@ -67,7 +67,7 @@ endfunction ()
 #
 # Using PASS_REGULAR_EXPRESSION and FAIL_REGULAR_EXPRESSION would
 # do as well, but CMake/CTest does not allow us to specify an
-# expected exist status. Moreover, the execute_test.cmake script
+# expected exit status. Moreover, the execute_test.cmake script
 # sets environment variables needed by the --fromenv/--tryfromenv tests.
 macro (add_gflags_test name expected_rc expected_output unexpected_output cmd)
   add_test (
@@ -76,7 +76,7 @@ macro (add_gflags_test name expected_rc expected_output unexpected_output cmd)
                                "-DEXPECTED_RC:STRING=${expected_rc}"
                                "-DEXPECTED_OUTPUT:STRING=${expected_output}"
                                "-DUNEXPECTED_OUTPUT:STRING=${unexpected_output}"
-                               -P "${PROJECT_SOURCE_DIR}/test/execute_test.cmake"
+                               -P "${CMAKE_CURRENT_LIST_DIR}/execute_test.cmake"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/test"
   )
 endmacro ()
