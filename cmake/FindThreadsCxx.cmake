@@ -98,9 +98,10 @@ else()
       # If we did not found -lpthread, -lpthread, or -lthread, look for -pthread
       if("THREADS_HAVE_PTHREAD_ARG" MATCHES "^THREADS_HAVE_PTHREAD_ARG")
         message(STATUS "Check if compiler accepts -pthread")
+        configure_file ("${CMAKE_ROOT}/Modules/CheckForPthreads.c" "${CMAKE_BINARY_DIR}/CheckForPthreads.cxx" COPYONLY)
         try_run(THREADS_PTHREAD_ARG THREADS_HAVE_PTHREAD_ARG
           ${CMAKE_BINARY_DIR}
-          ${CMAKE_ROOT}/Modules/CheckForPthreads.cxx
+          ${CMAKE_BINARY_DIR}/CheckForPthreads.cxx
           CMAKE_FLAGS -DLINK_LIBRARIES:STRING=-pthread
           COMPILE_OUTPUT_VARIABLE OUTPUT)
 
