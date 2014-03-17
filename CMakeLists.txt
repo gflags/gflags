@@ -103,7 +103,7 @@ foreach (fname IN ITEMS strtoll strtoq)
 endforeach ()
 
 set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
-find_package (ThreadsCxx)
+find_package (ThreadsCXX)
 if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   set (GFLAGS_HAVE_PTHREAD TRUE)
   check_type_size (pthread_rwlock_t GFLAGS_HAVE_RWLOCK LANGUAGE CXX)

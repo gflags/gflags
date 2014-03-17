@@ -34,7 +34,7 @@
 #  License text for the above reference.)
 
 include (CheckIncludeFileCXX)
-include (CheckLibraryExists)
+include (CheckCXXLibraryExists)
 include (CheckCXXSymbolExists)
 set(Threads_FOUND FALSE)
 
@@ -67,7 +67,7 @@ else()
 
       if(NOT CMAKE_HAVE_THREADS_LIBRARY)
         # Do we have -lpthreads
-        CHECK_LIBRARY_EXISTS(pthreads pthread_create "" CMAKE_HAVE_PTHREADS_CREATE)
+        CHECK_CXX_LIBRARY_EXISTS(pthreads pthread_create "" CMAKE_HAVE_PTHREADS_CREATE)
         if(CMAKE_HAVE_PTHREADS_CREATE)
           set(CMAKE_THREAD_LIBS_INIT "-lpthreads")
           set(CMAKE_HAVE_THREADS_LIBRARY 1)
@@ -75,7 +75,7 @@ else()
         endif()
 
         # Ok, how about -lpthread
-        CHECK_LIBRARY_EXISTS(pthread pthread_create "" CMAKE_HAVE_PTHREAD_CREATE)
+        CHECK_CXX_LIBRARY_EXISTS(pthread pthread_create "" CMAKE_HAVE_PTHREAD_CREATE)
         if(CMAKE_HAVE_PTHREAD_CREATE)
           set(CMAKE_THREAD_LIBS_INIT "-lpthread")
           set(CMAKE_HAVE_THREADS_LIBRARY 1)
@@ -84,7 +84,7 @@ else()
 
         if(CMAKE_SYSTEM MATCHES "SunOS.*")
           # On sun also check for -lthread
-          CHECK_LIBRARY_EXISTS(thread thr_create "" CMAKE_HAVE_THR_CREATE)
+          CHECK_CXX_LIBRARY_EXISTS(thread thr_create "" CMAKE_HAVE_THR_CREATE)
           if(CMAKE_HAVE_THR_CREATE)
             set(CMAKE_THREAD_LIBS_INIT "-lthread")
             set(CMAKE_HAVE_THREADS_LIBRARY 1)
@@ -153,7 +153,7 @@ if(CMAKE_USE_PTHREADS_INIT)
     # but we need to maintain compatibility here.
     # The CMAKE_HP_PTHREADS setting actually indicates whether CMA threads
     # are available.
-    CHECK_LIBRARY_EXISTS(cma pthread_attr_create "" CMAKE_HAVE_HP_CMA)
+    CHECK_CXX_LIBRARY_EXISTS(cma pthread_attr_create "" CMAKE_HAVE_HP_CMA)
     if(CMAKE_HAVE_HP_CMA)
       set(CMAKE_THREAD_LIBS_INIT "-lcma")
       set(CMAKE_HP_PTHREADS_INIT 1)
