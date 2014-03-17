@@ -76,7 +76,7 @@ macro (add_gflags_test name expected_rc expected_output unexpected_output cmd)
                                "-DEXPECTED_RC:STRING=${expected_rc}"
                                "-DEXPECTED_OUTPUT:STRING=${expected_output}"
                                "-DUNEXPECTED_OUTPUT:STRING=${unexpected_output}"
-                               -P "${CMAKE_CURRENT_LIST_DIR}/execute_test.cmake"
+                               -P "${PROJECT_SOURCE_DIR}/cmake/execute_test.cmake"
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}/test"
   )
 endmacro ()
