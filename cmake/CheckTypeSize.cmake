@@ -1,6 +1,9 @@
 # Copied from master branch of CMake (commit SHA 34a49dea) and
 # modified to use CheckIncludeFileCXX instead of CheckIncludeFile
-# when the LANGUAGE is CXX.
+# when the LANGUAGE is CXX. Modified the try_compile call to
+# not pass any LINK_LIBRARIES as this option is only supported by
+# CMake since version 2.8.11
+# -andreas
 
 #.rst:
 # CheckTypeSize
@@ -62,7 +65,6 @@
 #   CMAKE_REQUIRED_FLAGS = string of compile command line flags
 #   CMAKE_REQUIRED_DEFINITIONS = list of macros to define (-DFOO=bar)
 #   CMAKE_REQUIRED_INCLUDES = list of include directories
-#   CMAKE_REQUIRED_LIBRARIES = list of libraries to link
 #   CMAKE_EXTRA_INCLUDE_FILES = list of extra headers to include
 
 #=============================================================================
@@ -121,7 +123,6 @@ function(__check_type_size_impl type var map builtin language)
   configure_file(${__check_type_size_dir}/CheckTypeSize.c.in ${src} @ONLY)
   try_compile(HAVE_${var} ${CMAKE_BINARY_DIR} ${src}
     COMPILE_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
-    LINK_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES}
     CMAKE_FLAGS
       "-DCOMPILE_DEFINITIONS:STRING=${CMAKE_REQUIRED_FLAGS}"
       "-DINCLUDE_DIRECTORIES:STRING=${CMAKE_REQUIRED_INCLUDES}"
