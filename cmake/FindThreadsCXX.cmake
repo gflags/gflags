@@ -38,6 +38,7 @@ include (CheckCXXLibraryExists)
 include (CheckCXXSymbolExists)
 set(Threads_FOUND FALSE)
 
+
 # Do we have sproc?
 if(CMAKE_SYSTEM MATCHES IRIX AND NOT CMAKE_THREAD_PREFER_PTHREAD)
   CHECK_INCLUDE_FILES_CXX("sys/types.h;sys/prctl.h"  CMAKE_HAVE_SPROC_H)
@@ -95,14 +96,15 @@ else()
     endif()
 
     if(NOT CMAKE_HAVE_THREADS_LIBRARY)
-      # If we did not found -lpthread, -lpthread, or -lthread, look for -pthread
+      # If we did not found -lpthread, -lpthreads, or -lthread, look for -pthread
       if("THREADS_HAVE_PTHREAD_ARG" MATCHES "^THREADS_HAVE_PTHREAD_ARG")
         message(STATUS "Check if compiler accepts -pthread")
-        configure_file ("${CMAKE_ROOT}/Modules/CheckForPthreads.c" "${CMAKE_BINARY_DIR}/CheckForPthreads.cxx" COPYONLY)
+        configure_file ("${CMAKE_CURRENT_LIST_DIR}/CheckForPthreads.cxx"
+                        "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CheckForPthreads.cxx" COPYONLY)
         try_run(THREADS_PTHREAD_ARG THREADS_HAVE_PTHREAD_ARG
           ${CMAKE_BINARY_DIR}
-          ${CMAKE_BINARY_DIR}/CheckForPthreads.cxx
-          CMAKE_FLAGS -DLINK_LIBRARIES:STRING=-pthread
+          ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CheckForPthreads.cxx
+          CMAKE_FLAGS "-DLINK_LIBRARIES:STRING=-pthread;-DCMAKE_CXX_FLAGS:STRING=-fpermissive"
           COMPILE_OUTPUT_VARIABLE OUTPUT)
 
         if(THREADS_HAVE_PTHREAD_ARG)

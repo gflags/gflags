@@ -145,15 +145,25 @@ set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package (ThreadsCXX)
 if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   set (GFLAGS_HAVE_PTHREAD TRUE)
-  check_type_size (pthread_rwlock_t GFLAGS_HAVE_RWLOCK LANGUAGE CXX)
+  check_type_size (pthread_rwlock_t RWLOCK LANGUAGE CXX)
+  if (HAVE_RWLOCK)
+    set (GFLAGS_HAVE_RWLOCK TRUE)
+  else ()
+    set (GFLAGS_HAVE_RWLOCK FALSE)
+  endif ()
 else ()
   set (GFLAGS_HAVE_PTHREAD FALSE)
 endif ()
 
 if (UNIX AND NOT GFLAGS_HAVE_PTHREAD AND BUILD_gflags_LIB)
   set_property (CACHE BUILD_gflags_LIB PROPERTY VALUE OFF)
-  message (WARNING "Could not find the <pthread.h> header file."
-                   " Disabling the build of the multi-threaded gflags library.")
+  if (CMAKE_HAVE_PTHREAD_H)
+    message (WARNING "Could not find the pthread(s) library."
+                     " Disabling the build of the multi-threaded gflags library.")
+  else ()
+    message (WARNING "Could not find the <pthread.h> header file."
+                     " Disabling the build of the multi-threaded gflags library.")
+  endif ()
 endif ()
 
 # ----------------------------------------------------------------------------
