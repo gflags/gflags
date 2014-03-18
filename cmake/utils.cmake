@@ -1,6 +1,16 @@
 ## Utility CMake functions.
 
 # ----------------------------------------------------------------------------
+## Convert boolean value to 0 or 1
+macro (bool_to_int VAR)
+  if (${VAR})
+    set (${VAR} 1)
+  else ()
+    set (${VAR} 0)
+  endif ()
+endmacro ()
+
+# ----------------------------------------------------------------------------
 ## Extract version numbers from version string.
 function (version_numbers version major minor patch)
   if (version MATCHES "([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(rc[1-9][0-9]*|[a-z]+)?")

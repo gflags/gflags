@@ -55,9 +55,25 @@
 
 #include "config.h"
 
-#undef GFLAGS_DLL_DECL
+#ifdef GFLAGS_DLL_DECL
+#  undef GFLAGS_DLL_DECL
+#endif
+#ifdef GFLAGS_DLL_DEFINE_FLAG
+#  undef GFLAGS_DLL_DEFINE_FLAG
+#endif
+#ifdef GFLAGS_DLL_DECLARE_FLAG
+#  undef GFLAGS_DLL_DECLARE_FLAG
+#endif
+
 #ifdef GFLAGS_DLL_DECL_FOR_UNITTESTS
-# define GFLAGS_DLL_DECL  GFLAGS_DLL_DECL_FOR_UNITTESTS
+#  define GFLAGS_DLL_DECL  GFLAGS_DLL_DECL_FOR_UNITTESTS
 #else
-# define GFLAGS_DLL_DECL  // if DLL_DECL_FOR_UNITTESTS isn't defined, use ""
+#  define GFLAGS_DLL_DECL  // if DLL_DECL_FOR_UNITTESTS isn't defined, use ""
+#endif
+
+// Import flags defined by gflags.cc
+#if GFLAGS_IS_A_DLL && defined(_MSC_VER)
+#  define GFLAGS_DLL_DECLARE_FLAG __declspec(dllimport)
+#else
+#  define GFLAGS_DLL_DECLARE_FLAG
 #endif

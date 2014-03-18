@@ -47,9 +47,6 @@
 #define GFLAGS_VERSION_MINOR @PACKAGE_VERSION_MINOR@ ///< Minor version number.
 #define GFLAGS_VERSION_PATCH @PACKAGE_VERSION_PATCH@ ///< Version patch number.
 
-// Whether gflags library is shared. Used for DLL import declaration.
-#cmakedefine GFLAGS_SHARED_LIBS
-
 // ---------------------------------------------------------------------------
 // Namespace for gflags symbols.
 #define GFLAGS_NAMESPACE @GFLAGS_NAMESPACE@
@@ -60,148 +57,49 @@
 
 // ---------------------------------------------------------------------------
 // Windows DLL import/export.
+
+// We always want to import the symbols of the gflags library
 #ifndef GFLAGS_DLL_DECL
-#  if defined(_MSC_VER) && defined(GFLAGS_SHARED_LIBS)
-#    ifdef GFLAGS_DLL_EXPORT
-#      define GFLAGS_DLL_DECL __declspec(dllexport)
-#    else
-#      define GFLAGS_DLL_DECL __declspec(dllimport)
-#    endif
+#  if @GFLAGS_IS_A_DLL@ && defined(_MSC_VER)
+#    define GFLAGS_DLL_DECL __declspec(dllimport)
 #  else
 #    define GFLAGS_DLL_DECL
 #  endif
 #endif
 
-// By default, we always want to export defined variables, assuming
-// that the DEFINE_FLAG macros are used within shared modules.
-#ifndef GFLAGS_DLL_DEFINE_FLAG
-#  if defined(_MSC_VER)
-#    define GFLAGS_DLL_DEFINE_FLAG __declspec(dllexport)
-#  else
-#    define GFLAGS_DLL_DEFINE_FLAG
-#  endif
-#endif
-
-// By default, we always want to export defined variables, assuming
-// that the DECLARE_FLAG macros are used within shared modules.
+// We always want to import variables declared in user code
 #ifndef GFLAGS_DLL_DECLARE_FLAG
-#  if defined(_MSC_VER)
+#  ifdef _MSC_VER
 #    define GFLAGS_DLL_DECLARE_FLAG __declspec(dllimport)
 #  else
 #    define GFLAGS_DLL_DECLARE_FLAG
 #  endif
 #endif
 
-// Export/import of STL class instantiations
-// \sa http://support.microsoft.com/default.aspx?scid=KB;EN-US;168958
-#if defined(GFLAGS_SHARED_LIBS) && defined(_MSC_VER) && _MSC_VER >= 1100
-#  ifdef GFLAGS_DLL_EXPORT
-#    define GFLAGS_EXTERN_STL
-#  else
-#    define GFLAGS_EXTERN_STL extern
-#  endif
-#endif
-
-// ---------------------------------------------------------------------------
-// Available system headers
-
-// Define if you have the <stdint.h> header file.
-#cmakedefine GFLAGS_HAVE_STDINT_H
-
-// Define if you have the <sys/types.h> header file.
-#cmakedefine GFLAGS_HAVE_SYS_TYPES_H
-
-// Define if you have the <inttypes.h> header file.
-#cmakedefine GFLAGS_HAVE_INTTYPES_H
-
-// Define if you have the <sys/stat.h> header file.
-#cmakedefine GFLAGS_HAVE_SYS_STAT_H
-
-// Define if you have the <unistd.h> header file.
-#cmakedefine GFLAGS_HAVE_UNISTD_H
-
-// Define if you have the <fnmatch.h> header file.
-#cmakedefine GFLAGS_HAVE_FNMATCH_H
-
-// Define if you have the strtoll function.
-#cmakedefine GFLAGS_HAVE_STRTOLL
-
-// Define if you have the strtoq function.
-#cmakedefine GFLAGS_HAVE_STRTOQ
-
-// Define if you have the <pthread.h> header file.
-#cmakedefine GFLAGS_HAVE_PTHREAD
-
-// Define if your pthread library defines the type pthread_rwlock_t
-#cmakedefine GFLAGS_HAVE_RWLOCK
-
-// Backwards compatibility in case users defined these macros themselves
-// or allow users to use these more general macros if the gflags library
-// is build as part of a user project, e.g., included as Git submodule
-#if defined(HAVE_STDINT_H) && !defined(GFLAGS_HAVE_STDINT_H)
-#  define GFLAGS_HAVE_STDINT_H
-#endif
-#if defined(HAVE_SYS_TYPES_H) && !defined(GFLAGS_HAVE_SYS_TYPES_H)
-#  define GFLAGS_HAVE_SYS_TYPES_H
-#endif
-#if defined(HAVE_INTTYPES_H)  && !defined(GFLAGS_HAVE_INTTYPES_H)
-#  define GFLAGS_HAVE_INTTYPES_H
-#endif
-#if defined(HAVE_SYS_STAT_H)  && !defined(GFLAGS_HAVE_SYS_STAT_H)
-#  define GFLAGS_HAVE_SYS_STAT_H
-#endif
-#if defined(HAVE_UNISTD_H)    && !defined(GFLAGS_HAVE_UNISTD_H)
-#  define GFLAGS_HAVE_UNISTD_H
-#endif
-#if defined(HAVE_FNMATCH_H)   && !defined(GFLAGS_HAVE_FNMATCH_H)
-#  define GFLAGS_HAVE_FNMATCH_H
-#endif
-#if defined(HAVE_STRTOLL)     && !defined(GFLAGS_HAVE_STRTOLL)
-#  define GFLAGS_HAVE_STRTOLL
-#endif
-#if defined(HAVE_STRTOLQ)     && !defined(GFLAGS_HAVE_STRTOLQ)
-#  define GFLAGS_HAVE_STRTOLQ
-#endif
-#if defined(HAVE_PTHREAD)     && !defined(GFLAGS_HAVE_PTHREAD)
-#  define GFLAGS_HAVE_PTHREAD
-#endif
-#if defined(HAVE_RWLOCK)      && !defined(GFLAGS_HAVE_RWLOCK)
-#  define GFLAGS_HAVE_RWLOCK
-#endif
-
-// gcc requires this to get PRId64, etc.
-#if defined(GFLAGS_HAVE_INTTYPES_H) && !defined(__STDC_FORMAT_MACROS)
-#  define __STDC_FORMAT_MACROS 1
-#endif
-
 // ---------------------------------------------------------------------------
 // Flag types
 #include <string>
-#if defined(GFLAGS_HAVE_STDINT_H)
+#if @GFLAGS_HAVE_STDINT_H@
 #  include <stdint.h>                   // the normal place uint32_t is defined
-#elif defined(GFLAGS_HAVE_SYS_TYPES_H)
+#elif @GFLAGS_HAVE_SYS_TYPES_H@
 #  include <sys/types.h>                // the normal place u_int32_t is defined
-#elif defined(GFLAGS_HAVE_INTTYPES_H)
+#elif @GFLAGS_HAVE_INTTYPES_H@
 #  include <inttypes.h>                 // a third place for uint32_t or u_int32_t
 #endif
 
-#cmakedefine GFLAGS_INTTYPES_FORMAT_C99
-#cmakedefine GFLAGS_INTTYPES_FORMAT_BSD
-#cmakedefine GFLAGS_INTTYPES_FORMAT_VC7
-
 namespace GFLAGS_NAMESPACE {
 
-#if   defined(GFLAGS_INTTYPES_FORMAT_C99)
+#if @GFLAGS_INTTYPES_FORMAT_C99@ // C99
 typedef int32_t          int32;
 typedef uint32_t         uint32;
 typedef int64_t          int64;
 typedef uint64_t         uint64;
-#elif defined(GFLAGS_INTTYPES_FORMAT_BSD)
+#elif @GFLAGS_INTTYPES_FORMAT_BSD@ // BSD
 typedef int32_t          int32;
 typedef u_int32_t        uint32;
 typedef int64_t          int64;
 typedef u_int64_t        uint64;
-#elif defined(GFLAGS_INTTYPES_FORMAT_VC7) // Windows
+#elif @GFLAGS_INTTYPES_FORMAT_VC7@ // Windows
 typedef __int32          int32;
 typedef unsigned __int32 uint32;
 typedef __int64          int64;

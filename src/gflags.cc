@@ -93,8 +93,11 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#ifdef GFLAGS_HAVE_FNMATCH_H
+#if defined(GFLAGS_HAVE_FNMATCH_H)
 #  include <fnmatch.h>
+#elif defined(GFLAGS_HAVE_SHLWAPI_H)
+#  include <shlwapi.h>
+#  pragma comment(lib, "shlwapi.lib")
 #endif
 #include <stdarg.h> // For va_list and related operations
 #include <stdio.h>
@@ -108,12 +111,6 @@
 
 #include "mutex.h"
 #include "util.h"
-
-// Export the following flags only if the gflags library is a DLL
-#ifndef GFLAGS_SHARED_LIBS
-#  undef  GFLAGS_DLL_DEFINE_FLAG
-#  define GFLAGS_DLL_DEFINE_FLAG
-#endif
 
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
 DEFINE_string(flagfile,   "", "load flags from file");
@@ -1310,13 +1307,12 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
         // We try matching both against the full argv0 and basename(argv0)
         if (glob == ProgramInvocationName()       // small optimization
             || glob == ProgramInvocationShortName()
-#ifdef GFLAGS_HAVE_FNMATCH_H
-            || fnmatch(glob.c_str(),
-                       ProgramInvocationName(),
-                       FNM_PATHNAME) == 0
-            || fnmatch(glob.c_str(),
-                       ProgramInvocationShortName(),
-                       FNM_PATHNAME) == 0
+#if defined(GFLAGS_HAVE_FNMATCH_H)
+            || fnmatch(glob.c_str(), ProgramInvocationName(),      FNM_PATHNAME) == 0
+            || fnmatch(glob.c_str(), ProgramInvocationShortName(), FNM_PATHNAME) == 0
+#elif defined(GFLAGS_HAVE_SHLWAPI_H)
+            || PathMatchSpec(glob.c_str(), ProgramInvocationName())
+            || PathMatchSpec(glob.c_str(), ProgramInvocationShortName())
 #endif
             ) {
           flags_are_relevant = true;

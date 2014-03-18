@@ -246,7 +246,7 @@ static bool FileMatchesSubstring(const string& filename,
     // the string to be at the beginning of a directory component.
     // That should match the first directory component as well, so
     // we allow '/foo' to match a filename of 'foo'.
-    if (!target->empty() && (*target)[0] == '/' &&
+    if (!target->empty() && (*target)[0] == PATH_SEPARATOR &&
         strncmp(filename.c_str(), target->c_str() + 1,
                 strlen(target->c_str() + 1)) == 0)
       return true;
@@ -352,7 +352,8 @@ static void ShowVersion() {
 
 static void AppendPrognameStrings(vector<string>* substrings,
                                   const char* progname) {
-  string r("/");
+  string r("");
+  r += PATH_SEPARATOR;
   r += progname;
   substrings->push_back(r + ".");
   substrings->push_back(r + "-main.");
@@ -387,7 +388,7 @@ void HandleCommandLineHelpFlags() {
     gflags_exitfunc(1);
 
   } else if (!FLAGS_helpon.empty()) {
-    string restrict = "/" + FLAGS_helpon + ".";
+    string restrict = PATH_SEPARATOR + FLAGS_helpon + ".";
     ShowUsageWithFlagsRestrict(progname, restrict.c_str());
     gflags_exitfunc(1);
 
@@ -409,7 +410,7 @@ void HandleCommandLineHelpFlags() {
          ++flag) {
       if (!FileMatchesSubstring(flag->filename, substrings))
         continue;
-      const string package = Dirname(flag->filename) + "/";
+      const string package = Dirname(flag->filename) + PATH_SEPARATOR;
       if (package != last_package) {
         ShowUsageWithFlagsRestrict(progname, package.c_str());
         VLOG(7) << "Found package: " << package;

@@ -35,11 +35,6 @@
 #include "config_for_unittests.h"
 #include <gflags/gflags.h>
 
-#ifndef GFLAGS_SHARED_LIBS
-#  undef  GFLAGS_DLL_DECLARE_FLAG
-#  define GFLAGS_DLL_DECLARE_FLAG
-#endif
-
 #include <math.h>       // for isinf() and isnan()
 #include <stdio.h>
 #include <stdlib.h>
