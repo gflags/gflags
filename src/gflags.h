@@ -149,13 +149,9 @@ extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const std::string* flag, bool 
 // In addition to accessing flags, you can also access argv[0] (the program
 // name) and argv (the entire commandline), which we sock away a copy of.
 // These variables are static, so you should only set them once.
-#ifdef _MSC_VER
-#  pragma warning(push)
-// The solution offered at http://support.microsoft.com/default.aspx?scid=KB;EN-US;168958
-// is not really desireable as we don't want to explicitly instantiate/export any STL types
-#  pragma warning(disable: 4251)
-#endif
-struct GFLAGS_DLL_DECL CommandLineFlagInfo {
+//
+// No need to export this data only structure from DLL, avoiding VS warning 4251.
+struct CommandLineFlagInfo {
   std::string name;            // the name of the flag
   std::string type;            // the type of the flag: int32, etc
   std::string description;     // the "help text" associated with the flag
@@ -168,9 +164,6 @@ struct GFLAGS_DLL_DECL CommandLineFlagInfo {
                                // or via SetCommandLineOption
   const void* flag_ptr;        // pointer to the flag's current value (i.e. FLAGS_foo)
 };
-#ifdef _MSC_VER
-#  pragma warning(pop)
-#endif
 
 // Using this inside of a validator is a recipe for a deadlock.
 // TODO(user) Fix locking when validators are running, to make it safe to
