@@ -364,7 +364,8 @@ inline int SafeFOpen(FILE **fp, const char* fname, const char *mode)
 #else
 	assert(fp != NULL);
 	*fp = fopen(fname, mode);
-	return errno;
+    // errno only guaranteed to be set on failure
+	return ((*fp == NULL) ? errno : 0);
 #endif
 }
 
