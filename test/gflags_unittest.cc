@@ -39,7 +39,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef GFLAGS_HAVE_UNISTD_H
+#ifdef HAVE_UNISTD_H
 #  include <unistd.h>   // for unlink()
 #endif
 #include <vector>

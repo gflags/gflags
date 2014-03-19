@@ -9,74 +9,40 @@
 // System checks
 
 // Define if you have the <stdint.h> header file.
-#cmakedefine GFLAGS_HAVE_STDINT_H
+#cmakedefine HAVE_STDINT_H
 
 // Define if you have the <sys/types.h> header file.
-#cmakedefine GFLAGS_HAVE_SYS_TYPES_H
+#cmakedefine HAVE_SYS_TYPES_H
 
 // Define if you have the <inttypes.h> header file.
-#cmakedefine GFLAGS_HAVE_INTTYPES_H
+#cmakedefine HAVE_INTTYPES_H
 
 // Define if you have the <sys/stat.h> header file.
-#cmakedefine GFLAGS_HAVE_SYS_STAT_H
+#cmakedefine HAVE_SYS_STAT_H
 
 // Define if you have the <unistd.h> header file.
-#cmakedefine GFLAGS_HAVE_UNISTD_H
+#cmakedefine HAVE_UNISTD_H
 
 // Define if you have the <fnmatch.h> header file.
-#cmakedefine GFLAGS_HAVE_FNMATCH_H
+#cmakedefine HAVE_FNMATCH_H
 
 // Define if you have the <shlwapi.h> header file (Windows 2000/XP).
-#cmakedefine GFLAGS_HAVE_SHLWAPI_H
+#cmakedefine HAVE_SHLWAPI_H
 
 // Define if you have the strtoll function.
-#cmakedefine GFLAGS_HAVE_STRTOLL
+#cmakedefine HAVE_STRTOLL
 
 // Define if you have the strtoq function.
-#cmakedefine GFLAGS_HAVE_STRTOQ
+#cmakedefine HAVE_STRTOQ
 
 // Define if you have the <pthread.h> header file.
-#cmakedefine GFLAGS_HAVE_PTHREAD
+#cmakedefine HAVE_PTHREAD
 
 // Define if your pthread library defines the type pthread_rwlock_t
-#cmakedefine GFLAGS_HAVE_RWLOCK
-
-// Backwards compatibility in case users defined these macros themselves
-// or allow users to use these more general macros if the gflags library
-// is build as part of a user project, e.g., included as Git submodule
-#if defined(HAVE_STDINT_H) && !defined(GFLAGS_HAVE_STDINT_H)
-#  define GFLAGS_HAVE_STDINT_H
-#endif
-#if defined(HAVE_SYS_TYPES_H) && !defined(GFLAGS_HAVE_SYS_TYPES_H)
-#  define GFLAGS_HAVE_SYS_TYPES_H
-#endif
-#if defined(HAVE_INTTYPES_H)  && !defined(GFLAGS_HAVE_INTTYPES_H)
-#  define GFLAGS_HAVE_INTTYPES_H
-#endif
-#if defined(HAVE_SYS_STAT_H)  && !defined(GFLAGS_HAVE_SYS_STAT_H)
-#  define GFLAGS_HAVE_SYS_STAT_H
-#endif
-#if defined(HAVE_UNISTD_H)    && !defined(GFLAGS_HAVE_UNISTD_H)
-#  define GFLAGS_HAVE_UNISTD_H
-#endif
-#if defined(HAVE_FNMATCH_H)   && !defined(GFLAGS_HAVE_FNMATCH_H)
-#  define GFLAGS_HAVE_FNMATCH_H
-#endif
-#if defined(HAVE_STRTOLL)     && !defined(GFLAGS_HAVE_STRTOLL)
-#  define GFLAGS_HAVE_STRTOLL
-#endif
-#if defined(HAVE_STRTOLQ)     && !defined(GFLAGS_HAVE_STRTOLQ)
-#  define GFLAGS_HAVE_STRTOLQ
-#endif
-#if defined(HAVE_PTHREAD)     && !defined(GFLAGS_HAVE_PTHREAD)
-#  define GFLAGS_HAVE_PTHREAD
-#endif
-#if defined(HAVE_RWLOCK)      && !defined(GFLAGS_HAVE_RWLOCK)
-#  define GFLAGS_HAVE_RWLOCK
-#endif
+#cmakedefine HAVE_RWLOCK
 
 // gcc requires this to get PRId64, etc.
-#if defined(GFLAGS_HAVE_INTTYPES_H) && !defined(__STDC_FORMAT_MACROS)
+#if defined(HAVE_INTTYPES_H) && !defined(__STDC_FORMAT_MACROS)
 #  define __STDC_FORMAT_MACROS 1
 #endif
 
@@ -138,10 +104,4 @@
 #    define GFLAGS_DLL_DECL_FOR_UNITTESTS __declspec(dllimport)
 #  endif
 #  include "windows_port.h"
-#endif
-
-// Export of STL class instantiations -- no extern keyword to not trigger a warning
-// \sa http://support.microsoft.com/default.aspx?scid=KB;EN-US;168958
-#if GFLAGS_IS_A_DLL && defined(_MSC_VER) && _MSC_VER >= 1100
-#  define GFLAGS_EXTERN_STL
 #endif

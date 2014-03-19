@@ -79,11 +79,11 @@
 // ---------------------------------------------------------------------------
 // Flag types
 #include <string>
-#if @GFLAGS_HAVE_STDINT_H@
+#if @HAVE_STDINT_H@
 #  include <stdint.h>                   // the normal place uint32_t is defined
-#elif @GFLAGS_HAVE_SYS_TYPES_H@
+#elif @HAVE_SYS_TYPES_H@
 #  include <sys/types.h>                // the normal place u_int32_t is defined
-#elif @GFLAGS_HAVE_INTTYPES_H@
+#elif @HAVE_INTTYPES_H@
 #  include <inttypes.h>                 // a third place for uint32_t or u_int32_t
 #endif
 

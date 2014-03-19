@@ -93,9 +93,9 @@
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#if defined(GFLAGS_HAVE_FNMATCH_H)
+#if defined(HAVE_FNMATCH_H)
 #  include <fnmatch.h>
-#elif defined(GFLAGS_HAVE_SHLWAPI_H)
+#elif defined(_MSC_VER) && defined(HAVE_SHLWAPI_H)
 #  include <shlwapi.h>
 #  pragma comment(lib, "shlwapi.lib")
 #endif
@@ -1307,10 +1307,10 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
         // We try matching both against the full argv0 and basename(argv0)
         if (glob == ProgramInvocationName()       // small optimization
             || glob == ProgramInvocationShortName()
-#if defined(GFLAGS_HAVE_FNMATCH_H)
+#if defined(HAVE_FNMATCH_H)
             || fnmatch(glob.c_str(), ProgramInvocationName(),      FNM_PATHNAME) == 0
             || fnmatch(glob.c_str(), ProgramInvocationShortName(), FNM_PATHNAME) == 0
-#elif defined(GFLAGS_HAVE_SHLWAPI_H)
+#elif defined(_MSC_VER) && defined(HAVE_SHLWAPI_H)
             || PathMatchSpec(glob.c_str(), ProgramInvocationName())
             || PathMatchSpec(glob.c_str(), ProgramInvocationShortName())
 #endif

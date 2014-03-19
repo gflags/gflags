@@ -38,7 +38,7 @@
 
 #include <assert.h>
 #include <config.h>
-#ifdef GFLAGS_HAVE_INTTYPES_H
+#ifdef HAVE_INTTYPES_H
 #  include <inttypes.h>
 #endif
 #include <stdarg.h>     // for va_*
@@ -47,7 +47,7 @@
 #include <iostream>
 #include <string>
 #include <errno.h>
-#ifdef GFLAGS_HAVE_SYS_STAT_H
+#ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h> // for mkdir
 #endif
 
@@ -59,10 +59,10 @@ namespace GFLAGS_NAMESPACE {
 extern GFLAGS_DLL_DECL void (*gflags_exitfunc)(int);
 
 // Work properly if either strtoll or strtoq is on this system
-#if defined(GFLAGS_HAVE_STRTOLL)
+#if defined(HAVE_STRTOLL)
 #  define strto64  strtoll
 #  define strtou64 strtoull
-#elif defined(GFLAGS_HAVE_STRTOQ)
+#elif defined(HAVE_STRTOQ)
 #  define strto64  strtoq
 #  define strtou64 strtouq
 #elif defined(_WIN32) && !defined(__MINGW32__) && !defined(__MINGW64__)
