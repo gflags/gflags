@@ -1,0 +1,33 @@
+#!/usr/bin/env python
+
+import os
+import sys
+import subprocess
+import shutil
+
+CMAKE      = '@CMAKE_COMMAND@'
+TMPDIR     = '@TEMPDIR@'
+SRCDIR     = '@SRCDIR@'
+GFLAGS_DIR = '@gflags_BINARY_DIR@'
+
+if __name__ == "__main__":
+  if len(sys.argv) != 2:
+    sys.stderr.write(' '.join(['usage:', sys.argv[0], '<test_name>\n']))
+    sys.exit(1)
+  test_name = sys.argv[1]
+  bindir = os.path.join(TMPDIR, '_'.join(['nc', test_name]))
+  if TMPDIR == '':
+    sys.stderr.write('Temporary directory not set!\n')
+    sys.exit(1)
+  # create build directory
+  if os.path.isdir(bindir): shutil.rmtree(bindir)
+  os.makedirs(bindir)
+  # configure the build tree
+  if subprocess.call([CMAKE, '-Dgflags_DIR:PATH='+GFLAGS_DIR, '-DTEST_NAME:STRING='+test_name, SRCDIR], cwd=bindir) != 0:
+    sys.stderr.write('Failed to configure the build tree!\n')
+    sys.exit(1)
+  # try build, which is supposed to fail (except in case of the sanity check)
+  if subprocess.call([CMAKE, '--build', bindir], cwd=bindir) == 0 and test_name != 'sanity':
+    sys.stderr.write('Build expected to fail, but it succeeded!\n')
+    sys.exit(1)
+  sys.exit(0)

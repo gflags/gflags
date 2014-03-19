@@ -26,7 +26,7 @@
 
 <body>
 
-<h1>How To Use Gflags (formerly Google Commandline Flags)</h1>
+<h1>How To Use gflags (formerly Google Commandline Flags)</h1>
 <small>(as of
 <script type=text/javascript>
   var lm = new Date(document.lastModified);
@@ -38,6 +38,7 @@
 <blockquote><dl>
   <dt> Table of contents </dt>
   <dd> <a href="#intro">Introduction</a> </dd>
+  <dd> <a href="#cmake">Finding and Linking to gflags using CMake</a></dd>
   <dd> <a href="#define">DEFINE: Defining Flags In Program</A> </dd>
   <dd> <a href="#using">Accessing the Flag</A> </dd>
   <dd> <a href="#declare">DECLARE: Using the Flag in a Different File</a> </dd>
@@ -90,6 +91,17 @@ library.  It's a C++ library, so examples are in C++.  However, there
 is a Python port with the same functionality, and this discussion
 translates directly to Python.</p>
 
+<h2> <A name=cmake>Finding and Linking to gflags </A> using CMake</h2>
+
+<p> Using gflags within a project which uses <A href="http://www.cmake.org">CMake</A> for its build system is easy. Therefore, simply add the following CMake code to your <code>CMakeLists.txt</code> file.
+
+<pre>
+   find_package (gflags REQUIRED)
+   include_directories (${gflags_INCLUDE_DIR})
+   
+   add_executable (foo main.cc)
+   target_link_libraries (foo gflags)
+</pre>
 
 <h2> <A name=define>DEFINE: Defining Flags In Program</A> </h2>
 
@@ -535,7 +547,7 @@ useful for security reasons.</p>
 
 <hr>
 <address>
-Craig Silverstein<br>
+Craig Silverstein, Andreas Schuh<br>
 <script type=text/javascript>
   var lm = new Date(document.lastModified);
   document.write(lm.toDateString());

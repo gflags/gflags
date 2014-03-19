@@ -32,11 +32,6 @@
 // A simple mutex wrapper, supporting locks and read-write locks.
 // You should assume the locks are *not* re-entrant.
 //
-// To use: you should define the following macros in your configure.ac:
-//   ACX_PTHREAD
-//   AC_RWLOCK
-// The latter is defined in ../autoconf.
-//
 // This class is meant to be internal-only and should be wrapped by an
 // internal namespace.  Before you use this module, please give the
 // name of your internal namespace for this module.  Or, if you want
@@ -108,13 +103,13 @@
 // weird to a Mutex's memory after it is destroyed, but for a
 // static global variable, that's pretty safe.
 
-#ifndef GOOGLE_MUTEX_H_
-#define GOOGLE_MUTEX_H_
+#ifndef GFLAGS_MUTEX_H_
+#define GFLAGS_MUTEX_H_
 
-#include "config.h"           // to figure out pthreads support
+#include "gflags_declare.h"     // to figure out pthreads support
 
 #if defined(NO_THREADS)
-  typedef int MutexType;      // to keep a lock-count
+  typedef int MutexType;        // to keep a lock-count
 #elif defined(_WIN32) || defined(__CYGWIN32__) || defined(__CYGWIN64__)
 # ifndef WIN32_LEAN_AND_MEAN
 #   define WIN32_LEAN_AND_MEAN  // We only need minimal includes
@@ -353,4 +348,4 @@ using namespace MUTEX_NAMESPACE;
 
 #undef MUTEX_NAMESPACE
 
-#endif  /* #define GOOGLE_MUTEX_H__ */
+#endif  /* #define GFLAGS_MUTEX_H__ */

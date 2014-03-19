@@ -87,18 +87,17 @@
 // other hand, hooks into CommandLineFlagParser.  Other API functions
 // are, similarly, mostly hooks into the functionality described above.
 
-// This comes first to ensure we define __STDC_FORMAT_MACROS in time.
-#include <config.h>
-#if defined(HAVE_INTTYPES_H) && !defined(__STDC_FORMAT_MACROS)
-# define __STDC_FORMAT_MACROS 1   // gcc requires this to get PRId64, etc.
-#endif
+#include "config.h"
+#include "gflags.h"
 
-#include <gflags/gflags.h>
 #include <assert.h>
 #include <ctype.h>
 #include <errno.h>
-#ifdef HAVE_FNMATCH_H
-# include <fnmatch.h>
+#if defined(HAVE_FNMATCH_H)
+#  include <fnmatch.h>
+#elif defined(_MSC_VER) && defined(HAVE_SHLWAPI_H)
+#  include <shlwapi.h>
+#  pragma comment(lib, "shlwapi.lib")
 #endif
 #include <stdarg.h> // For va_list and related operations
 #include <stdio.h>
@@ -109,31 +108,23 @@
 #include <string>
 #include <utility>     // for pair<>
 #include <vector>
+
 #include "mutex.h"
 #include "util.h"
 
-#ifndef PATH_SEPARATOR
-#define PATH_SEPARATOR  '/'
-#endif
-
-
 // Special flags, type 1: the 'recursive' flags.  They set another flag's val.
-DEFINE_string(flagfile, "",
-              "load flags from file");
-DEFINE_string(fromenv, "",
-              "set flags from the environment"
-              " [use 'export FLAGS_flag1=value']");
-DEFINE_string(tryfromenv, "",
-              "set flags from the environment if present");
+DEFINE_string(flagfile,   "", "load flags from file");
+DEFINE_string(fromenv,    "", "set flags from the environment"
+                              " [use 'export FLAGS_flag1=value']");
+DEFINE_string(tryfromenv, "", "set flags from the environment if present");
 
 // Special flags, type 2: the 'parsing' flags.  They modify how we parse.
-DEFINE_string(undefok, "",
-              "comma-separated list of flag names that it is okay to specify "
-              "on the command line even if the program does not define a flag "
-              "with that name.  IMPORTANT: flags in this list that have "
-              "arguments MUST use the flag=value format");
+DEFINE_string(undefok, "", "comma-separated list of flag names that it is okay to specify "
+                           "on the command line even if the program does not define a flag "
+                           "with that name.  IMPORTANT: flags in this list that have "
+                           "arguments MUST use the flag=value format");
 
-_START_GOOGLE_NAMESPACE_
+namespace GFLAGS_NAMESPACE {
 
 using std::map;
 using std::pair;
@@ -206,7 +197,7 @@ class FlagValue {
 
  private:
   friend class CommandLineFlag;  // for many things, including Validate()
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // calls New()
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // calls New()
   friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
   template <typename T> friend T GetFromEnv(const char*, const char*, T);
   friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
@@ -406,8 +397,7 @@ const char* FlagValue::TypeName() const {
     assert(false);
     return "";
   }
-  // Directly indexing the strigns in the 'types' string, each of them
-  // is 7 bytes long.
+  // Directly indexing the strings in the 'types' string, each of them is 7 bytes long.
   return &types[type_ * 7];
 }
 
@@ -504,7 +494,7 @@ class CommandLineFlag {
  private:
   // for SetFlagLocked() and setting flags_by_ptr_
   friend class FlagRegistry;
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // for cloning the values
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // for cloning the values
   // set validate_fn
   friend bool AddFlagValidator(const void*, ValidateFnProto);
 
@@ -671,9 +661,9 @@ class FlagRegistry {
   static FlagRegistry* GlobalRegistry();   // returns a singleton registry
 
  private:
-  friend class GOOGLE_NAMESPACE::FlagSaverImpl;  // reads all the flags in order to copy them
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // reads all the flags in order to copy them
   friend class CommandLineFlagParser;    // for ValidateAllFlags
-  friend void GOOGLE_NAMESPACE::GetAllFlags(vector<CommandLineFlagInfo>*);
+  friend void GFLAGS_NAMESPACE::GetAllFlags(vector<CommandLineFlagInfo>*);
 
   // The map from name to flag, for FindFlagLocked().
   typedef map<const char*, CommandLineFlag*, StringCmp> FlagMap;
@@ -1003,8 +993,8 @@ static string ReadFileIntoString(const char* filename) {
   const int kBufSize = 8092;
   char buffer[kBufSize];
   string s;
-  FILE* fp = fopen(filename, "r");
-  if (!fp)  PFATAL(filename);
+  FILE* fp;
+  if ((errno = SafeFOpen(&fp, filename, "r")) != 0) PFATAL(filename);
   size_t n;
   while ( (n=fread(buffer, 1, kBufSize, fp)) > 0 ) {
     if (ferror(fp))  PFATAL(filename);
@@ -1148,8 +1138,8 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
     }
 
     const string envname = string("FLAGS_") + string(flagname);
-    const char* envval = getenv(envname.c_str());
-    if (!envval) {
+	string envval;
+	if (!SafeGetEnv(envname.c_str(), envval)) {
       if (errors_are_fatal) {
         error_flags_[flagname] = (string(kError) + envname +
                                   " not found in environment\n");
@@ -1158,15 +1148,14 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
     }
 
     // Avoid infinite recursion.
-    if ((strcmp(envval, "fromenv") == 0) ||
-        (strcmp(envval, "tryfromenv") == 0)) {
+    if (envval == "fromenv" || envval == "tryfromenv") {
       error_flags_[flagname] =
           StringPrintf("%sinfinite recursion on environment flag '%s'\n",
-                       kError, envval);
+                       kError, envval.c_str());
       continue;
     }
 
-    msg += ProcessSingleOptionLocked(flag, envval, set_mode);
+    msg += ProcessSingleOptionLocked(flag, envval.c_str(), set_mode);
   }
   return msg;
 }
@@ -1318,13 +1307,12 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
         // We try matching both against the full argv0 and basename(argv0)
         if (glob == ProgramInvocationName()       // small optimization
             || glob == ProgramInvocationShortName()
-#ifdef HAVE_FNMATCH_H
-            || fnmatch(glob.c_str(),
-                       ProgramInvocationName(),
-                       FNM_PATHNAME) == 0
-            || fnmatch(glob.c_str(),
-                       ProgramInvocationShortName(),
-                       FNM_PATHNAME) == 0
+#if defined(HAVE_FNMATCH_H)
+            || fnmatch(glob.c_str(), ProgramInvocationName(),      FNM_PATHNAME) == 0
+            || fnmatch(glob.c_str(), ProgramInvocationShortName(), FNM_PATHNAME) == 0
+#elif defined(_MSC_VER) && defined(HAVE_SHLWAPI_H)
+            || PathMatchSpec(glob.c_str(), ProgramInvocationName())
+            || PathMatchSpec(glob.c_str(), ProgramInvocationShortName())
 #endif
             ) {
           flags_are_relevant = true;
@@ -1346,14 +1334,15 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 
 template<typename T>
 T GetFromEnv(const char *varname, const char* type, T dflt) {
-  const char* const valstr = getenv(varname);
-  if (!valstr)
-    return dflt;
-  FlagValue ifv(new T, type, true);
-  if (!ifv.ParseFrom(valstr))
-    ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
-                varname, valstr);
-  return OTHER_VALUE_AS(ifv, T);
+  std::string valstr;
+  if (SafeGetEnv(varname, valstr)) {
+    FlagValue ifv(new T, type, true);
+    if (!ifv.ParseFrom(valstr.c_str())) {
+      ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
+                  varname, valstr.c_str());
+	}
+    return OTHER_VALUE_AS(ifv, T);
+  } else return dflt;
 }
 
 bool AddFlagValidator(const void* flag_ptr, ValidateFnProto validate_fn_proto) {
@@ -1505,7 +1494,7 @@ const char* ProgramInvocationName() {             // like the GNU libc fn
 }
 const char* ProgramInvocationShortName() {        // like the GNU libc fn
   const char* slash = strrchr(argv0, '/');
-#ifdef OS_WINDOWS
+#ifdef _WINDOWS
   if (!slash)  slash = strrchr(argv0, '\\');
 #endif
   return slash ? slash + 1 : argv0;
@@ -1765,8 +1754,8 @@ bool ReadFlagsFromString(const string& flagfilecontents,
 
 // TODO(csilvers): nix prog_name in favor of ProgramInvocationShortName()
 bool AppendFlagsIntoFile(const string& filename, const char *prog_name) {
-  FILE *fp = fopen(filename.c_str(), "a");
-  if (!fp) {
+  FILE *fp;
+  if (SafeFOpen(&fp, filename.c_str(), "a") != 0) {
     return false;
   }
 
@@ -1824,10 +1813,18 @@ uint64 Uint64FromEnv(const char *v, uint64 dflt) {
 double DoubleFromEnv(const char *v, double dflt) {
   return GetFromEnv(v, "double", dflt);
 }
+
+#ifdef _MSC_VER
+#  pragma warning(push)
+#  pragma warning(disable: 4996) // ignore getenv security warning
+#endif
 const char *StringFromEnv(const char *varname, const char *dflt) {
   const char* const val = getenv(varname);
   return val ? val : dflt;
 }
+#ifdef _MSC_VER
+#  pragma warning(pop)
+#endif
 
 
 // --------------------------------------------------------------------
@@ -1957,4 +1954,5 @@ void ShutDownCommandLineFlags() {
   FlagRegistry::DeleteGlobalRegistry();
 }
 
-_END_GOOGLE_NAMESPACE_
+
+} // namespace GFLAGS_NAMESPACE
