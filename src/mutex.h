@@ -110,7 +110,7 @@
 
 #if defined(NO_THREADS)
   typedef int MutexType;        // to keep a lock-count
-#elif defined(_WIN32) || defined(__CYGWIN32__) || defined(__CYGWIN64__)
+#elif defined(OS_WINDOWS)
 # ifndef WIN32_LEAN_AND_MEAN
 #   define WIN32_LEAN_AND_MEAN  // We only need minimal includes
 # endif
@@ -227,7 +227,7 @@ bool Mutex::TryLock()      { if (mutex_) return false; Lock(); return true; }
 void Mutex::ReaderLock()   { assert(++mutex_ > 0); }
 void Mutex::ReaderUnlock() { assert(mutex_-- > 0); }
 
-#elif defined(_WIN32) || defined(__CYGWIN32__) || defined(__CYGWIN64__)
+#elif defined(OS_WINDOWS)
 
 Mutex::Mutex() : destroy_(true) {
   InitializeCriticalSection(&mutex_);

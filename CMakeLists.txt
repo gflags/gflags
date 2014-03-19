@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 2.8.4 FATAL_ERROR)
 
 if (WIN32 AND NOT CYGWIN)
-  set (WINDOWS 1)
+  set (OS_WINDOWS 1)
 else ()
-  set (WINDOWS 0)
+  set (OS_WINDOWS 0)
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -34,7 +34,7 @@ version_numbers (
 # configure options
 option (BUILD_SHARED_LIBS "Request build of shared libraries." OFF)
 
-if (WINDOWS AND BUILD_SHARED_LIBS)
+if (OS_WINDOWS AND BUILD_SHARED_LIBS)
   set (GFLAGS_IS_A_DLL 1)
 else ()
   set (GFLAGS_IS_A_DLL 0)
@@ -184,7 +184,7 @@ set (GFLAGS_SRCS
   "gflags_completions.cc"
 )
 
-if (WINDOWS)
+if (OS_WINDOWS)
   list (APPEND PRIVATE_HDRS "windows_port.h")
   list (APPEND GFLAGS_SRCS  "windows_port.cc")
 endif ()
@@ -226,7 +226,7 @@ endif ()
 
 # ----------------------------------------------------------------------------
 # installation
-if (WINDOWS)
+if (OS_WINDOWS)
   set (RUNTIME_INSTALL_DIR Bin)
   set (LIBRARY_INSTALL_DIR Lib)
   set (INCLUDE_INSTALL_DIR Include)

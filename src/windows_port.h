@@ -112,7 +112,7 @@ inline void setenv(const char* name, const char* value, int) {
 #define PRId64  "I64d"
 #define PRIu64  "I64u"
 
-#ifndef __MINGW32__
+#if !defined(__MINGW32__) && !defined(__MINGW64__)
 #define strtoq   _strtoi64
 #define strtouq  _strtoui64
 #define strtoll  _strtoi64

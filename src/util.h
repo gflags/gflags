@@ -65,7 +65,7 @@ extern GFLAGS_DLL_DECL void (*gflags_exitfunc)(int);
 #elif defined(HAVE_STRTOQ)
 #  define strto64  strtoq
 #  define strtou64 strtouq
-#elif defined(_WIN32) && !defined(__MINGW32__) && !defined(__MINGW64__)
+#elif defined(OS_WINDOWS)
 #  define strto64  _strtoi64
 #  define strtou64 _strtoui64
 // Neither strtoll nor strtoq are defined.  I hope strtol works!

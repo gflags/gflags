@@ -5,6 +5,9 @@
 // ---------------------------------------------------------------------------
 // System checks
 
+// Define if you build this library for a MS Windows OS.
+#cmakedefine OS_WINDOWS
+
 // Define if you have the <stdint.h> header file.
 #cmakedefine HAVE_STDINT_H
 
@@ -73,7 +76,7 @@
 // ---------------------------------------------------------------------------
 // Path separator
 #ifndef PATH_SEPARATOR
-#  if _WIN32
+#  ifdef OS_WINDOWS
 #    define PATH_SEPARATOR  '\\'
 #  else
 #    define PATH_SEPARATOR  '/'
@@ -101,7 +104,7 @@
 #  define GFLAGS_DLL_DEFINE_FLAG GFLAGS_DLL_DECL
 #endif
 
-#ifdef _WIN32
+#ifdef OS_WINDOWS
 // The unittests import the symbols of the shared gflags library
 #  if GFLAGS_IS_A_DLL && defined(_MSC_VER)
 #    define GFLAGS_DLL_DECL_FOR_UNITTESTS __declspec(dllimport)
