@@ -408,7 +408,7 @@ TEST(FlagFileTest, FilenamesOurfileFirst) {
       -1.0);
 }
 
-#if defined(HAVE_FNMATCH_H) || (defined(_MSC_VER) && defined(HAVE_SHLWAPI_H))  // otherwise glob isn't supported
+#if defined(HAVE_FNMATCH_H) || defined(HAVE_SHLWAPI_H)  // otherwise glob isn't supported
 TEST(FlagFileTest, FilenamesOurfileGlob) {
   FLAGS_test_string = "initial";
   FLAGS_test_bool = false;
@@ -460,7 +460,7 @@ TEST(FlagFileTest, FilenamesOurfileInBigList) {
       1,
       -1.0);
 }
-#endif  // defined(HAVE_FNMATCH_H) || (defined(_MSC_VER) && defined(HAVE_SHLWAPI_H))
+#endif  // defined(HAVE_FNMATCH_H) || defined(HAVE_SHLWAPI_H)
 
 // Tests that a failed flag-from-string read keeps flags at default values
 TEST(FlagFileTest, FailReadFlagsFromString) {

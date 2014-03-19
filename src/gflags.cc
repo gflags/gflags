@@ -95,9 +95,8 @@
 #include <errno.h>
 #if defined(HAVE_FNMATCH_H)
 #  include <fnmatch.h>
-#elif defined(_MSC_VER) && defined(HAVE_SHLWAPI_H)
+#elif defined(HAVE_SHLWAPI_H)
 #  include <shlwapi.h>
-#  pragma comment(lib, "shlwapi.lib")
 #endif
 #include <stdarg.h> // For va_list and related operations
 #include <stdio.h>
@@ -1310,7 +1309,7 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 #if defined(HAVE_FNMATCH_H)
             || fnmatch(glob.c_str(), ProgramInvocationName(),      FNM_PATHNAME) == 0
             || fnmatch(glob.c_str(), ProgramInvocationShortName(), FNM_PATHNAME) == 0
-#elif defined(_MSC_VER) && defined(HAVE_SHLWAPI_H)
+#elif defined(HAVE_SHLWAPI_H)
             || PathMatchSpec(glob.c_str(), ProgramInvocationName())
             || PathMatchSpec(glob.c_str(), ProgramInvocationShortName())
 #endif
