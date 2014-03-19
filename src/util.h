@@ -58,16 +58,13 @@ namespace GFLAGS_NAMESPACE {
 // This is used for unittests for death-testing.  It is defined in gflags.cc.
 extern GFLAGS_DLL_DECL void (*gflags_exitfunc)(int);
 
-// Work properly if either strtoll or strtoq is on this system
-#if defined(HAVE_STRTOLL)
+// Work properly if either strtoll or strtoq is on this system.
+#if defined(strtoll) || defined(HAVE_STRTOLL)
 #  define strto64  strtoll
 #  define strtou64 strtoull
 #elif defined(HAVE_STRTOQ)
 #  define strto64  strtoq
 #  define strtou64 strtouq
-#elif defined(OS_WINDOWS)
-#  define strto64  _strtoi64
-#  define strtou64 _strtoui64
 // Neither strtoll nor strtoq are defined.  I hope strtol works!
 #else
 #  define strto64  strtol
