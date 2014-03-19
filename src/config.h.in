@@ -2,9 +2,6 @@
 
 // Note: This header file is only used internally. It is not part of public interface!
 
-// Whether gflags library is shared. Used for DLL import declaration.
-#define GFLAGS_IS_A_DLL @GFLAGS_IS_A_DLL@
-
 // ---------------------------------------------------------------------------
 // System checks
 
@@ -70,6 +67,9 @@
 // Define to the address where bug reports for this package should be sent.
 #define PACKAGE_BUGREPORT @PACKAGE_BUGREPORT@
 
+// Namespace of gflags library symbols.
+#define GFLAGS_NAMESPACE @GFLAGS_NAMESPACE@
+
 // ---------------------------------------------------------------------------
 // Path separator
 #ifndef PATH_SEPARATOR
@@ -82,6 +82,9 @@
 
 // ---------------------------------------------------------------------------
 // Windows
+
+// Whether gflags library is shared.
+#define GFLAGS_IS_A_DLL @GFLAGS_IS_A_DLL@
 
 // Always export symbols when compiling a shared library as this file is only
 // included by internal modules when building the gflags library itself.

@@ -38,24 +38,6 @@
 #define GFLAGS_DECLARE_H_
 
 // ---------------------------------------------------------------------------
-// Meta-information
-
-// Version number of gflags library.
-#define GFLAGS_VERSION_STRING "@PACKAGE_VERSION@"
-
-#define GFLAGS_VERSION_MAJOR @PACKAGE_VERSION_MAJOR@ ///< Major version number.
-#define GFLAGS_VERSION_MINOR @PACKAGE_VERSION_MINOR@ ///< Minor version number.
-#define GFLAGS_VERSION_PATCH @PACKAGE_VERSION_PATCH@ ///< Version patch number.
-
-// ---------------------------------------------------------------------------
-// Namespace for gflags symbols.
-#define GFLAGS_NAMESPACE @GFLAGS_NAMESPACE@
-
-// ---------------------------------------------------------------------------
-// Unused attribute declaration for GNU GCC.
-#define GFLAGS_ATTRIBUTE_UNUSED @GFLAGS_ATTRIBUTE_UNUSED@
-
-// ---------------------------------------------------------------------------
 // Windows DLL import/export.
 
 // We always want to import the symbols of the gflags library
@@ -87,7 +69,7 @@
 #  include <inttypes.h>                 // a third place for uint32_t or u_int32_t
 #endif
 
-namespace GFLAGS_NAMESPACE {
+namespace @GFLAGS_NAMESPACE@ {
 
 #if @GFLAGS_INTTYPES_FORMAT_C99@ // C99
 typedef int32_t          int32;
@@ -108,7 +90,7 @@ typedef unsigned __int64 uint64;
 #  error Do not know how to define a 32-bit integer quantity on your system
 #endif
 
-} // namespace GFLAGS_NAMESPACE
+} // namespace @GFLAGS_NAMESPACE@
 
 
 namespace fLS {
