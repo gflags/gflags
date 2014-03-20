@@ -16,6 +16,10 @@ in order to keep the two public repositories in sync.
 When fixing an issue for a pull request through either of these hosting
 platforms, please reference the issue number as 
 [https://code.google.com/p/support/wiki/IssueTracker#Integration_with_version_control described here].
+For the further development, I am following the
+[http://nvie.com/posts/a-successful-git-branching-model/ Git branching model]
+with feature branch names prefixed by "feature/" and bugfix branch names
+prefixed by "bugfix/", respectively.
 
 Binary and source distribution packages can be downloaded from
 [https://github.com/schuhschuh/gflags GitHub] as Google Code no longer
