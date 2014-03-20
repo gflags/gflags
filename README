@@ -1,5 +1,0 @@
-This repository contains the C++ implementation of the commandline flags module
-originally developed at Google. Documentation for this module is in doc/.
-The python version of gflags is now a separate project.
-
-See INSTALL for (generic) installation instructions.

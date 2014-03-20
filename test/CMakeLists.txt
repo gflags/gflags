@@ -12,7 +12,17 @@ set (GFLAGS_FLAGFILES_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 # ----------------------------------------------------------------------------
 # common include directories and link libraries
 include_directories ("${CMAKE_CURRENT_SOURCE_DIR}")
-link_libraries (gflags_nothreads)
+
+if (BUILD_SHARED_LIBS)
+  set (type shared)
+else ()
+  set (type static)
+endif ()
+if (BUILD_gflags_LIB)
+  link_libraries (gflags-${type})
+else ()
+  link_libraries (gflags_nothreads-${type})
+endif ()
 
 # ----------------------------------------------------------------------------
 # STRIP_FLAG_HELP
@@ -35,7 +45,7 @@ add_executable (gflags_unittest      gflags_unittest.cc)
 add_executable (gflags_unittest-main gflags_unittest-main.cc)
 add_executable (gflags_unittest_main gflags_unittest_main.cc)
 
-if (WIN32 AND NOT CYGWIN)
+if (OS_WINDOWS)
   set (SLASH "\\\\")
 else ()
   set (SLASH "/")
@@ -146,11 +156,11 @@ add_gflags_test(always_fail 1 "ERROR: failed validation of new value 'true' for 
 
 # ----------------------------------------------------------------------------
 # (negative) compilation tests
-if (BUILD_NEGATIVE_COMPILATION_TESTS)
+if (BUILD_NC_TESTS)
   find_package (PythonInterp)
   if (NOT PYTHON_EXECUTABLE)
     message (FATAL_ERROR "No Python installation found! It is required by the negative compilation tests."
-                         " Either install Python or set NEGATIVE_COMPILATION_TESTS to FALSE and try again.")
+                         " Either install Python or set BUILD_NC_TESTS to FALSE and try again.")
   endif ()
   set (SRCDIR "${CMAKE_CURRENT_SOURCE_DIR}/nc")
   configure_file (gflags_nc.py.in "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nc.py" @ONLY)
