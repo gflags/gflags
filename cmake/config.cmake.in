@@ -1,0 +1,23 @@
+## gflags CMake configuration file
+
+# library version information
+set (@PACKAGE_NAME@_VERSION_STRING "@PACKAGE_VERSION@")
+set (@PACKAGE_NAME@_VERSION_MAJOR  @PACKAGE_VERSION_MAJOR@)
+set (@PACKAGE_NAME@_VERSION_MINOR  @PACKAGE_VERSION_MINOR@)
+set (@PACKAGE_NAME@_VERSION_PATCH  @PACKAGE_VERSION_PATCH@)
+
+# import targets
+include ("${CMAKE_CURRENT_LIST_DIR}/@PACKAGE_NAME@-export.cmake")
+
+# installation prefix
+get_filename_component (CMAKE_CURRENT_LIST_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
+get_filename_component (_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_PREFIX_REL2CONFIG_DIR@" ABSOLUTE)
+
+# include directory
+set (@PACKAGE_NAME@_INCLUDE_DIR "${_INSTALL_PREFIX}/@INCLUDE_INSTALL_DIR@")
+
+# gflags library
+set (@PACKAGE_NAME@_LIBRARIES gflags)
+
+# unset private variables
+unset (_INSTALL_PREFIX)
