@@ -1,3 +1,37 @@
+=== 20 March 2014 ===
+
+I've just released gflags 2.1.0.
+
+The major changes are the use of CMake for the build configuration instead
+of the autotools and packaging support through CPack. This release compiles
+with all major compilers without warnings and passed the unit tests on 
+Ubuntu 12.04, Windows 7 (Visual Studio 2008 and 2010, Cygwin, MinGW), and
+Mac OS X (Xcode 5.1).
+
+The SVN repository on Google Code is now frozen and replaced by a Git
+repository such that it can be used as Git submodule by projects. The main
+hosting of this project remains at Google Code. Thanks to the distributed
+character of Git, I can push (and pull) changes from both GitHub and Google Code
+in order to keep the two public repositories in sync.
+When fixing an issue for a pull request through either of these hosting
+platforms, please reference the issue number as 
+[https://code.google.com/p/support/wiki/IssueTracker#Integration_with_version_control described here].
+
+Binary and source distribution packages can be downloaded from
+[https://github.com/schuhschuh/gflags GitHub] as Google Code no longer
+permits the upload of such download packages.
+
+
+=== 14 January 2013 ===
+
+The migration of the build system to CMake is almost complete.
+What remains to be done is rewriting the tests in Python such they can be
+executed on non-Unix platforms and splitting them up into separate CTest tests.
+Though merging these changes into the master branch yet remains to be done,
+it is recommended to already start using the
+[https://github.com/schuhschuh/gflags/tree/cmake-migration cmake-migration] branch.
+
+
 === 20 April 2013 ===
 
 More than a year has past since I (Andreas) took over the maintenance for
