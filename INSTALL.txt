@@ -3,9 +3,9 @@ INSTALLING A BINARY DISTRIBUTION PACKAGE
 ========================================
 
 No official binary distribution packages are provided by the gflags developers.
-There may, however, be binary packages available for your OS, in particular
-for various flavors of Linux. Please consult the package repositories of your
-Linux distribution to see if a binary package is available.
+There may, however, be binary packages available for your OS at
+https://code.google.com/p/gflags/downloads/list. Please consult also the
+package repositories of your Linux distribution.
 
 For example on Debian/Ubuntu Linux, gflags can be installed using the
 following command:
