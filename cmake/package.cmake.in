@@ -37,6 +37,7 @@ elseif (CPACK_GENERATOR MATCHES "DEB")
   if (NOT RV EQUAL 0)
     set (CPACK_DEBIAN_PACKAGE_ARCHITECTURE i386)
   endif ()
+
   set (CPACK_DEBIAN_PACKAGE_DEPENDS)
   set (CPACK_DEBIAN_PACKAGE_SECTION    "devel")
   set (CPACK_DEBIAN_PACKAGE_PRIORITY   "optional")
@@ -46,6 +47,15 @@ elseif (CPACK_GENERATOR MATCHES "DEB")
 # ------------------------------------------------------------------------------
 # RPM package
 elseif (CPACK_GENERATOR MATCHES "RPM")
+
+  execute_process (
+    COMMAND         dpkg --print-architecture
+    RESULT_VARIABLE RV
+    OUTPUT_VARIABLE CPACK_RPM_PACKAGE_ARCHITECTURE
+  )
+  if (NOT RV EQUAL 0)
+    set (CPACK_RPM_PACKAGE_ARCHITECTURE i386)
+  endif ()
 
   set (CPACK_PACKAGE_FILE_NAME   "${CPACK_PACKAGE_NAME}")
   if (DEVEL)
