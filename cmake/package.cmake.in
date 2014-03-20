@@ -51,4 +51,9 @@ elseif ("^${CPACK_GENERATOR}$" STREQUAL "RPM")
   endif ()
   set (CPACK_PACKAGE_FILE_NAME   "${CPACK_PACKAGE_FILE_NAME}-${CPACK_PACKAGE_VERSION}-1_${CMAKE_SYSTEM_PROCESSOR}")
 
+  set (CPACK_RPM_PACKAGE_GROUP   "Development/Libraries")
+  set (CPACK_RPM_PACKAGE_LICENSE "BSD")
+  set (CPACK_RPM_PACKAGE_URL     "http://code.google.com/p/gflags")
+  set (CPACK_RPM_CHANGELOG_FILE  "@CPACK_RESOURCE_FILE_CHANGELOG@")
+
 endif ()
