@@ -232,6 +232,9 @@ foreach (TYPE IN ITEMS STATIC SHARED)
           set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL};NOTHREADS")
         else ()
           set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL}")
+          if (CMAKE_USE_PTHREADS_INIT)
+            target_link_libraries (gflags${opts}-${type} ${CMAKE_THREAD_LIBS_INIT})
+          endif ()
         endif ()
         set_target_properties (
           gflags${opts}-${type} PROPERTIES COMPILE_DEFINITIONS "${defines}"
