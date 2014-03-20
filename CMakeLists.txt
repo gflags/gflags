@@ -375,6 +375,25 @@ if (BUILD_PACKAGING)
     endif ()
   else ()
     string (TOLOWER "${CMAKE_SYSTEM_NAME}" CPACK_SYSTEM_NAME)
+    if (CMAKE_CXX_FLAGS MATCHES "-m32")
+      set (CPACK_PACKAGE_ARCHITECTURE i386)
+    else ()
+      execute_process (
+        COMMAND         dpkg --print-architecture
+        RESULT_VARIABLE RV
+        OUTPUT_VARIABLE CPACK_PACKAGE_ARCHITECTURE
+      )
+      if (RV EQUAL 0)
+	      string (STRIP "${CPACK_PACKAGE_ARCHITECTURE}" CPACK_PACKAGE_ARCHITECTURE)
+      else ()
+        execute_process (COMMAND uname -m OUTPUT_VARIABLE CPACK_PACKAGE_ARCHITECTURE)
+        if (CPACK_PACKAGE_ARCHITECTURE MATCHES "x86_64")
+	        set (CPACK_PACKAGE_ARCHITECTURE amd64)
+        else ()
+          set (CPACK_PACKAGE_ARCHITECTURE i386)
+        endif ()
+      endif ()
+    endif ()
   endif ()
 
   # source package settings
