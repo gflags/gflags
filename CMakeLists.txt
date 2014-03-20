@@ -338,7 +338,7 @@ if (BUILD_PACKAGING)
   mark_as_advanced (CPACK_GENERATOR CPACK_SOURCE_GENERATOR)
 
   # common package information
-  set (CPACK_PACKAGE_VENDOR              "Open Source by Andreas Schuh")
+  set (CPACK_PACKAGE_VENDOR              "Andreas Schuh")
   set (CPACK_PACKAGE_CONTACT             "google-gflags@googlegroups.com")
   set (CPACK_PACKAGE_NAME                "${PACKAGE_NAME}")
   set (CPACK_PACKAGE_VERSION             "${PACKAGE_VERSION}")
