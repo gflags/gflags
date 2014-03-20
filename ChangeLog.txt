@@ -126,7 +126,7 @@
 - Better error messages when bool flags collide (colohan)
 - Only evaluate DEFINE_foo macro args once (csilvers)
 
-* Wed Mar 26 - Google Inc. <opensource@google.com>
+* Wed Mar 26 2008 - Google Inc. <opensource@google.com>
 
 - google-gflags: version 0.8
 - Export DescribeOneFlag() in the API
