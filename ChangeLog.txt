@@ -7,6 +7,7 @@
 - Fixed issue 57: Use _strdup instead of strdup on Windows
 - Fixed issue 62: Change all preprocessor include guards to start with GFLAGS_
 - Fixed issue 64: Add DEFINE_validator macro
+- Fixed issue 73: Warnings in Visual Studio 2010 and unable to compile unit test
 
 * Wed Jan 25 2012 - Google Inc. <google-gflags@googlegroups.com>
 
