@@ -354,7 +354,7 @@ if (BUILD_PACKAGING)
   set (CPACK_PACKAGE_RELOCATABLE         TRUE)
   set (CPACK_MONOLITHIC_INSTALL          TRUE)
 
-  # RPM specification
+  # RPM package information -- used in cmake/package.cmake.in also for DEB
   set (CPACK_RPM_PACKAGE_GROUP   "Development/Libraries")
   set (CPACK_RPM_PACKAGE_LICENSE "BSD")
   set (CPACK_RPM_PACKAGE_URL     "http://code.google.com/p/gflags")
