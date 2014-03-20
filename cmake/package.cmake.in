@@ -19,7 +19,7 @@ if (CPACK_GENERATOR MATCHES "PackageMaker|DragNDrop")
 
 # ------------------------------------------------------------------------------
 # Debian package
-elseif ("^${CPACK_GENERATOR}$" STREQUAL "DEB")
+elseif (CPACK_GENERATOR MATCHES "DEB")
 
   set (CPACK_PACKAGE_FILE_NAME   "lib${CPACK_PACKAGE_NAME}")
   if (DEVEL)
@@ -43,7 +43,7 @@ elseif ("^${CPACK_GENERATOR}$" STREQUAL "DEB")
 
 # ------------------------------------------------------------------------------
 # RPM package
-elseif ("^${CPACK_GENERATOR}$" STREQUAL "RPM")
+elseif (CPACK_GENERATOR MATCHES "RPM")
 
   set (CPACK_PACKAGE_FILE_NAME   "${CPACK_PACKAGE_NAME}")
   if (DEVEL)
