@@ -197,6 +197,15 @@ else ()
   set (GFLAGS_ATTRIBUTE_UNUSED)
 endif ()
 
+# whenever we build a shared library (DLL on Windows), configure the public
+# headers of the API for use of this library rather than the optionally
+# also build statically linked library; users can override GFLAGS_DLL_DECL
+if (BUILD_SHARED_LIBS)
+  set (GFLAGS_IS_A_DLL 1)
+else ()
+  set (GFLAGS_IS_A_DLL 0)
+endif ()
+
 configure_headers (PUBLIC_HDRS  ${PUBLIC_HDRS})
 configure_sources (PRIVATE_HDRS ${PRIVATE_HDRS})
 configure_sources (GFLAGS_SRCS  ${GFLAGS_SRCS})
