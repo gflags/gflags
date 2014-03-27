@@ -24,7 +24,15 @@ version_numbers (
 
 # ----------------------------------------------------------------------------
 # options
-set (GFLAGS_NAMESPACE "${PACKAGE_NAME}" CACHE STRING "C++ namespace identifier of gflags library.")
+set (GFLAGS_NAMESPACE   "${PACKAGE_NAME}" CACHE STRING "C++ namespace identifier of gflags library.")
+set (GFLAGS_INCLUDE_DIR "${PACKAGE_NAME}" CACHE STRING "Include subdirectory of gflags header files.")
+
+if (IS_ABSOLUTE GFLAGS_INCLUDE_DIR)
+  message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must be a path relative to CMAKE_INSTALL_PREFIX/include")
+endif ()
+if (GFLAGS_INCLUDE_DIR MATCHES "^\\.\\.[/\\]")
+  message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must not start with parent directory reference (../)")
+endif ()
 
 option (BUILD_SHARED_LIBS          "Request build of shared libraries."                                       OFF)
 option (BUILD_STATIC_LIBS          "Request build of static libraries (default if BUILD_SHARED_LIBS is OFF)." OFF)
@@ -38,6 +46,7 @@ option (INSTALL_HEADERS            "Request packaging of headers and other devel
 mark_as_advanced (CLEAR CMAKE_INSTALL_PREFIX)
 mark_as_advanced (CMAKE_CONFIGURATION_TYPES
                   GFLAGS_NAMESPACE
+                  GFLAGS_INCLUDE_DIR
                   BUILD_STATIC_LIBS
                   BUILD_NC_TESTS
                   INSTALL_HEADERS)
@@ -212,7 +221,7 @@ configure_sources (GFLAGS_SRCS  ${GFLAGS_SRCS})
 
 include_directories ("${PROJECT_SOURCE_DIR}/src")
 include_directories ("${PROJECT_BINARY_DIR}/include")
-include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_NAMESPACE}")
+include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}")
 
 # ----------------------------------------------------------------------------
 # output directories
@@ -282,7 +291,7 @@ configure_file (cmake/version.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-co
 
 install (TARGETS ${TARGETS} DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
 if (INSTALL_HEADERS)
-  install (FILES ${PUBLIC_HDRS} DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_NAMESPACE})
+  install (FILES ${PUBLIC_HDRS} DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_INCLUDE_DIR})
   install (
     FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake"
     RENAME ${PACKAGE_NAME}-config.cmake
