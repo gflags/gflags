@@ -1,3 +1,14 @@
+=== 30 March 2014 ===
+
+I've just released gflags 2.1.1.
+
+This release fixes a few bugs in the configuration of gflags_declare.h
+and adds a separate GFLAGS_INCLUDE_DIR CMake variable to the build configuration.
+Setting GFLAGS_NAMESPACE to "google" no longer changes also the include
+path of the public header files. This allows the use of the library with
+other Google projects such as glog which still use the deprecated "google"
+namespace for the gflags library, but include it as "gflags/gflags.h".
+
 === 20 March 2014 ===
 
 I've just released gflags 2.1.
