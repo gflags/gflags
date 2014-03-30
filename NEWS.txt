@@ -1,12 +1,26 @@
+=== 30 March 2014 ===
+
+I've just released gflags 2.1.1.
+
+This release fixes a few bugs in the configuration of gflags_declare.h
+and adds a separate GFLAGS_INCLUDE_DIR CMake variable to the build configuration.
+Setting GFLAGS_NAMESPACE to "google" no longer changes also the include
+path of the public header files. This allows the use of the library with
+other Google projects such as glog which still use the deprecated "google"
+namespace for the gflags library, but include it as "gflags/gflags.h".
+
 === 20 March 2014 ===
 
-I've just released gflags 2.1.0.
+I've just released gflags 2.1.
 
 The major changes are the use of CMake for the build configuration instead
-of the autotools and packaging support through CPack. This release compiles
-with all major compilers without warnings and passed the unit tests on 
-Ubuntu 12.04, Windows 7 (Visual Studio 2008 and 2010, Cygwin, MinGW), and
-Mac OS X (Xcode 5.1).
+of the autotools and packaging support through CPack. The default namespace
+of all C++ symbols is now "gflags" instead of "google". This can be
+configured via the GFLAGS_NAMESPACE variable.
+
+This release compiles with all major compilers without warnings and passed
+the unit tests on  Ubuntu 12.04, Windows 7 (Visual Studio 2008 and 2010,
+Cygwin, MinGW), and Mac OS X (Xcode 5.1).
 
 The SVN repository on Google Code is now frozen and replaced by a Git
 repository such that it can be used as Git submodule by projects. The main
@@ -21,9 +35,7 @@ For the further development, I am following the
 with feature branch names prefixed by "feature/" and bugfix branch names
 prefixed by "bugfix/", respectively.
 
-Binary and source distribution packages can be downloaded from
-[https://github.com/schuhschuh/gflags GitHub] as Google Code no longer
-permits the upload of such download packages.
+Binary and source [https://github.com/schuhschuh/gflags/releases packages] are available on GitHub.
 
 
 === 14 January 2013 ===
