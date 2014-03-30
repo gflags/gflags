@@ -1,3 +1,10 @@
+* Sun Mar 20 2014 - Andreas Schuh <google-gflags@googlegroups.com>
+
+- gflags: version 2.1.1
+- Fixed issue 77: GFLAGS_IS_A_DLL expands to empty string in gflags_declare.h
+- Fixed issue 79: GFLAGS_NAMESPACE not expanded to actual namespace in gflags_declare.h
+- Fixed issue 80: Allow include path to differ from GFLAGS_NAMESPACE
+
 * Thu Mar 20 2014 - Andreas Schuh <google-gflags@googlegroups.com>
 
 - gflags: version 2.1.0
