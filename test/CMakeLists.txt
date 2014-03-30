@@ -155,6 +155,13 @@ add_gflags_test(always_fail 1 "ERROR: failed validation of new value 'true' for 
 #add_gflags_test(deadlock_if_cant_lock 0 "PASS" ""  gflags_unittest  --deadlock_if_cant_lock)
 
 # ----------------------------------------------------------------------------
+# use gflags_declare.h
+add_executable (gflags_declare_test gflags_declare_test.cc gflags_declare_flags.cc)
+
+add_test(NAME gflags_declare COMMAND gflags_declare_test --message "Hello gflags!")
+set_tests_properties(gflags_declare PROPERTIES PASS_REGULAR_EXPRESSION "Hello gflags!")
+
+# ----------------------------------------------------------------------------
 # (negative) compilation tests
 if (BUILD_NC_TESTS)
   find_package (PythonInterp)
