@@ -22,6 +22,8 @@ version_numbers (
     PACKAGE_VERSION_PATCH
 )
 
+set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}")
+
 # ----------------------------------------------------------------------------
 # options
 set (GFLAGS_NAMESPACE   "${PACKAGE_NAME}" CACHE STRING "C++ namespace identifier of gflags library.")
@@ -257,6 +259,9 @@ foreach (TYPE IN ITEMS STATIC SHARED)
         set_target_properties (
           gflags${opts}-${type} PROPERTIES COMPILE_DEFINITIONS "${defines}"
                                            OUTPUT_NAME "gflags${opts}"
+                                           # Set VERSION instead of SOVERSION such
+                                           # that it is also used on Windows
+                                           VERSION "${PACKAGE_SOVERSION}"
         )
         if (HAVE_SHLWAPI_H)
           target_link_libraries (gflags${opts}-${type} shlwapi.lib)
