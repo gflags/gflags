@@ -280,11 +280,14 @@ if (OS_WINDOWS)
   set (CONFIG_INSTALL_DIR  CMake)
 else ()
   set (RUNTIME_INSTALL_DIR bin)
-  # The LIB_SUFFIX variable is used by the Fedora package maintainers.
-  # Also package maintainers of other distribution packages need to be able
-  # to specify the name of the library directory.
-  set (LIBRARY_INSTALL_DIR lib${LIB_SUFFIX}
-    CACHE STRING "Directory name for installed libraries, e.g., \"lib64\""
+  # The LIB_INSTALL_DIR and LIB_SUFFIX variables are used by the Fedora
+  # package maintainers. Also package maintainers of other distribution
+  # packages need to be able to specify the name of the library directory.
+  if (NOT LIB_INSTALL_DIR)
+    set (LIB_INSTALL_DIR "lib${LIB_SUFFIX}")
+  endif ()
+  set (LIBRARY_INSTALL_DIR "${LIB_INSTALL_DIR}"
+    CACHE PATH "Directory of installed libraries, e.g., \"lib64\""
   )
   mark_as_advanced (LIBRARY_INSTALL_DIR)
   set (INCLUDE_INSTALL_DIR include)
