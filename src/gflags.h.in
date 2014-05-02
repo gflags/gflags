@@ -565,4 +565,8 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
 
 #endif  // SWIG
 
+
+@INCLUDE_GFLAGS_NS_H@
+
+
 #endif  // GFLAGS_GFLAGS_H_

@@ -26,15 +26,19 @@ set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}")
 
 # ----------------------------------------------------------------------------
 # options
-set (GFLAGS_NAMESPACE   "${PACKAGE_NAME}" CACHE STRING "C++ namespace identifier of gflags library.")
-set (GFLAGS_INCLUDE_DIR "${PACKAGE_NAME}" CACHE STRING "Include subdirectory of gflags header files.")
-
-if (IS_ABSOLUTE GFLAGS_INCLUDE_DIR)
-  message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must be a path relative to CMAKE_INSTALL_PREFIX/include")
+set (GFLAGS_NAMESPACE "${PACKAGE_NAME};google" CACHE STRING "C++ namespace identifier(s) of gflags library.")
+set (GFLAGS_NAMESPACE_SECONDARY "${GFLAGS_NAMESPACE}")
+list (REMOVE_DUPLICATES GFLAGS_NAMESPACE_SECONDARY)
+if (NOT GFLAGS_NAMESPACE_SECONDARY)
+  message (FATAL_ERROR "GFLAGS_NAMESPACE must be set to one (or more) valid C++ namespace identifier(s separated by semicolon \";\").")
 endif ()
-if (GFLAGS_INCLUDE_DIR MATCHES "^\\.\\.[/\\]")
-  message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must not start with parent directory reference (../)")
-endif ()
+foreach (ns IN LISTS GFLAGS_NAMESPACE_SECONDARY)
+  if (NOT ns MATCHES "^[a-zA-Z][a-zA-Z0-9_]*$")
+    message (FATAL_ERROR "GFLAGS_NAMESPACE contains invalid namespace identifier: ${ns}")
+  endif ()
+endforeach ()
+list (GET       GFLAGS_NAMESPACE_SECONDARY 0 GFLAGS_NAMESPACE)
+list (REMOVE_AT GFLAGS_NAMESPACE_SECONDARY 0)
 
 option (BUILD_SHARED_LIBS          "Request build of shared libraries."                                       OFF)
 option (BUILD_STATIC_LIBS          "Request build of static libraries (default if BUILD_SHARED_LIBS is OFF)." OFF)
@@ -48,7 +52,6 @@ option (INSTALL_HEADERS            "Request packaging of headers and other devel
 mark_as_advanced (CLEAR CMAKE_INSTALL_PREFIX)
 mark_as_advanced (CMAKE_CONFIGURATION_TYPES
                   GFLAGS_NAMESPACE
-                  GFLAGS_INCLUDE_DIR
                   BUILD_STATIC_LIBS
                   BUILD_NC_TESTS
                   INSTALL_HEADERS)
@@ -67,6 +70,17 @@ endif ()
 
 if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
   set_property (CACHE CMAKE_BUILD_TYPE PROPERTY VALUE Release)
+endif ()
+
+if (NOT GFLAGS_INCLUDE_DIR)
+  set (GFLAGS_INCLUDE_DIR "${GFLAGS_NAMESPACE}")
+else ()
+  if (IS_ABSOLUTE GFLAGS_INCLUDE_DIR)
+    message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must be a path relative to CMAKE_INSTALL_PREFIX/include")
+  endif ()
+  if (GFLAGS_INCLUDE_DIR MATCHES "^\\.\\.[/\\]")
+    message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must not start with parent directory reference (../)")
+  endif ()
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -182,6 +196,19 @@ set (PUBLIC_HDRS
   "gflags_declare.h"
   "gflags_completions.h"
 )
+
+if (GFLAGS_NAMESPACE_SECONDARY)
+  set (INCLUDE_GFLAGS_NS_H "// Import gflags library symbols into alternative/deprecated namespace(s)")
+  foreach (ns IN LISTS GFLAGS_NAMESPACE_SECONDARY)
+    string (TOUPPER "${ns}" NS)
+    set (gflags_ns_h "${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}/gflags_${ns}.h")
+    configure_file ("${PROJECT_SOURCE_DIR}/src/gflags_ns.h.in" "${gflags_ns_h}" @ONLY)
+    list (APPEND PUBLIC_HDRS "${gflags_ns_h}")
+    set (INCLUDE_GFLAGS_NS_H "${INCLUDE_GFLAGS_NS_H}\n#include \"gflags_${ns}.h\"")
+  endforeach ()
+else ()
+  set (INCLUDE_GFLAGS_NS_H)
+endif ()
 
 set (PRIVATE_HDRS
   "config.h"
