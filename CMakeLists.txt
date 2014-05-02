@@ -22,7 +22,7 @@ version_numbers (
     PACKAGE_VERSION_PATCH
 )
 
-set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}")
+set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}")
 
 # ----------------------------------------------------------------------------
 # options
@@ -258,10 +258,9 @@ foreach (TYPE IN ITEMS STATIC SHARED)
         endif ()
         set_target_properties (
           gflags${opts}-${type} PROPERTIES COMPILE_DEFINITIONS "${defines}"
-                                           OUTPUT_NAME "gflags${opts}"
-                                           # Set VERSION instead of SOVERSION such
-                                           # that it is also used on Windows
-                                           VERSION "${PACKAGE_SOVERSION}"
+                                           OUTPUT_NAME         "gflags${opts}"
+                                           VERSION             "${PACKAGE_VERSION}"
+                                           SOVERSION           "${PACKAGE_SOVERSION}"
         )
         if (HAVE_SHLWAPI_H)
           target_link_libraries (gflags${opts}-${type} shlwapi.lib)
