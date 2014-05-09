@@ -9,25 +9,27 @@ To create a nuget package for the gflags library:
 This will create a nuget package for gflags that can be used from VS or CMake. CMake usage example:
 
 In PS execute:
-
-    PS> nuget install gflags -ExcludeVersion
+```PowerShell
+PS> nuget install gflags -ExcludeVersion
+```
     
 Then in your CMakeLists.txt:
+```CMake
+cmake_minimum_required(VERSION 2.8.12)
 
-    cmake_minimum_required(VERSION 2.8.12)
+project(test_gflags)
 
-    project(test_gflags)
+# make sure CMake finds the nuget installed package
+find_package(gflags REQUIRED)
 
-    # make sure CMake finds the nuget installed package
-    find_package(gflags REQUIRED)
+add_executable(test_gflags main.cpp)
 
-    add_executable(test_gflags main.cpp)
+# gflags libraries are automatically mapped to the good arch/VS version/linkage combination
+target_link_libraries(test_gflags ${gflags_LIBRARIES})
+target_include_directories(test_gflags PRIVATE ${gflags_INCLUDE_DIR})
 
-    # gflags libraries are automatically mapped to the good arch/VS version/linkage combination
-    target_link_libraries(test_gflags ${gflags_LIBRARIES})
-    target_include_directories(test_gflags PRIVATE ${gflags_INCLUDE_DIR})
-
-    # copy the DLL to the output folder if desired.
-    if (MSVC AND COMMAND target_copy_shared_libs AND NOT gflags_STATIC)
-      target_copy_shared_libs(test_gflags ${gflags_LIBRARIES})
-    endif ()
+# copy the DLL to the output folder if desired.
+if (MSVC AND COMMAND target_copy_shared_libs AND NOT gflags_STATIC)
+  target_copy_shared_libs(test_gflags ${gflags_LIBRARIES})
+endif ()
+```    
