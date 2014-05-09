@@ -1,9 +1,26 @@
+configurations {
+    // define the threads option so that one can link on gflags or gflags_nothreads
+    Threads {         
+        description = "Link with gflags.lib or gflags_nothreads.lib";
+        choices: { threads, nothreads }; 
+        
+        
+        threads { 
+            description = "With Threads";
+        };
+        
+        nothreads { 
+            description = "Without Threads";
+        };
+    };
+};
+
 nuget
 {
     nuspec
     {
         id = gflags;
-        version : 2.1.1.0-alpha;
+        version : 2.1.1.2-beta;
         title: gflags;
         authors: { Guillaume Dumont };      
         licenseUrl: "http://opensource.org/licenses/BSD-3-Clause";
@@ -48,31 +65,60 @@ nuget
                                     ".\build\${0}\${1}\${2}\install\CMake\*.cmake";
                                 };
                         };
-                        [${0},${1},${2},Debug] {  
+                        [${0},${1},${2},Debug,threads] {  
                                 lib: {                                 
                                     #destination = ${build_root}\${0}\${1}\${2}\Lib;
-                                    ".\build\${0}\${1}\${2}\install\Lib\*d.lib";
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflagsd.lib";
                                 };           
                                 bin: {                                 
                                     #destination = ${build_root}\${0}\${1}\${2}\Lib;
-                                    ".\build\${0}\${1}\${2}\install\Lib\*d.dll";
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflagsd.dll";
                                 };
                         };
-                        [${0},${1},${2},Release] {  
+                        [${0},${1},${2},Release,threads] {  
                                 lib: {                                 
                                     #destination = ${build_root}\${0}\${1}\${2}\Lib;
-                                    ".\build\${0}\${1}\${2}\install\Lib\*s.lib";
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags.lib";
                                 };           
                                 bin: {                                 
                                     #destination = ${build_root}\${0}\${1}\${2}\Lib;
-                                    ".\build\${0}\${1}\${2}\install\Lib\*s.dll";
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags.dll";
+                                };
+                        };
+                         [${0},${1},${2},Debug,nothreads] {  
+                                lib: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreadsd.lib";
+                                };           
+                                bin: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreadsd.dll";
+                                };
+                        };
+                        [${0},${1},${2},Release,nothreads] {  
+                                lib: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreads.lib";
+                                };           
+                                bin: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreads.dll";
                                 };
                         };
                         
                 };                        
     };
     
+    props {
+        // default to threads (rather than no threads)
+        Threads = threads;
+    };
+    
     targets {
+        // Hard code the need for shlwapi.lib. We should probably get this from CMake export files. 
+        [static] {
+            Libraries += "shlwapi.lib";
+        };
         Includes += ${pkg_root}/${d_include}; 
     };
 }
