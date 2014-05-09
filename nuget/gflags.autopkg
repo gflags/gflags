@@ -3,7 +3,7 @@ nuget
     nuspec
     {
         id = gflags;
-        version : 2.1.1.0;
+        version : 2.1.1.0-alpha;
         title: gflags;
         authors: { Guillaume Dumont };      
         licenseUrl: "http://opensource.org/licenses/BSD-3-Clause";
