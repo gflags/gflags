@@ -34,8 +34,8 @@
 #  error The internal header gflags_@ns@.h may only be included by gflags.h
 #endif
 
-#ifndef GFLAGS_@NS@_H_
-#define GFLAGS_@NS@_H_
+#ifndef GFLAGS_NS_@NS@_H_
+#define GFLAGS_NS_@NS@_H_
 
 
 namespace @ns@ {
@@ -98,4 +98,4 @@ using GFLAGS_NAMESPACE::ParseCommandLineFlags;
 } // namespace @ns@
 
 
-#endif  // GFLAGS_@NS@_H_
+#endif  // GFLAGS_NS_@NS@_H_
