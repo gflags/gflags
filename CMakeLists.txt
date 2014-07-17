@@ -26,7 +26,11 @@ set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}")
 
 # ----------------------------------------------------------------------------
 # options
-set (GFLAGS_NAMESPACE "google;${PACKAGE_NAME}" CACHE STRING "C++ namespace identifier(s) of gflags library.")
+if (NOT GFLAGS_NAMESPACE)
+  # maintain binary backwards compatibility with gflags library version <= 2.0,
+  # but at the same time enable the use of the preferred new "gflags" namespace
+  set (GFLAGS_NAMESPACE "google;${PACKAGE_NAME}")
+endif ()
 set (GFLAGS_NAMESPACE_SECONDARY "${GFLAGS_NAMESPACE}")
 list (REMOVE_DUPLICATES GFLAGS_NAMESPACE_SECONDARY)
 if (NOT GFLAGS_NAMESPACE_SECONDARY)
@@ -51,7 +55,6 @@ option (INSTALL_HEADERS            "Request packaging of headers and other devel
 
 mark_as_advanced (CLEAR CMAKE_INSTALL_PREFIX)
 mark_as_advanced (CMAKE_CONFIGURATION_TYPES
-                  GFLAGS_NAMESPACE
                   BUILD_STATIC_LIBS
                   BUILD_NC_TESTS
                   INSTALL_HEADERS)
@@ -72,9 +75,8 @@ if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
   set_property (CACHE CMAKE_BUILD_TYPE PROPERTY VALUE Release)
 endif ()
 
-set (GFLAGS_INCLUDE_DIR "" CACHE STRING "Installation directory of header files relative to CMAKE_INSTALL_PREFIX.")
 if (NOT GFLAGS_INCLUDE_DIR)
-  set_property (CACHE GFLAGS_INCLUDE_DIR PROPERTY VALUE "${PACKAGE_NAME}")
+  set (GFLAGS_INCLUDE_DIR "${PACKAGE_NAME}")
 else ()
   if (IS_ABSOLUTE GFLAGS_INCLUDE_DIR)
     message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must be a path relative to CMAKE_INSTALL_PREFIX/include")
