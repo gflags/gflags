@@ -428,6 +428,9 @@ if (BUILD_PACKAGING)
   set (CPACK_SOURCE_GENERATOR "${PACKAGE_SOURCE_GENERATOR}" CACHE STRING "List of source package generators (CPack).")
   mark_as_advanced (CPACK_GENERATOR CPACK_SOURCE_GENERATOR)
 
+  # some package generators (e.g., PackageMaker) do not allow .md extension
+  configure_file ("${CMAKE_CURRENT_LIST_DIR}/README.md" "${CMAKE_CURRENT_BINARY_DIR}/README.txt" COPYONLY)
+
   # common package information
   set (CPACK_PACKAGE_VENDOR              "Andreas Schuh")
   set (CPACK_PACKAGE_CONTACT             "google-gflags@googlegroups.com")
@@ -437,9 +440,9 @@ if (BUILD_PACKAGING)
   set (CPACK_PACKAGE_VERSION_MINOR       "${PACKAGE_VERSION_MINOR}")
   set (CPACK_PACKAGE_VERSION_PATCH       "${PACKAGE_VERSION_PATCH}")
   set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "A commandline flags library that allows for distributed flags.")
-  set (CPACK_RESOURCE_FILE_WELCOME       "${CMAKE_CURRENT_LIST_DIR}/README.md")
+  set (CPACK_RESOURCE_FILE_WELCOME       "${CMAKE_CURRENT_BINARY_DIR}/README.md")
   set (CPACK_RESOURCE_FILE_LICENSE       "${CMAKE_CURRENT_LIST_DIR}/COPYING.txt")
-  set (CPACK_PACKAGE_DESCRIPTION_FILE    "${CMAKE_CURRENT_LIST_DIR}/README.md")
+  set (CPACK_PACKAGE_DESCRIPTION_FILE    "${CMAKE_CURRENT_BINARY_DIR}/README.md")
   set (CPACK_INSTALL_PREFIX              "${CMAKE_INSTALL_PREFIX}")
   set (CPACK_OUTPUT_FILE_PREFIX          packages)
   set (CPACK_PACKAGE_RELOCATABLE         TRUE)
