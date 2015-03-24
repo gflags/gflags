@@ -64,7 +64,7 @@ prefixed by "bugfix/", respectively.
 Binary and source [packages](https://github.com/schuhschuh/gflags/releases) are available on GitHub.
 
 
-14 January 2013
+14 January 2014
 ---------------
 
 The migration of the build system to CMake is almost complete.
