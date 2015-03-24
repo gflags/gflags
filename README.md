@@ -1,9 +1,23 @@
 24 March 2015
 -------------
 
-Finalized move of gflags project from Google Code to GitHub.
-Email addresses of original issue reporters got lost in the process.
-Given the age of most issue reports, this should be negligable.
+I've just released gflags 2.1.2.
+
+This release completes the namespace change fixes. In particular,
+it restores binary ABI compatibility with release version 2.0.
+The deprecated "google" namespace is by default still kept as
+primary namespace while symbols are imported into the new "gflags" namespace.
+This can be overridden using the CMake variable GFLAGS_NAMESPACE.
+
+Other fixes of the build configuration are related to the (patched)
+CMake modules FindThreads.cmake and CheckTypeSize.cmake. These have
+been removed and instead the C language is enabled again even though
+gflags is written in C++ only.
+
+This release also marks the complete move of the gflags project
+from Google Code to GitHub. Email addresses of original issue
+reporters got lost in the process. Given the age of most issue reports,
+this should be neglibable.
 
 Please report any further issues using the GitHub issue tracker.
 
