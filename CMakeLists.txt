@@ -257,15 +257,41 @@ configure_headers (PUBLIC_HDRS  ${PUBLIC_HDRS})
 configure_sources (PRIVATE_HDRS ${PRIVATE_HDRS})
 configure_sources (GFLAGS_SRCS  ${GFLAGS_SRCS})
 
-include_directories ("${PROJECT_SOURCE_DIR}/src")
-include_directories ("${PROJECT_BINARY_DIR}/include")
-include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}")
+# deprecated declaration of include directories for older CMake versions
+if (NOT COMMAND target_include_directories)
+  include_directories ("${PROJECT_SOURCE_DIR}/src")
+  include_directories ("${PROJECT_BINARY_DIR}/include")
+  include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}")
+endif ()
 
 # ----------------------------------------------------------------------------
 # output directories
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib")
 set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib")
+
+# ----------------------------------------------------------------------------
+# installation directories
+if (OS_WINDOWS)
+  set (RUNTIME_INSTALL_DIR Bin)
+  set (LIBRARY_INSTALL_DIR Lib)
+  set (INCLUDE_INSTALL_DIR Include)
+  set (CONFIG_INSTALL_DIR  CMake)
+else ()
+  set (RUNTIME_INSTALL_DIR bin)
+  # The LIB_INSTALL_DIR and LIB_SUFFIX variables are used by the Fedora
+  # package maintainers. Also package maintainers of other distribution
+  # packages need to be able to specify the name of the library directory.
+  if (NOT LIB_INSTALL_DIR)
+    set (LIB_INSTALL_DIR "lib${LIB_SUFFIX}")
+  endif ()
+  set (LIBRARY_INSTALL_DIR "${LIB_INSTALL_DIR}"
+    CACHE PATH "Directory of installed libraries, e.g., \"lib64\""
+  )
+  mark_as_advanced (LIBRARY_INSTALL_DIR)
+  set (INCLUDE_INSTALL_DIR include)
+  set (CONFIG_INSTALL_DIR  ${LIBRARY_INSTALL_DIR}/cmake/${PACKAGE_NAME})
+endif ()
 
 # ----------------------------------------------------------------------------
 # add library targets
@@ -284,6 +310,17 @@ foreach (TYPE IN ITEMS STATIC SHARED)
     foreach (opts IN ITEMS "" _nothreads)
       if (BUILD_gflags${opts}_LIB)
         add_library (gflags${opts}-${type} ${TYPE} ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
+        if (COMMAND target_include_directories)
+          target_include_directories (gflags${opts}-${type}
+            PUBLIC  "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>"
+            PRIVATE "${PROJECT_SOURCE_DIR}/src;${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}"
+          )
+          if (INSTALL_HEADERS)
+            target_include_directories (gflags${opts}-${type}
+              PUBLIC  "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>"
+            )
+          endif ()
+        endif ()
         if (opts MATCHES "nothreads")
           set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL};NOTHREADS")
         else ()
@@ -312,28 +349,7 @@ foreach (TYPE IN ITEMS STATIC SHARED)
 endforeach ()
 
 # ----------------------------------------------------------------------------
-# installation
-if (OS_WINDOWS)
-  set (RUNTIME_INSTALL_DIR Bin)
-  set (LIBRARY_INSTALL_DIR Lib)
-  set (INCLUDE_INSTALL_DIR Include)
-  set (CONFIG_INSTALL_DIR  CMake)
-else ()
-  set (RUNTIME_INSTALL_DIR bin)
-  # The LIB_INSTALL_DIR and LIB_SUFFIX variables are used by the Fedora
-  # package maintainers. Also package maintainers of other distribution
-  # packages need to be able to specify the name of the library directory.
-  if (NOT LIB_INSTALL_DIR)
-    set (LIB_INSTALL_DIR "lib${LIB_SUFFIX}")
-  endif ()
-  set (LIBRARY_INSTALL_DIR "${LIB_INSTALL_DIR}"
-    CACHE PATH "Directory of installed libraries, e.g., \"lib64\""
-  )
-  mark_as_advanced (LIBRARY_INSTALL_DIR)
-  set (INCLUDE_INSTALL_DIR include)
-  set (CONFIG_INSTALL_DIR  ${LIBRARY_INSTALL_DIR}/cmake/${PACKAGE_NAME})
-endif ()
-
+# installation rules
 file (RELATIVE_PATH INSTALL_PREFIX_REL2CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/${CONFIG_INSTALL_DIR}" "${CMAKE_INSTALL_PREFIX}")
 configure_file (cmake/config.cmake.in  "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake" @ONLY)
 configure_file (cmake/version.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake" @ONLY)

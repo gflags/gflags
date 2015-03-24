@@ -14,6 +14,10 @@ get_filename_component (CMAKE_CURRENT_LIST_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH
 get_filename_component (_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_PREFIX_REL2CONFIG_DIR@" ABSOLUTE)
 
 # include directory
+#
+# Newer versions of CMake set the INTERFACE_INCLUDE_DIRECTORIES property
+# of the imported targets. It is hence not necessary to add this path
+# manually to the include search path for targets which link to gflags.
 set (@PACKAGE_NAME@_INCLUDE_DIR "${_INSTALL_PREFIX}/@INCLUDE_INSTALL_DIR@")
 
 # gflags library
