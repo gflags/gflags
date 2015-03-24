@@ -70,9 +70,6 @@
 // Define to the address where bug reports for this package should be sent.
 #define PACKAGE_BUGREPORT @PACKAGE_BUGREPORT@
 
-// Namespace of gflags library symbols.
-#define GFLAGS_NAMESPACE @GFLAGS_NAMESPACE@
-
 // ---------------------------------------------------------------------------
 // Path separator
 #ifndef PATH_SEPARATOR
