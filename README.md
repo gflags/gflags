@@ -1,6 +1,13 @@
 24 March 2015
 -------------
 
+Released gflags 2.1.2 with fixes of ABI incompatibilities to 2.0 caused
+by namespace change. The deprecated "google" namespace is yet kept as primary
+namespace while sybmols are imported into the new "gflags" namespace by default.
+This can be configured using GFLAGS_NAMESPACE and GLAGS_INCLUDE_DIR. Problems
+with the (patched) CMake modules FindThreads.cmake and CheckTypeSize.cmake
+are resolved by re-enabling the C language again even though gflags is C++.
+
 Finalized move of gflags project from Google Code to GitHub.
 Email addresses of original issue reporters got lost in the process.
 Given the age of most issue reports, this should be neglibable.
