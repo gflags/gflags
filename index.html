@@ -107,10 +107,29 @@ You can clone the project using the command:</p>
 
 <p> Using gflags within a project which uses <A href="http://www.cmake.org">CMake</A> for its build system is easy. Therefore, simply add the following CMake code to your <code>CMakeLists.txt</code> file.
 
+<p>The following CMake variables can be set to request a particular imported gflags library target
+to link against. By default, the multi-threaded gflags library with static linkage is chosen if available.
+It is recommended to only define these variables if a specific library must be used.
+Otherwise, the gflags-config.cmake module will choose a suitable and available library for you.
+These configuration options can also be added to the CMake cache (using CMake's option command) so they can
+be modified via the CMake GUI or specified as arguments to CMake instead, e.g.,
+"cmake -D gflags_SHARED:BOOL=TRUE -D gflags_NOTHREADS:BOOL=FALSE &lt;gflags_source_dir&gt;".</p>
 <pre>
-   find_package (gflags REQUIRED)
-   add_executable (foo main.cc)
-   target_link_libraries (foo gflags)
+   set(gflags_SHARED    FALSE)
+   set(gflags_NOTHREADS FALSE)
+</pre>
+
+<p>Find gflags installation. The gflags_DIR variable must be set to the &lt;prefix&gt;/lib/cmake/gflags directory
+containing the gflags-config.cmake file if &lt;prefix&gt; is a non-standard location. Otherwise, CMake should find
+the gflags installation automatically.</p>
+<pre>
+   find_package(gflags REQUIRED)
+</pre>
+<p>Finally, add your executable build target which uses gflags to parse the command arguments with dependency on the
+imported gflags library target:</p>
+<pre>
+   add_executable(foo main.cc)
+   target_link_libraries(foo ${gflags_LIBRARIES})
 </pre>
 
 <h2> <A name=define>DEFINE: Defining Flags In Program</A> </h2>
