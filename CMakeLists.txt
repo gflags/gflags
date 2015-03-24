@@ -18,6 +18,14 @@ set (PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
 set (PACKAGE_BUGREPORT "https://github.com/schuhschuh/gflags/issues")
 
 project (${PACKAGE_NAME} CXX)
+if (CMAKE_VERSION VERSION_LESS 100)
+  # C language still needed because the following required CMake modules
+  # (or their dependencies, respectively) are not correctly handling
+  # the case where only CXX is enabled.
+  # - CheckTypeSize.cmake (fixed in CMake 3.1, cf. http://www.cmake.org/Bug/view.php?id=14056)
+  # - FindThreads.cmake (--> CheckIncludeFiles.cmake <--)
+  enable_language (C)
+endif ()
 
 version_numbers (
   ${PACKAGE_VERSION}
@@ -179,7 +187,7 @@ else ()
 endif ()
 
 set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
-find_package (ThreadsCXX)
+find_package (Threads)
 if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
   set (HAVE_PTHREAD 1)
   check_type_size (pthread_rwlock_t RWLOCK LANGUAGE CXX)
