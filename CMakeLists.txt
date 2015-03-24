@@ -12,7 +12,7 @@ include (utils)
 # ----------------------------------------------------------------------------
 # package information
 set (PACKAGE_NAME      "gflags")
-set (PACKAGE_VERSION   "2.1.1")
+set (PACKAGE_VERSION   "2.2.0")
 set (PACKAGE_STRING    "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set (PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
 set (PACKAGE_BUGREPORT "https://github.com/schuhschuh/gflags/issues")
