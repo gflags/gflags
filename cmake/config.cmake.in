@@ -20,8 +20,40 @@ get_filename_component (_INSTALL_PREFIX "${CMAKE_CURRENT_LIST_DIR}/@INSTALL_PREF
 # manually to the include search path for targets which link to gflags.
 set (@PACKAGE_NAME@_INCLUDE_DIR "${_INSTALL_PREFIX}/@INCLUDE_INSTALL_DIR@")
 
-# gflags library
-set (@PACKAGE_NAME@_LIBRARIES gflags)
+# default settings
+if (NOT DEFINED @PACKAGE_NAME@_SHARED)
+  if (TARGET @PACKAGE_NAME@-static OR TARGET @PACKAGE_NAME@_nothreads-static)
+    set (@PACKAGE_NAME@_SHARED FALSE)
+  else ()
+    set (@PACKAGE_NAME@_SHARED TRUE)
+  endif ()
+endif ()
+if (NOT DEFINED @PACKAGE_NAME@_NOTHREADS)
+  if (TARGET @PACKAGE_NAME@-static OR TARGET @PACKAGE_NAME@-shared)
+    set (@PACKAGE_NAME@_NOTHREADS FALSE)
+  else ()
+    set (@PACKAGE_NAME@_NOTHREADS TRUE)
+  endif ()
+endif ()
+
+# choose imported library target
+if (@PACKAGE_NAME@_SHARED)
+  if (@PACKAGE_NAME@_NOTHREADS)
+    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@_nothreads-shared)
+  else ()
+    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@-shared)
+  endif ()
+else ()
+  if (@PACKAGE_NAME@_NOTHREADS)
+    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@_nothreads-static)
+  else ()
+    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@-static)
+  endif ()
+endif ()
+if (NOT TARGET ${@PACKAGE_NAME@_LIBRARIES})
+  message (FATAL_ERROR "Your @PACKAGE_NAME@ installation does not contain a ${@PACKAGE_NAME@_LIBRARIES} library!"
+                       " Try a different combination of @PACKAGE_NAME@_SHARED and @PACKAGE_NAME@_NOTHREADS.")
+endif ()
 
 # unset private variables
 unset (_INSTALL_PREFIX)
