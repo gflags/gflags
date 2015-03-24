@@ -319,15 +319,14 @@ foreach (TYPE IN ITEMS STATIC SHARED)
       if (BUILD_gflags${opts}_LIB)
         add_library (gflags${opts}-${type} ${TYPE} ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
         if (COMMAND target_include_directories)
+          set (include_dirs "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>")
+          if (INSTALL_HEADERS)
+            list (APPEND include_dirs "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>")
+          endif ()
           target_include_directories (gflags${opts}-${type}
-            PUBLIC  "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>"
+            PUBLIC  "${include_dirs}"
             PRIVATE "${PROJECT_SOURCE_DIR}/src;${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}"
           )
-          if (INSTALL_HEADERS)
-            target_include_directories (gflags${opts}-${type}
-              PUBLIC  "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>"
-            )
-          endif ()
         endif ()
         if (opts MATCHES "nothreads")
           set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL};NOTHREADS")
