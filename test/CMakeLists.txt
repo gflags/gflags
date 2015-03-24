@@ -12,6 +12,9 @@ set (GFLAGS_FLAGFILES_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 # ----------------------------------------------------------------------------
 # common include directories and link libraries
 include_directories ("${CMAKE_CURRENT_SOURCE_DIR}")
+include_directories ("${gflags_SOURCE_DIR}/src")
+include_directories ("${gflags_BINARY_DIR}/include")
+include_directories ("${gflags_BINARY_DIR}/include/gflags")
 
 if (BUILD_SHARED_LIBS)
   set (type shared)
