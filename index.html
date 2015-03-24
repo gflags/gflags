@@ -38,6 +38,7 @@
 <blockquote><dl>
   <dt> Table of contents </dt>
   <dd> <a href="#intro">Introduction</a> </dd>
+  <dd> <a href="#download">Download and Installation</a> </dd>
   <dd> <a href="#cmake">Finding and Linking to gflags using CMake</a></dd>
   <dd> <a href="#define">DEFINE: Defining Flags In Program</A> </dd>
   <dd> <a href="#using">Accessing the Flag</A> </dd>
@@ -49,6 +50,8 @@
   <dd> <a href="#default">Changing the Default Flag Value</a> </dd>
   <dd> <a href="#special">Special Flags</a> </dd>
   <dd> <a href="#api">The API</a> </dd>
+  <dd> <a href="#misc">Miscellaneous Notes</a> </dd>
+  <dd> <a href="#issues">Issues and Feature Requests</a> </dd>
   <dd> <br/> </dd>
 </dl></blockquote>
 
@@ -90,6 +93,15 @@ together.</p>
 library.  It's a C++ library, so examples are in C++.  However, there
 is a Python port with the same functionality, and this discussion
 translates directly to Python.</p>
+
+<h2> <A NAME=download>Download and Installation</A> </h2>
+
+<p>The gflags library can be downloaded from <A href="https://github.com/schuhschuh/gflags">GitHub</A>.
+You can clone the project using the command:</p>
+<pre>
+   git clone git@github.com:schuhschuh/gflags.git
+</pre>
+<p>Build and installation instructions are provided in the <A href="https://github.com/schuhschuh/gflags/blob/master/INSTALL.md">INSTALL</A> file.</p>
 
 <h2> <A name=cmake>Finding and Linking to gflags </A> using CMake</h2>
 
@@ -544,6 +556,10 @@ methods such as <code>gflags::SetUsageMessage()</code> and
 reduce the size of the resulting binary somewhat, and may also be
 useful for security reasons.</p>
 
+<h2> <A name="issues">Issues and Feature Requests</code> </h2>
+
+<p>Please report any issues or ideas for additional features on <A href="https://github.com/schuhschuh/gflags/issues">GitHub</A>.
+We would also like to encourage <A href="https://github.com/schuhschuh/gflags/pulls">pull requests</A> for bug fixes and implementations of new features.</p>
 
 <hr>
 <address>
