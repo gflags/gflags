@@ -6,7 +6,7 @@ import subprocess
 import shutil
 
 CMAKE      = '@CMAKE_COMMAND@'
-TMPDIR     = '@TEMPDIR@'
+TMPDIR     = '@TMPDIR@'
 SRCDIR     = '@SRCDIR@'
 GFLAGS_DIR = '@gflags_BINARY_DIR@'
 
