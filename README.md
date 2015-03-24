@@ -3,7 +3,7 @@
 
 Finalized move of gflags project from Google Code to GitHub.
 Email addresses of original issue reporters got lost in the process.
-Given the age of most issue reports, this should be neglibable.
+Given the age of most issue reports, this should be negligable.
 
 Please report any further issues using the GitHub issue tracker.
 
