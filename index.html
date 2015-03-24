@@ -97,8 +97,6 @@ translates directly to Python.</p>
 
 <pre>
    find_package (gflags REQUIRED)
-   include_directories (${gflags_INCLUDE_DIR})
-   
    add_executable (foo main.cc)
    target_link_libraries (foo gflags)
 </pre>
