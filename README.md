@@ -1,22 +1,34 @@
-=== 30 March 2014 ===
+24 March 2015
+-------------
+
+Finalized move of gflags project from Google Code to GitHub.
+Email addresses of original issue reporters got lost in the process.
+Given the age of most issue reports, this should be neglibable.
+
+Please report any further issues using the GitHub issue tracker.
+
+
+30 March 2014
+-------------
 
 I've just released gflags 2.1.1.
 
-This release fixes a few bugs in the configuration of gflags_declare.h
-and adds a separate GFLAGS_INCLUDE_DIR CMake variable to the build configuration.
-Setting GFLAGS_NAMESPACE to "google" no longer changes also the include
+This release fixes a few bugs in the configuration of gflags\_declare.h
+and adds a separate GFLAGS\_INCLUDE\_DIR CMake variable to the build configuration.
+Setting GFLAGS\_NAMESPACE to "google" no longer changes also the include
 path of the public header files. This allows the use of the library with
 other Google projects such as glog which still use the deprecated "google"
 namespace for the gflags library, but include it as "gflags/gflags.h".
 
-=== 20 March 2014 ===
+20 March 2014
+-------------
 
 I've just released gflags 2.1.
 
 The major changes are the use of CMake for the build configuration instead
 of the autotools and packaging support through CPack. The default namespace
 of all C++ symbols is now "gflags" instead of "google". This can be
-configured via the GFLAGS_NAMESPACE variable.
+configured via the GFLAGS\_NAMESPACE variable.
 
 This release compiles with all major compilers without warnings and passed
 the unit tests on  Ubuntu 12.04, Windows 7 (Visual Studio 2008 and 2010,
@@ -28,34 +40,36 @@ hosting of this project remains at Google Code. Thanks to the distributed
 character of Git, I can push (and pull) changes from both GitHub and Google Code
 in order to keep the two public repositories in sync.
 When fixing an issue for a pull request through either of these hosting
-platforms, please reference the issue number as 
-[https://code.google.com/p/support/wiki/IssueTracker#Integration_with_version_control described here].
+platforms, please reference the issue number as
+[described here](https://code.google.com/p/support/wiki/IssueTracker#Integration_with_version_control).
 For the further development, I am following the
-[http://nvie.com/posts/a-successful-git-branching-model/ Git branching model]
+[Git branching model](http://nvie.com/posts/a-successful-git-branching-model/)
 with feature branch names prefixed by "feature/" and bugfix branch names
 prefixed by "bugfix/", respectively.
 
-Binary and source [https://github.com/schuhschuh/gflags/releases packages] are available on GitHub.
+Binary and source [packages](https://github.com/schuhschuh/gflags/releases) are available on GitHub.
 
 
-=== 14 January 2013 ===
+14 January 2013
+---------------
 
 The migration of the build system to CMake is almost complete.
 What remains to be done is rewriting the tests in Python such they can be
 executed on non-Unix platforms and splitting them up into separate CTest tests.
 Though merging these changes into the master branch yet remains to be done,
 it is recommended to already start using the
-[https://github.com/schuhschuh/gflags/tree/cmake-migration cmake-migration] branch.
+[cmake-migration](https://github.com/schuhschuh/gflags/tree/cmake-migration) branch.
 
 
-=== 20 April 2013 ===
+20 April 2013
+-------------
 
 More than a year has past since I (Andreas) took over the maintenance for
 `gflags`. Only few minor changes have been made since then, much to my regret.
 To get more involved and stimulate participation in the further
 development of the library, I moved the project source code today to
-[https://github.com/schuhschuh/gflags GitHub].
-I believe that the strengths of [http://git-scm.com/ Git] will allow for better community collaboration
+[GitHub](https://github.com/schuhschuh/gflags).
+I believe that the strengths of [Git](http://git-scm.com/) will allow for better community collaboration
 as well as ease the integration of changes made by others. I encourage everyone
 who would like to contribute to send me pull requests.
 Git's lightweight feature branches will also provide the right tool for more
@@ -74,13 +88,14 @@ Please continue to report any issues with gflags on Google Code. The GitHub proj
 only be used to host the Git repository.
 
 One major change of the project structure I have in mind for the next weeks
-is the migration from autotools to [http://www.cmake.org/ CMake].
+is the migration from autotools to [CMake](http://www.cmake.org/).
 Check out the (unstable!)
-[https://github.com/schuhschuh/gflags/tree/cmake-migration cmake-migration]
+[cmake-migration](https://github.com/schuhschuh/gflags/tree/cmake-migration)
 branch on GitHub for details.
 
 
-=== 25 January 2012 ===
+25 January 2012
+---------------
 
 I've just released gflags 2.0.
 
@@ -91,8 +106,7 @@ around gflags and the ideas you have for the project going forward,
 and look forward to having you on the team.
 
 I bumped the major version number up to 2 to reflect the new community
-ownership of the project.  All the
-[http://gflags.googlecode.com/svn/tags/gflags-2.0/ChangeLog changes]
+ownership of the project.  All the [changes](ChangeLog.txt)
 are related to the renaming.  There are no functional changes from
 gflags 1.7.  In particular, I've kept the code in the namespace
 `google`, though in a future version it should be renamed to `gflags`.
@@ -101,7 +115,8 @@ synonym of `/usr/local/include/gflags/`, though the former name has
 been obsolete for some time now.
 
 
-=== 18 January 2011 ===
+18 January 2011
+---------------
 
 The `google-gflags` Google Code page has been renamed to
 `gflags`, in preparation for the project being renamed to
@@ -111,15 +126,16 @@ relinquishing ownership of the project; it will now be entirely
 community run.  The name change reflects that shift.
 
 
-=== 20 December 2011 ===
+20 December 2011
+----------------
 
 I've just released gflags 1.7.  This is a minor release; the major
 change is that `CommandLineFlagInfo` now exports the address in memory
 where the flag is located.  There has also been a bugfix involving
-very long --help strings, and some other minor
-[http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.7/ChangeLog changes].
+very long --help strings, and some other minor [changes](ChangeLog.txt).
 
-=== 29 July 2011 ===
+29 July 2011
+------------
 
 I've just released gflags 1.6.  The major new feature in this release
 is support for setting version info, so that --version does something
@@ -138,11 +154,10 @@ frequent updates with better change descriptions.  They will also
 result in future `ChangeLog` entries being much more verbose (for better
 or for worse).
 
-See the
-[http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.6/ChangeLog ChangeLog]
-for a full list of changes for this release.
+See the [ChangeLog](ChangeLog.txt) for a full list of changes for this release.
 
-=== 24 January 2011 ===
+24 January 2011
+---------------
 
 I've just released gflags 1.5.  This release has only minor changes
 from 1.4, including some slightly better reporting in --help, and
@@ -152,28 +167,30 @@ libraries under valgrind.  The major change is to fix up the macros
 
 If you have not had a problem with these macros, and don't need any of
 the other changes described, there is no need to upgrade.  See the
-[http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.5/ChangeLog ChangeLog]
-for a full list of changes for this release.
+[ChangeLog](ChangeLog.txt) for a full list of changes for this release.
 
-=== 11 October 2010 ===
+11 October 2010
+---------------
 
 I've just released gflags 1.4.  This release has only minor changes
 from 1.3, including some documentation tweaks and some work to make
 the library smaller.  If 1.3 is working well for you, there's no
 particular reason to upgrade.
 
-=== 4 January 2010 ===
+4 January 2010
+--------------
 
 I've just released gflags 1.3.  gflags now compiles under MSVC, and
-all tests pass.  I *really* never thought non-unix-y Windows folks
+all tests pass.  I **really** never thought non-unix-y Windows folks
 would want gflags, but at least some of them do.
 
 The major news, though, is that I've separated out the python package
-into its own library, [http://code.google.com/p/python-gflags python-gflags].
+into its own library, [python-gflags](http://code.google.com/p/python-gflags).
 If you're interested in the Python version of gflags, that's the place to
 get it now.
 
-=== 10 September 2009 ==
+10 September 2009
+-----------------
 
 I've just released gflags 1.2.  The major change from gflags 1.1 is it
 now compiles under MinGW (as well as cygwin), and all tests pass.  I
@@ -184,14 +201,13 @@ wrong!
 The other changes are minor, such as support for --htmlxml in the
 python version of gflags.
 
-=== 15 April 2009 ===
+15 April 2009
+-------------
 
 I've just released gflags 1.1.  It has only minor changes fdrom gflags
-1.0 (see the
-[http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.1/ChangeLog ChangeLog]
-for details).  The major change is that I moved to a new
-system for creating .deb and .rpm files.  This allows me to create
-x86_64 deb and rpm files.
+1.0 (see the [ChangeLog](ChangeLog.txt) for details).
+The major change is that I moved to a new system for creating .deb and .rpm files.
+This allows me to create x86\_64 deb and rpm files.
 
 In the process of moving to this new system, I noticed an
 inconsistency: the tar.gz and .rpm files created libraries named
@@ -199,7 +215,7 @@ libgflags.so, but the deb file created libgoogle-gflags.so.  I have
 fixed the deb file to create libraries like the others.  I'm no expert
 in debian packaging, but I believe this has caused the package name to
 change as well.  Please let me know (at
-[mailto:google-gflags@googlegroups.com
+[[mailto:google-gflags@googlegroups.com](mailto:google-gflags@googlegroups.com)
 google-gflags@googlegroups.com]) if this causes problems for you --
 especially if you know of a fix!  I would be happy to change the deb
 packages to add symlinks from the old library name to the new
@@ -210,20 +226,21 @@ If you've tried to install a .rpm or .deb and it doesn't work for you,
 let me know.  I'm excited to finally have 64-bit package files, but
 there may still be some wrinkles in the new system to iron out.
 
-=== 1 October 2008 ===
+1 October 2008
+--------------
 
 gflags 1.0rc2 was out for a few weeks without any issues, so gflags
 1.0 is now released.  This is much like gflags 0.9.  The major change
 is that the .h files have been moved from `/usr/include/google` to
 `/usr/include/gflags`.  While I have backwards-compatibility
 forwarding headeds in place, please rewrite existing code to say
-{{{
+```
    #include <gflags/gflags.h>
-}}}
+```
 instead of
-{{{
+```
    #include <google/gflags.h>
-}}}
+```
 
 I've kept the default namespace to google.  You can still change with
 with the appropriate flag to the configure script (`./configure
@@ -233,8 +250,7 @@ non-backwards-compatible change, send mail to
 `google-gflags@googlegroups.com`!
 
 Version 1.0 also has some neat new features, like support for bash
-commandline-completion of help flags.  See the
-[http://code.google.com/p/google-gflags/source/browse/tags/gflags-1.0rc2/ChangeLog
-ChangeLog] for more details.
+commandline-completion of help flags.  See the [ChangeLog](ChangeLog.txt)
+for more details.
 
 If I don't hear any bad news for a few weeks, I'll release 1.0-final.
