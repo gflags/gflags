@@ -1,0 +1,124 @@
+configurations {
+    // define the threads option so that one can link on gflags or gflags_nothreads
+    Threads {         
+        description = "Link with gflags.lib or gflags_nothreads.lib";
+        choices: { threads, nothreads }; 
+        
+        
+        threads { 
+            description = "With Threads";
+        };
+        
+        nothreads { 
+            description = "Without Threads";
+        };
+    };
+};
+
+nuget
+{
+    nuspec
+    {
+        id = gflags;
+        version : 2.1.1.2;
+        title: gflags;
+        authors: { Guillaume Dumont };      
+        licenseUrl: "http://opensource.org/licenses/BSD-3-Clause";
+        projectUrl: "https://code.google.com/p/gflags/";     
+        iconUrl: "https://ssl.gstatic.com/codesite/ph/images/defaultlogo.png"        
+        requireLicenseAcceptance:false;
+        summary:Commandline flags module for C++;
+
+        /* if you need to span several lines you can prefix a string with 
+         an @ symbol (exactly like c# does). */
+         
+         description: @"The gflags package contains a library that implements commandline flags processing. 
+         As such it's a replacement for getopt(). It has increased flexibility, including built-in support 
+         for C++ types like string, and the ability to define flags in the source file in which they're used.
+         
+         This nuget package includes static and shared binaries for 32 and 64 bit architectures 
+         and for v100, v110 and v120 platform toolsets.";
+               
+        releaseNotes: "Updated to new gflags version and added support for CMake.";
+        copyright: Copyright 2013;
+        tags: { native, CoApp, gflags, commandline };
+    };
+    
+    files
+    {           
+        nestedInclude: {
+            #destination = ${d_include}\gflags;
+            ".\build\x64\v120\static\install\Include\gflags\*"
+        };        
+        
+        config: {
+            #destination = ${pkg_root};
+            ".\build\x64\v120\static\install\CMake\gflags-config-version.cmake";
+            ".\*.cmake";                                    
+        };
+        
+                
+        ("x64,Win32", "v100,v110,v120", "static,dynamic") => {
+                        [${0},${1},${2}] {                                         
+                                cmake: {
+                                    #destination = ${build_root}\${0}\${1}\${2}\CMake;
+                                    ".\build\${0}\${1}\${2}\install\CMake\*.cmake";
+                                };
+                        };
+                        [${0},${1},${2},Debug,threads] {  
+                                lib: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflagsd.lib";
+                                };           
+                                bin: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflagsd.dll";
+                                };
+                        };
+                        [${0},${1},${2},Release,threads] {  
+                                lib: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags.lib";
+                                };           
+                                bin: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags.dll";
+                                };
+                        };
+                         [${0},${1},${2},Debug,nothreads] {  
+                                lib: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreadsd.lib";
+                                };           
+                                bin: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreadsd.dll";
+                                };
+                        };
+                        [${0},${1},${2},Release,nothreads] {  
+                                lib: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreads.lib";
+                                };           
+                                bin: {                                 
+                                    #destination = ${build_root}\${0}\${1}\${2}\Lib;
+                                    ".\build\${0}\${1}\${2}\install\Lib\gflags_nothreads.dll";
+                                };
+                        };
+                        
+                };                        
+    };
+    
+    props {
+        // default to threads (rather than no threads)
+        Threads = threads;
+    };
+    
+    targets {
+        // Hard code the need for shlwapi.lib. We should probably get this from CMake export files. 
+        [static] {
+            Libraries += "shlwapi.lib";
+        };
+        Includes += ${pkg_root}/${d_include}; 
+    };
+}

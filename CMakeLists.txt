@@ -340,6 +340,9 @@ foreach (TYPE IN ITEMS STATIC SHARED)
                                            VERSION             "${PACKAGE_VERSION}"
                                            SOVERSION           "${PACKAGE_SOVERSION}"
         )
+        if (MSVC)
+           set_target_properties (gflags${opts}-${type} PROPERTIES DEBUG_POSTFIX "d")
+        endif() 
         if (HAVE_SHLWAPI_H)
           target_link_libraries (gflags${opts}-${type} shlwapi.lib)
         endif ()
