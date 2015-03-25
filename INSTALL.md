@@ -44,11 +44,23 @@ the name of this package and the obtained version of the software.
     $ make install (optional)
 
 In the following, only gflags-specific CMake settings available to
-configure the build and installation are documented.
+configure the build and installation are documented. Note that most of these
+variables are for advanced users and binary package maintainers only.
+They usually do not have to be modified.
 
 
-CMake Option           | Description
----------------------- | -------------------------------------------------------
-CMAKE_INSTALL_PREFIX   | Installation directory, e.g., "/usr/local" on Unix and "C:\Program Files\gflags" on Windows.
-GFLAGS_NAMESPACE       | Name of the C++ namespace to be used by the gflags library. Note that the public source header files are installed in a subdirectory named after this namespace. To maintain backwards compatibility with the Google Commandline Flags, set this variable to "google". The default is "gflags".
-GFLAGS_INCLUDE_DIR     | Name of include subdirectory where headers are installed into.
+CMake Option                | Description
+--------------------------- | -------------------------------------------------------
+CMAKE_INSTALL_PREFIX        | Installation directory, e.g., "/usr/local" on Unix and "C:\Program Files\gflags" on Windows.
+BUILD_SHARED_LIBS           | Request build of dynamic link libraries.
+BUILD_STATIC_LIBS           | Request build of static link libraries. Implied if BUILD_SHARED_LIBS is OFF.
+BUILD_PACKAGING             | Enable binary package generation using CPack.
+BUILD_TESTING               | Build tests for execution by CTest.
+BUILD_NC_TESTS              | Request inclusion of negative compilation tests (requires Python).
+BUILD_gflags_LIBS           | Request build of multi-threaded gflags libraries (if threading library found).
+BUILD_gflags_nothreads_LIBS | Request build of single-threaded gflags libraries.
+GFLAGS_NAMESPACE            | Name of the C++ namespace to be used by the gflags library. Note that the public source header files are installed in a subdirectory named after this namespace. To maintain backwards compatibility with the Google Commandline Flags, set this variable to "google". The default is "gflags".
+GFLAGS_INTTYPES_FORMAT      | String identifying format of built-in integer types.
+GFLAGS_INCLUDE_DIR          | Name of include where headers are installed into relative to CMAKE_INSTALL_PREFIX.
+LIBRARY_INSTALL_DIR         | Name of library installation directory relative to CMAKE_INSTALL_PREFIX.
+INSTALL_HEADERS             | Request installation of public header files.
