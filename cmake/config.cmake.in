@@ -37,23 +37,75 @@ if (NOT DEFINED @PACKAGE_NAME@_NOTHREADS)
 endif ()
 
 # choose imported library target
-if (@PACKAGE_NAME@_SHARED)
-  if (@PACKAGE_NAME@_NOTHREADS)
-    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@_nothreads-shared)
+if (NOT @PACKAGE_NAME@_TARGET)
+  if (@PACKAGE_NAME@_SHARED)
+    if (@PACKAGE_NAME@_NOTHREADS)
+      set (@PACKAGE_NAME@_TARGET @PACKAGE_NAME@_nothreads-shared)
+    else ()
+      set (@PACKAGE_NAME@_TARGET @PACKAGE_NAME@-shared)
+    endif ()
   else ()
-    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@-shared)
-  endif ()
-else ()
-  if (@PACKAGE_NAME@_NOTHREADS)
-    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@_nothreads-static)
-  else ()
-    set (@PACKAGE_NAME@_LIBRARIES @PACKAGE_NAME@-static)
+    if (@PACKAGE_NAME@_NOTHREADS)
+      set (@PACKAGE_NAME@_TARGET @PACKAGE_NAME@_nothreads-static)
+    else ()
+      set (@PACKAGE_NAME@_TARGET @PACKAGE_NAME@-static)
+    endif ()
   endif ()
 endif ()
-if (NOT TARGET ${@PACKAGE_NAME@_LIBRARIES})
-  message (FATAL_ERROR "Your @PACKAGE_NAME@ installation does not contain a ${@PACKAGE_NAME@_LIBRARIES} library!"
+if (NOT TARGET ${@PACKAGE_NAME@_TARGET})
+  message (FATAL_ERROR "Your @PACKAGE_NAME@ installation does not contain a ${@PACKAGE_NAME@_TARGET} library target!"
                        " Try a different combination of @PACKAGE_NAME@_SHARED and @PACKAGE_NAME@_NOTHREADS.")
 endif ()
+
+# add more convenient "@PACKAGE_NAME@" import target
+if (NOT TARGET @PACKAGE_NAME@)
+  if (@PACKAGE_NAME@_SHARED)
+    add_library (@PACKAGE_NAME@ SHARED IMPORTED)
+  else ()
+    add_library (@PACKAGE_NAME@ STATIC IMPORTED)
+  endif ()
+  # INTERFACE_INCLUDE_DIRECTORIES
+  get_target_property (_@PACKAGE_NAME@_INCLUDES ${@PACKAGE_NAME@_TARGET} INTERFACE_INCLUDE_DIRECTORIES)
+  if (_@PACKAGE_NAME@_INCLUDES)
+    set_target_properties(@PACKAGE_NAME@ PROPERTIES
+      INTERFACE_INCLUDE_DIRECTORIES "${_@PACKAGE_NAME@_INCLUDES}"
+    )
+  endif ()
+  unset (_@PACKAGE_NAME@_INCLUDES)
+  # set configuration specific properties
+  get_target_property (_@PACKAGE_NAME@_CONFIGURATIONS ${@PACKAGE_NAME@_TARGET} IMPORTED_CONFIGURATIONS)
+  set_target_properties (@PACKAGE_NAME@ PROPERTIES IMPORTED_CONFIGURATIONS "${_@PACKAGE_NAME@_CONFIGURATIONS}")
+  foreach (_@PACKAGE_NAME@_CONFIG IN LISTS _@PACKAGE_NAME@_CONFIGURATIONS)
+    # IMPORTED_LOCATION_<config>
+    get_target_property (_@PACKAGE_NAME@_LOCATION ${@PACKAGE_NAME@_TARGET} IMPORTED_LOCATION_${_@PACKAGE_NAME@_CONFIG})
+    if (_@PACKAGE_NAME@_LOCATION)
+      set_target_properties(@PACKAGE_NAME@ PROPERTIES
+        IMPORTED_LOCATION_${_@PACKAGE_NAME@_CONFIG} "${_@PACKAGE_NAME@_LOCATION}"
+      )
+    endif ()
+    unset (_@PACKAGE_NAME@_LOCATION)
+    # IMPORTED_LINK_INTERFACE_LANGUAGES_<config> (static)
+    get_target_property (_@PACKAGE_NAME@_LANGUAGES ${@PACKAGE_NAME@_TARGET} IMPORTED_LINK_INTERFACE_LANGUAGES_${_@PACKAGE_NAME@_CONFIG})
+    if (_@PACKAGE_NAME@_LANGUAGES)
+      set_target_properties(@PACKAGE_NAME@ PROPERTIES
+        IMPORTED_LINK_INTERFACE_LANGUAGES_${_@PACKAGE_NAME@_CONFIG} "${_@PACKAGE_NAME@_LANGUAGES}"
+      )
+    endif ()
+    unset (_@PACKAGE_NAME@_LANGUAGES)
+    # IMPORTED_SONAME_<config> (shared)
+    get_target_property (_@PACKAGE_NAME@_SONAME ${@PACKAGE_NAME@_TARGET} IMPORTED_SONAME_${_@PACKAGE_NAME@_CONFIG})
+    if (_@PACKAGE_NAME@_SONAME)
+      set_target_properties(@PACKAGE_NAME@ PROPERTIES
+        IMPORTED_SONAME_${_@PACKAGE_NAME@_CONFIG} "${_@PACKAGE_NAME@_SONAME}"
+      )
+    endif ()
+    unset (_@PACKAGE_NAME@_SONAME)
+  endforeach ()
+  unset (_@PACKAGE_NAME@_CONFIGURATIONS)
+endif ()
+
+# alias for default import target to be compatible with older CMake package configurations
+set (@PACKAGE_NAME@_LIBRARIES "@PACKAGE_NAME@")
 
 # unset private variables
 unset (_INSTALL_PREFIX)
