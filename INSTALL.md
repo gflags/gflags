@@ -61,6 +61,6 @@ BUILD_gflags_LIBS           | Request build of multi-threaded gflags libraries (
 BUILD_gflags_nothreads_LIBS | Request build of single-threaded gflags libraries.
 GFLAGS_NAMESPACE            | Name of the C++ namespace to be used by the gflags library. Note that the public source header files are installed in a subdirectory named after this namespace. To maintain backwards compatibility with the Google Commandline Flags, set this variable to "google". The default is "gflags".
 GFLAGS_INTTYPES_FORMAT      | String identifying format of built-in integer types.
-GFLAGS_INCLUDE_DIR          | Name of include where headers are installed into relative to CMAKE_INSTALL_PREFIX.
+GFLAGS_INCLUDE_DIR          | Name of headers installation directory relative to CMAKE_INSTALL_PREFIX.
 LIBRARY_INSTALL_DIR         | Name of library installation directory relative to CMAKE_INSTALL_PREFIX.
 INSTALL_HEADERS             | Request installation of public header files.
