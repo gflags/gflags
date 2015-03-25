@@ -173,7 +173,7 @@ if (BUILD_NC_TESTS)
                          " Either install Python or set BUILD_NC_TESTS to FALSE and try again.")
   endif ()
   set (SRCDIR "${CMAKE_CURRENT_SOURCE_DIR}/nc")
-  set (TMPDIR "${gflags_BINARY_DIR}/Testing/Temporary")
+  set (TMPDIR "${PROJECT_BINARY_DIR}/Testing/Temporary")
   configure_file (gflags_nc.py.in "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nc.py" @ONLY)
   macro (add_gflags_nc_test name)
     add_test (
