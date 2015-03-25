@@ -165,25 +165,41 @@ add_test(NAME gflags_declare COMMAND gflags_declare_test --message "Hello gflags
 set_tests_properties(gflags_declare PROPERTIES PASS_REGULAR_EXPRESSION "Hello gflags!")
 
 # ----------------------------------------------------------------------------
-# (negative) compilation tests
-if (BUILD_NC_TESTS)
+# configure Python script which configures and builds a test project
+if (BUILD_NC_TESTS OR BUILD_CONFIG_TESTS)
   find_package (PythonInterp)
   if (NOT PYTHON_EXECUTABLE)
-    message (FATAL_ERROR "No Python installation found! It is required by the negative compilation tests."
-                         " Either install Python or set BUILD_NC_TESTS to FALSE and try again.")
+    message (FATAL_ERROR "No Python installation found! It is required by the (negative) compilation tests."
+                         " Either install Python or set BUILD_NC_TESTS and BUILD_CONFIG_TESTS to FALSE.")
   endif ()
-  set (SRCDIR "${CMAKE_CURRENT_SOURCE_DIR}/nc")
   set (TMPDIR "${PROJECT_BINARY_DIR}/Testing/Temporary")
-  configure_file (gflags_nc.py.in "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nc.py" @ONLY)
-  macro (add_gflags_nc_test name)
+  configure_file (gflags_build.py.in "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/build.py" @ONLY)
+  function (add_gflags_build_test name srcdir expect_fail)
+    set (srcdir "${CMAKE_CURRENT_SOURCE_DIR}/${srcdir}")
     add_test (
-      NAME nc_${name}
-      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/nc.py" ${name}
+      NAME    "${name}"
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/build.py" 
+                    ${name} ${srcdir} ${expect_fail}
     )
-  endmacro ()
-  add_gflags_nc_test (sanity)
-  add_gflags_nc_test (swapped_args)
-  add_gflags_nc_test (int_instead_of_bool)
-  add_gflags_nc_test (bool_in_quotes)
-  add_gflags_nc_test (define_string_with_0)
+  endfunction ()
+endif ()
+
+# ----------------------------------------------------------------------------
+# negative compilation tests
+option (BUILD_NC_TESTS "Request addition of negative compilation tests." OFF)
+mark_as_advanced (BUILD_NC_TESTS)
+if (BUILD_NC_TESTS)
+  add_gflags_build_test (nc_sanity               nc 0)
+  add_gflags_build_test (nc_swapped_args         nc 1)
+  add_gflags_build_test (nc_int_instead_of_bool  nc 1)
+  add_gflags_build_test (nc_bool_in_quotes       nc 1)
+  add_gflags_build_test (nc_define_string_with_0 nc 1)
+endif ()
+
+# ----------------------------------------------------------------------------
+# build configuration test
+option (BUILD_CONFIG_TESTS "Request addition of package configuration tests." OFF)
+mark_as_advanced (BUILD_CONFIG_TESTS)
+if (BUILD_CONFIG_TESTS)
+  add_gflags_build_test (cmake_config config 0)
 endif ()

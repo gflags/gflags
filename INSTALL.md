@@ -57,6 +57,7 @@ BUILD_STATIC_LIBS           | Request build of static link libraries. Implied if
 BUILD_PACKAGING             | Enable binary package generation using CPack.
 BUILD_TESTING               | Build tests for execution by CTest.
 BUILD_NC_TESTS              | Request inclusion of negative compilation tests (requires Python).
+BUILD_CONFIG_TESTS          | Request inclusion of package configuration tests (requires Python).
 BUILD_gflags_LIBS           | Request build of multi-threaded gflags libraries (if threading library found).
 BUILD_gflags_nothreads_LIBS | Request build of single-threaded gflags libraries.
 GFLAGS_NAMESPACE            | Name of the C++ namespace to be used by the gflags library. Note that the public source header files are installed in a subdirectory named after this namespace. To maintain backwards compatibility with the Google Commandline Flags, set this variable to "google". The default is "gflags".

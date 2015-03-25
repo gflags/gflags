@@ -63,13 +63,11 @@ option (BUILD_gflags_LIB           "Request build of the multi-threaded gflags l
 option (BUILD_gflags_nothreads_LIB "Request build of the single-threaded gflags library."                     ON)
 option (BUILD_PACKAGING            "Enable build of distribution packages using CPack."                       OFF)
 option (BUILD_TESTING              "Enable build of the unit tests and their execution using CTest."          OFF)
-option (BUILD_NC_TESTS             "Request addition of negative compilation tests."                          OFF)
 option (INSTALL_HEADERS            "Request packaging of headers and other development files."                ON)
 
 mark_as_advanced (CLEAR CMAKE_INSTALL_PREFIX)
 mark_as_advanced (CMAKE_CONFIGURATION_TYPES
                   BUILD_STATIC_LIBS
-                  BUILD_NC_TESTS
                   INSTALL_HEADERS)
 if (APPLE)
   mark_as_advanced(CMAKE_OSX_ARCHITECTURES
