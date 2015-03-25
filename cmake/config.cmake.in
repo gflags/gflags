@@ -105,7 +105,7 @@ if (NOT TARGET @PACKAGE_NAME@)
 endif ()
 
 # alias for default import target to be compatible with older CMake package configurations
-set (@PACKAGE_NAME@_LIBRARIES "@PACKAGE_NAME@")
+set (@PACKAGE_NAME@_LIBRARIES "${@PACKAGE_NAME@_TARGET}")
 
 # unset private variables
 unset (_INSTALL_PREFIX)
