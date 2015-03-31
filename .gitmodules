@@ -1,4 +1,4 @@
 [submodule "doc"]
 	path = doc
-	url = git@github.com:gflags/gflags.git
+	url = https://github.com/gflags/gflags.git
 	branch = gh-pages
