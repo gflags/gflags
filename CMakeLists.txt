@@ -1,4 +1,4 @@
-cmake_minimum_required (VERSION 2.8.4 FATAL_ERROR)
+cmake_minimum_required (VERSION 2.8.12 FATAL_ERROR)
 
 if (POLICY CMP0042)
   cmake_policy (SET CMP0042 NEW)
@@ -263,13 +263,6 @@ configure_headers (PUBLIC_HDRS  ${PUBLIC_HDRS})
 configure_sources (PRIVATE_HDRS ${PRIVATE_HDRS})
 configure_sources (GFLAGS_SRCS  ${GFLAGS_SRCS})
 
-# deprecated declaration of include directories for older CMake versions
-if (NOT COMMAND target_include_directories)
-  include_directories ("${PROJECT_SOURCE_DIR}/src")
-  include_directories ("${PROJECT_BINARY_DIR}/include")
-  include_directories ("${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}")
-endif ()
-
 # ----------------------------------------------------------------------------
 # output directories
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
@@ -316,16 +309,14 @@ foreach (TYPE IN ITEMS STATIC SHARED)
     foreach (opts IN ITEMS "" _nothreads)
       if (BUILD_gflags${opts}_LIB)
         add_library (gflags${opts}-${type} ${TYPE} ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
-        if (COMMAND target_include_directories)
-          set (include_dirs "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>")
-          if (INSTALL_HEADERS)
-            list (APPEND include_dirs "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>")
-          endif ()
-          target_include_directories (gflags${opts}-${type}
-            PUBLIC  "${include_dirs}"
-            PRIVATE "${PROJECT_SOURCE_DIR}/src;${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}"
-          )
+        set (include_dirs "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>")
+        if (INSTALL_HEADERS)
+          list (APPEND include_dirs "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>")
         endif ()
+        target_include_directories (gflags${opts}-${type}
+          PUBLIC  "${include_dirs}"
+          PRIVATE "${PROJECT_SOURCE_DIR}/src;${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}"
+        )
         if (opts MATCHES "nothreads")
           set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL};NOTHREADS")
         else ()
