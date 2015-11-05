@@ -298,13 +298,21 @@ set (TARGETS)
 # static vs. shared
 foreach (TYPE IN ITEMS STATIC SHARED)
   if (BUILD_${TYPE}_LIBS)
+
+    string (TOLOWER "${TYPE}" type)
+
     # whether or not targets are a DLL
     if (OS_WINDOWS AND "^${TYPE}$" STREQUAL "^SHARED$")
       set (GFLAGS_IS_A_DLL 1)
+      set(GFLAG_STATIC_EXTENSION "")
     else ()
+      if (OS_WINDOWS)
+        set(GFLAG_STATIC_EXTENSION _${type})
+      endif ()
       set (GFLAGS_IS_A_DLL 0)
     endif ()
-    string (TOLOWER "${TYPE}" type)
+
+
     # multi-threaded vs. single-threaded
     foreach (opts IN ITEMS "" _nothreads)
       if (BUILD_gflags${opts}_LIB)
@@ -325,9 +333,10 @@ foreach (TYPE IN ITEMS STATIC SHARED)
             target_link_libraries (gflags${opts}-${type} ${CMAKE_THREAD_LIBS_INIT})
           endif ()
         endif ()
+
         set_target_properties (
           gflags${opts}-${type} PROPERTIES COMPILE_DEFINITIONS "${defines}"
-                                           OUTPUT_NAME         "gflags${opts}"
+                                           OUTPUT_NAME         "gflags${opts}${GFLAG_STATIC_EXTENSION}"
                                            VERSION             "${PACKAGE_VERSION}"
                                            SOVERSION           "${PACKAGE_SOVERSION}"
         )
