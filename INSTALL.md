@@ -32,7 +32,7 @@ the name of this package and the obtained version of the software.
     $ tar xzf gflags-$version-source.tar.gz
     $ cd gflags-$version
     $ mkdir build && cd build
-    $ ccmake ..
+    $ cmake ..
     
       - Press 'c' to configure the build system and 'e' to ignore warnings.
       - Set CMAKE_INSTALL_PREFIX and other CMake variables and options.
