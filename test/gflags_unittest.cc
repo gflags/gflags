@@ -1485,7 +1485,7 @@ TEST(FlagsValidator, FlagSaver) {
 
 }  // unnamed namespace
 
-int main(int argc, char **argv) {
+static int main(int argc, char **argv) {
 
   // Run unit tests only if called without arguments, otherwise this program
   // is used by an "external" usage test
