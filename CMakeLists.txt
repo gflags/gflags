@@ -318,7 +318,7 @@ foreach (TYPE IN ITEMS STATIC SHARED)
           PRIVATE "${PROJECT_SOURCE_DIR}/src;${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}"
         )
         if (opts MATCHES "nothreads")
-          set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL};NOTHREADS")
+          set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL};NO_THREADS")
         else ()
           set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL}")
           if (CMAKE_USE_PTHREADS_INIT)
