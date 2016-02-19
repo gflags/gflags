@@ -538,6 +538,26 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
 }
 inline clstring* dont_pass0toDEFINE_string(char *stringspot,
                                            int value);
+
+// Auxiliary class used to explicitly call destructor of string objects
+// allocated using placement new during static program deinitialization.
+// The destructor MUST be an inline function such that the explicit
+// destruction occurs in the same compilation unit as the placement new.
+class StringFlagDestructor {
+  void *current_storage_;
+  void *defvalue_storage_;
+
+public: 
+
+  StringFlagDestructor(void *current, void *defvalue)
+  : current_storage_(current), defvalue_storage_(defvalue) {}
+
+  ~StringFlagDestructor() {
+    reinterpret_cast<clstring*>(current_storage_ )->~clstring();
+    reinterpret_cast<clstring*>(defvalue_storage_)->~clstring();
+  }
+};
+
 }  // namespace fLS
 
 // We need to define a var named FLAGS_no##name so people don't define
@@ -557,6 +577,7 @@ inline clstring* dont_pass0toDEFINE_string(char *stringspot,
     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                       \
         #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
         s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
+    static StringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);     \
     extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \
     using fLS::FLAGS_##name;                                                \
     clstring& FLAGS_##name = *FLAGS_no##name;                               \
