@@ -8,5 +8,6 @@ int main(int argc, char **argv)
   gflags::SetUsageMessage("Test CMake configuration of gflags library (gflags-config.cmake)");
   gflags::ParseCommandLineFlags(&argc, &argv, true);
   std::cout << FLAGS_message << std::endl;
+  gflags::ShutDownCommandLineFlags();
   return 0;
 }
