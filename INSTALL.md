@@ -11,7 +11,7 @@ following command:
     sudo apt-get install gflags
 
 
-Compiling the source code
+Compiling the source code with CMake
 =========================
 
 The build system of gflags is since version 2.1 based on [CMake](http://cmake.org).
@@ -65,3 +65,24 @@ GFLAGS_INTTYPES_FORMAT      | String identifying format of built-in integer type
 GFLAGS_INCLUDE_DIR          | Name of headers installation directory relative to CMAKE_INSTALL_PREFIX.
 LIBRARY_INSTALL_DIR         | Name of library installation directory relative to CMAKE_INSTALL_PREFIX.
 INSTALL_HEADERS             | Request installation of public header files.
+
+Using gflags with [Bazel](http://bazel.io)
+=========================
+
+To use gflags in a Bazel project, map it in as an external dependency by editing
+your WORKSPACE file:
+
+    git_repository(
+        name = "gflags_git",
+        commit = "",  # Use the current HEAD commit
+        remote = "https://github.com/gflags/gflags.git",
+    )
+
+    bind(
+        name = "gflags",
+        actual = "@gflags_git//:gflags",
+    )
+
+You can then add `//external:gflags` to the `deps` section of a `cc_binary` or
+`cc_library` rule, and `#include <gflags/gflags.h>` to include it in your source
+code.
