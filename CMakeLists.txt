@@ -34,7 +34,7 @@ version_numbers (
     PACKAGE_VERSION_PATCH
 )
 
-set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}")
+set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}")
 
 # ----------------------------------------------------------------------------
 # options
