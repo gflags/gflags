@@ -1454,65 +1454,58 @@ void GetAllFlags(vector<CommandLineFlagInfo>* OUTPUT) {
 
 // These values are not protected by a Mutex because they are normally
 // set only once during program startup.
-static const char* argv0 = "UNKNOWN";      // just the program name
-static const char* cmdline = "";           // the entire command-line
+static string argv0("UNKNOWN");  // just the program name
+static string cmdline;           // the entire command-line
+static string program_usage;
 static vector<string> argvs;
 static uint32 argv_sum = 0;
-static const char* program_usage = NULL;
 
 void SetArgv(int argc, const char** argv) {
   static bool called_set_argv = false;
-  if (called_set_argv)         // we already have an argv for you
-    return;
-
+  if (called_set_argv) return;
   called_set_argv = true;
 
-  assert(argc > 0);            // every program has at least a progname
-  argv0 = strdup(argv[0]);     // small memory leak, but fn only called once
-  assert(argv0);
+  assert(argc > 0); // every program has at least a name
+  argv0 = argv[0];
 
-  string cmdline_string;       // easier than doing strcats
+  cmdline.clear();
   for (int i = 0; i < argc; i++) {
-    if (i != 0) {
-      cmdline_string += " ";
-    }
-    cmdline_string += argv[i];
+    if (i != 0) cmdline += " ";
+    cmdline += argv[i];
     argvs.push_back(argv[i]);
   }
-  cmdline = strdup(cmdline_string.c_str());  // another small memory leak
-  assert(cmdline);
 
   // Compute a simple sum of all the chars in argv
-  for (const char* c = cmdline; *c; c++)
+  argv_sum = 0;
+  for (string::const_iterator c = cmdline.begin(); c != cmdline.end(); ++c) {
     argv_sum += *c;
+  }
 }
 
 const vector<string>& GetArgvs() { return argvs; }
-const char* GetArgv()            { return cmdline; }
-const char* GetArgv0()           { return argv0; }
+const char* GetArgv()            { return cmdline.c_str(); }
+const char* GetArgv0()           { return argv0.c_str(); }
 uint32 GetArgvSum()              { return argv_sum; }
 const char* ProgramInvocationName() {             // like the GNU libc fn
   return GetArgv0();
 }
 const char* ProgramInvocationShortName() {        // like the GNU libc fn
-  const char* slash = strrchr(argv0, '/');
+  size_t pos = argv0.rfind('/');
 #ifdef OS_WINDOWS
-  if (!slash)  slash = strrchr(argv0, '\\');
+  if (pos == string::npos) pos = argv0.rfind('\\');
 #endif
-  return slash ? slash + 1 : argv0;
+  return (pos == string::npos ? argv0.c_str() : (argv0.c_str() + pos + 1));
 }
 
 void SetUsageMessage(const string& usage) {
-  if (program_usage != NULL)
-    ReportError(DIE, "ERROR: SetUsageMessage() called twice\n");
-  program_usage = strdup(usage.c_str());      // small memory leak
+  program_usage = usage;
 }
 
 const char* ProgramUsage() {
-  if (program_usage) {
-    return program_usage;
+  if (program_usage.empty()) {
+    return "Warning: SetUsageMessage() never called";
   }
-  return "Warning: SetUsageMessage() never called";
+  return program_usage.c_str();
 }
 
 // --------------------------------------------------------------------
@@ -1520,16 +1513,14 @@ const char* ProgramUsage() {
 // VersionString()
 // --------------------------------------------------------------------
 
-static const char* version_string = NULL;
+static string version_string;
 
 void SetVersionString(const string& version) {
-  if (version_string != NULL)
-    ReportError(DIE, "ERROR: SetVersionString() called twice\n");
-  version_string = strdup(version.c_str());   // small memory leak
+  version_string = version;
 }
 
 const char* VersionString() {
-  return version_string ? version_string : "";
+  return version_string.c_str();
 }
 
 
