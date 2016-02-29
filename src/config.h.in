@@ -2,6 +2,10 @@
 
 // Note: This header file is only used internally. It is not part of public interface!
 
+#ifndef GFLAGS_CONFIG_H_
+#define GFLAGS_CONFIG_H_
+
+
 // ---------------------------------------------------------------------------
 // System checks
 
@@ -110,3 +114,6 @@
 #  endif
 #  include "windows_port.h"
 #endif
+
+
+#endif // GFLAGS_CONFIG_H_
