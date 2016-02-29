@@ -1,3 +1,5 @@
+#define GFLAGS_DLL_DECLARE_FLAG
+
 #include <iostream>
 #include <gflags/gflags_declare.h>
 

@@ -34,7 +34,6 @@
 // script that runs 'strings' over this program and makes sure
 // that the help string is not in there.
 
-#include "config_for_unittests.h"
 #define STRIP_FLAG_HELP 1
 #include <gflags/gflags.h>
 
