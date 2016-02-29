@@ -1514,7 +1514,7 @@ static int main(int argc, char **argv) {
   // The non-recommended way:
   FLAGS_changed_bool2 = true;
 
-  SetUsageMessage(usage_message.c_str());
+  SetUsageMessage(usage_message);
   SetVersionString("test_version");
   ParseCommandLineFlags(&argc, &argv, true);
   MakeTmpdir(&FLAGS_test_tmpdir);
