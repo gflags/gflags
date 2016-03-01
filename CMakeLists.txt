@@ -15,7 +15,7 @@
 ## When this project is a subproject (GFLAGS_IS_SUBPROJECT is TRUE), the default
 ## settings are such that only the static single-threaded library is built without
 ## installation of the gflags files. The "gflags" target is in this case an ALIAS
-## library target for the "gflags_nothreads-static" library target. Targets which
+## library target for the "gflags_nothreads_static" library target. Targets which
 ## depend on the gflags library should link to the "gflags" library target.
 ##
 ## Example CMakeLists.txt of user project which requires separate gflags installation:
@@ -24,6 +24,16 @@
 ##   project(Foo)
 ##
 ##   find_package(gflags REQUIRED)
+##
+##   add_executable(foo src/foo.cc)
+##   target_link_libraries(foo gflags)
+##
+## Example CMakeLists.txt of user project which requires separate single-threaded static gflags installation:
+##   cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+##
+##   project(Foo)
+##
+##   find_package(gflags COMPONENTS nothreads_static)
 ##
 ##   add_executable(foo src/foo.cc)
 ##   target_link_libraries(foo gflags)
@@ -411,12 +421,12 @@ foreach (TYPE IN ITEMS STATIC SHARED)
     # multi-threaded vs. single-threaded
     foreach (opts IN ITEMS "" _nothreads)
       if (BUILD_gflags${opts}_LIB)
-        add_library (gflags${opts}-${type} ${TYPE} ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
+        add_library (gflags${opts}_${type} ${TYPE} ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
         set (include_dirs "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>")
         if (INSTALL_HEADERS)
           list (APPEND include_dirs "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>")
         endif ()
-        target_include_directories (gflags${opts}-${type}
+        target_include_directories (gflags${opts}_${type}
           PUBLIC  "${include_dirs}"
           PRIVATE "${PROJECT_SOURCE_DIR}/src;${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}"
         )
@@ -425,25 +435,25 @@ foreach (TYPE IN ITEMS STATIC SHARED)
         else ()
           set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL}")
           if (CMAKE_USE_PTHREADS_INIT)
-            target_link_libraries (gflags${opts}-${type} ${CMAKE_THREAD_LIBS_INIT})
+            target_link_libraries (gflags${opts}_${type} ${CMAKE_THREAD_LIBS_INIT})
           endif ()
         endif ()
         set_target_properties (
-          gflags${opts}-${type} PROPERTIES COMPILE_DEFINITIONS "${defines}"
+          gflags${opts}_${type} PROPERTIES COMPILE_DEFINITIONS "${defines}"
                                            OUTPUT_NAME         "gflags${opts}${type_suffix}"
                                            VERSION             "${PACKAGE_VERSION}"
                                            SOVERSION           "${PACKAGE_SOVERSION}"
         )
         if (HAVE_SHLWAPI_H)
-          target_link_libraries (gflags${opts}-${type} shlwapi.lib)
+          target_link_libraries (gflags${opts}_${type} shlwapi.lib)
         endif ()
-        list (APPEND TARGETS gflags${opts}-${type})
+        list (APPEND TARGETS gflags${opts}_${type})
         # add convenience make target for build of both shared and static libraries
         if (NOT GFLAGS_IS_SUBPROJECT)
           if (NOT TARGET gflags${opts})
             add_custom_target (gflags${opts})
           endif ()
-          add_dependencies (gflags${opts} gflags${opts}-${type})
+          add_dependencies (gflags${opts} gflags${opts}_${type})
         endif ()
       endif ()
     endforeach ()
@@ -454,8 +464,8 @@ endforeach ()
 if (GFLAGS_IS_SUBPROJECT)
   foreach (type IN ITEMS static shared)
     foreach (opts IN ITEMS "_nothreads" "")
-      if (TARGET gflags${opts}-${type})
-        add_library (gflags ALIAS gflags${opts}-${type})
+      if (TARGET gflags${opts}_${type})
+        add_library (gflags ALIAS gflags${opts}_${type})
         break ()
       endif ()
     endforeach ()
@@ -474,14 +484,14 @@ configure_file (cmake/version.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-co
 if (BUILD_SHARED_LIBS AND INSTALL_SHARED_LIBS)
   foreach (opts IN ITEMS "" _nothreads)
     if (BUILD_gflags${opts}_LIB)
-      install (TARGETS gflags${opts}-shared DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+      install (TARGETS gflags${opts}_shared DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
     endif ()
   endforeach ()
 endif ()
 if (BUILD_STATIC_LIBS AND INSTALL_STATIC_LIBS)
   foreach (opts IN ITEMS "" _nothreads)
     if (BUILD_gflags${opts}_LIB)
-      install (TARGETS gflags${opts}-static DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+      install (TARGETS gflags${opts}_static DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
     endif ()
   endforeach ()
 endif ()
@@ -497,7 +507,7 @@ if (INSTALL_HEADERS)
     FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake"
     DESTINATION ${CONFIG_INSTALL_DIR}
   )
-  install (EXPORT gflags-lib DESTINATION ${CONFIG_INSTALL_DIR} FILE ${PACKAGE_NAME}-export.cmake)
+  install (EXPORT gflags-lib DESTINATION ${CONFIG_INSTALL_DIR} FILE ${PACKAGE_NAME}-targets.cmake)
   if (UNIX)
     install (PROGRAMS src/gflags_completions.sh DESTINATION ${RUNTIME_INSTALL_DIR})
   endif ()
@@ -506,7 +516,7 @@ endif ()
 # ----------------------------------------------------------------------------
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
-export (TARGETS ${TARGETS} FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-export.cmake")
+export (TARGETS ${TARGETS} FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-targets.cmake")
 export (PACKAGE gflags)
 configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake" @ONLY)
 
