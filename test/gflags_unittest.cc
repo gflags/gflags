@@ -32,8 +32,10 @@
 // For now, this unit test does not cover all features of
 // gflags.cc
 
-#include "config.h"
 #include <gflags/gflags.h>
+
+#include "config.h"
+#include "util.h"
 
 #include <math.h>       // for isinf() and isnan()
 #include <stdio.h>
@@ -44,7 +46,6 @@
 #endif
 #include <vector>
 #include <string>
-#include "util.h"
 TEST_INIT
 EXPECT_DEATH_INIT
 
