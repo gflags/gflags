@@ -1,3 +1,65 @@
+## CMake configuration file of gflags project
+##
+## This CMakeLists.txt defines some gflags specific configuration variables
+## using the "gflags_define" utility macro. The default values of these variables
+## can be overridden either on the CMake command-line using the -D option of
+## the cmake command or in a super-project which includes the gflags source
+## tree by setting the GFLAGS_<varname> CMake variables before adding the
+## gflags source directory via CMake's "add_subdirectory" command. Only when
+## the non-cached variable GFLAGS_IS_SUBPROJECT has a value equivalent to FALSE,
+## these configuration variables are added to the CMake cache so they can be
+## edited in the CMake GUI. By default, GFLAGS_IS_SUBPROJECT is set to TRUE when
+## the CMAKE_SOURCE_DIR is not identical to the directory of this CMakeLists.txt
+## file, i.e., the top-level directory of the gflags project source tree.
+##
+## When this project is a subproject (GFLAGS_IS_SUBPROJECT is TRUE), the default
+## settings are such that only the static single-threaded library is built without
+## installation of the gflags files. The "gflags" target is in this case an ALIAS
+## library target for the "gflags_nothreads-static" library target. Targets which
+## depend on the gflags library should link to the "gflags" library target.
+##
+## Example CMakeLists.txt of user project which requires separate gflags installation:
+##   cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+##
+##   project(Foo)
+##
+##   find_package(gflags REQUIRED)
+##
+##   add_executable(foo src/foo.cc)
+##   target_link_libraries(foo gflags)
+##
+## Example CMakeLists.txt of super-project which contains gflags source tree:
+##   cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
+##
+##   project(Foo)
+##
+##   add_subdirectory(gflags)
+##
+##   add_executable(foo src/foo.cc)
+##   target_link_libraries(foo gflags)
+##
+## Variables to configure the source files:
+## - GFLAGS_IS_A_DLL
+## - GFLAGS_NAMESPACE
+## - GFLAGS_ATTRIBUTE_UNUSED
+## - GFLAGS_INTTYPES_FORMAT
+##
+## Variables to configure the build:
+## - GFLAGS_SOVERSION
+## - GFLAGS_BUILD_SHARED_LIBS
+## - GFLAGS_BUILD_STATIC_LIBS
+## - GFLAGS_BUILD_gflags_LIB
+## - GFLAGS_BUILD_gflags_nothreads_LIB
+## - GFLAGS_BUILD_TESTING
+## - GFLAGS_BUILD_PACKAGING
+##
+## Variables to configure the installation:
+## - GFLAGS_INCLUDE_DIR
+## - GFLAGS_LIBRARY_INSTALL_DIR or LIB_INSTALL_DIR or LIB_SUFFIX
+## - GFLAGS_INSTALL_HEADERS
+## - GFLAGS_INSTALL_SHARED_LIBS
+## - GFLAGS_INSTALL_STATIC_LIBS
+
 cmake_minimum_required (VERSION 2.8.12 FATAL_ERROR)
 
 if (POLICY CMP0042)
@@ -34,17 +96,36 @@ version_numbers (
     PACKAGE_VERSION_PATCH
 )
 
-set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}")
+# shared library ABI version number, can be overridden by package maintainers
+# using -DGFLAGS_SOVERSION=XXX on the command-line
+if (GFLAGS_SOVERSION)
+  set (PACKAGE_SOVERSION "${GFLAGS_SOVERSION}")
+else ()
+  set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}")
+endif ()
+
+# when gflags is included as subproject (e.g., as Git submodule/subtree) in the source
+# tree of a project that uses it, no variables should be added to the CMake cache;
+# users may set the non-cached variable GFLAGS_IS_SUBPROJECT before add_subdirectory(gflags)
+if (NOT DEFINED GFLAGS_IS_SUBPROJECT)
+  if ("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
+    set (GFLAGS_IS_SUBPROJECT FALSE)
+  else ()
+    set (GFLAGS_IS_SUBPROJECT TRUE)
+  endif ()
+endif ()
+
+# prefix for package variables in CMake configuration file
+string (TOUPPER "${PACKAGE_NAME}" PACKAGE_PREFIX)
 
 # ----------------------------------------------------------------------------
 # options
-if (NOT GFLAGS_NAMESPACE)
-  # maintain binary backwards compatibility with gflags library version <= 2.0,
-  # but at the same time enable the use of the preferred new "gflags" namespace
-  set (GFLAGS_NAMESPACE "google;${PACKAGE_NAME}" CACHE STRING "Name(s) of library namespace (separate multiple options by semicolon)")
-  mark_as_advanced (GFLAGS_NAMESPACE)
-endif ()
-set (GFLAGS_NAMESPACE_SECONDARY "${GFLAGS_NAMESPACE}")
+
+# maintain binary backwards compatibility with gflags library version <= 2.0,
+# but at the same time enable the use of the preferred new "gflags" namespace
+gflags_define (STRING NAMESPACE "Name(s) of library namespace (separate multiple options by semicolon)" "google;${PACKAGE_NAME}" "${PACKAGE_NAME}")
+gflags_property (NAMESPACE ADVANCED TRUE)
+set (GFLAGS_NAMESPACE_SECONDARY "${NAMESPACE}")
 list (REMOVE_DUPLICATES GFLAGS_NAMESPACE_SECONDARY)
 if (NOT GFLAGS_NAMESPACE_SECONDARY)
   message (FATAL_ERROR "GFLAGS_NAMESPACE must be set to one (or more) valid C++ namespace identifier(s separated by semicolon \";\").")
@@ -57,46 +138,54 @@ endforeach ()
 list (GET       GFLAGS_NAMESPACE_SECONDARY 0 GFLAGS_NAMESPACE)
 list (REMOVE_AT GFLAGS_NAMESPACE_SECONDARY 0)
 
-option (BUILD_SHARED_LIBS          "Request build of shared libraries."                                       OFF)
-option (BUILD_STATIC_LIBS          "Request build of static libraries (default if BUILD_SHARED_LIBS is OFF)." OFF)
-option (BUILD_gflags_LIB           "Request build of the multi-threaded gflags library."                      ON)
-option (BUILD_gflags_nothreads_LIB "Request build of the single-threaded gflags library."                     ON)
-option (BUILD_PACKAGING            "Enable build of distribution packages using CPack."                       OFF)
-option (BUILD_TESTING              "Enable build of the unit tests and their execution using CTest."          OFF)
-option (INSTALL_HEADERS            "Request packaging of headers and other development files."                ON)
+# cached build options when gflags is not a subproject, otherwise non-cached CMake variables
+# usage: gflags_define(BOOL <name> <doc> <default> [<subproject default>])
+gflags_define (BOOL BUILD_SHARED_LIBS          "Request build of shared libraries."                                       OFF OFF)
+gflags_define (BOOL BUILD_STATIC_LIBS          "Request build of static libraries (default if BUILD_SHARED_LIBS is OFF)." OFF ON)
+gflags_define (BOOL BUILD_gflags_LIB           "Request build of the multi-threaded gflags library."                      ON  OFF)
+gflags_define (BOOL BUILD_gflags_nothreads_LIB "Request build of the single-threaded gflags library."                     ON  ON)
+gflags_define (BOOL BUILD_PACKAGING            "Enable build of distribution packages using CPack."                       OFF OFF)
+gflags_define (BOOL BUILD_TESTING              "Enable build of the unit tests and their execution using CTest."          OFF OFF)
+gflags_define (BOOL INSTALL_HEADERS            "Request installation of headers and other development files."             ON  OFF)
+gflags_define (BOOL INSTALL_SHARED_LIBS        "Request installation of shared libraries."                                ON  ON)
+gflags_define (BOOL INSTALL_STATIC_LIBS        "Request installation of static libraries."                                ON  OFF)
 
-mark_as_advanced (CLEAR CMAKE_INSTALL_PREFIX)
-mark_as_advanced (CMAKE_CONFIGURATION_TYPES
-                  BUILD_STATIC_LIBS
-                  INSTALL_HEADERS)
-if (APPLE)
-  mark_as_advanced(CMAKE_OSX_ARCHITECTURES
-                   CMAKE_OSX_DEPLOYMENT_TARGET
-                   CMAKE_OSX_SYSROOT)
-endif ()
+gflags_property (BUILD_STATIC_LIBS   ADVANCED TRUE)
+gflags_property (INSTALL_HEADERS     ADVANCED TRUE)
+gflags_property (INSTALL_SHARED_LIBS ADVANCED TRUE)
+gflags_property (INSTALL_STATIC_LIBS ADVANCED TRUE)
+
+if (NOT GFLAGS_IS_SUBPROJECT)
+  foreach (varname IN ITEMS CMAKE_INSTALL_PREFIX)
+    gflags_property (${varname} ADVANCED FALSE)
+  endforeach ()
+  foreach (varname IN ITEMS CMAKE_CONFIGURATION_TYPES CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
+    gflags_property (${varname} ADVANCED TRUE)
+  endforeach ()
+  if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
+    gflags_set (CMAKE_BUILD_TYPE Release)
+  endif ()
+  if (CMAKE_CONFIGURATION_TYPES)
+    gflags_property (CMAKE_BUILD_TYPE STRINGS "${CMAKE_CONFIGURATION_TYPES}")
+  endif ()
+endif () # NOT GFLAGS_IS_SUBPROJECT
 
 if (NOT BUILD_SHARED_LIBS AND NOT BUILD_STATIC_LIBS)
   set (BUILD_STATIC_LIBS ON)
 endif ()
 if (NOT BUILD_gflags_LIB AND NOT BUILD_gflags_nothreads_LIB)
- message (FATAL_ERROR "At least one of BUILD_gflags_LIB and BUILD_gflags_nothreads_LIB must be ON.")
+  message (FATAL_ERROR "At least one of [GFLAGS_]BUILD_gflags_LIB and [GFLAGS_]BUILD_gflags_nothreads_LIB must be ON.")
 endif ()
 
-if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CXX_FLAGS)
-  set_property (CACHE CMAKE_BUILD_TYPE PROPERTY VALUE Release)
+gflags_define (STRING INCLUDE_DIR "Name of include directory of installed header files relative to CMAKE_INSTALL_PREFIX/include/" "${PACKAGE_NAME}")
+gflags_property (INCLUDE_DIR ADVANCED TRUE)
+if (IS_ABSOLUTE INCLUDE_DIR)
+  message (FATAL_ERROR "[GFLAGS_]INCLUDE_DIR must be a path relative to CMAKE_INSTALL_PREFIX/include/")
 endif ()
-
-if (NOT GFLAGS_INCLUDE_DIR)
-  set (GFLAGS_INCLUDE_DIR "${PACKAGE_NAME}" CACHE STRING "Name of include directory of installed header files")
-  mark_as_advanced (GFLAGS_INCLUDE_DIR)
-else ()
-  if (IS_ABSOLUTE GFLAGS_INCLUDE_DIR)
-    message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must be a path relative to CMAKE_INSTALL_PREFIX/include")
-  endif ()
-  if (GFLAGS_INCLUDE_DIR MATCHES "^\\.\\.[/\\]")
-    message (FATAL_ERROR "GFLAGS_INCLUDE_DIR must not start with parent directory reference (../)")
-  endif ()
+if (INCLUDE_DIR MATCHES "^\\.\\.[/\\]")
+  message (FATAL_ERROR "[GFLAGS_]INCLUDE_DIR must not start with parent directory reference (../)")
 endif ()
+set (GFLAGS_INCLUDE_DIR "${INCLUDE_DIR}")
 
 # ----------------------------------------------------------------------------
 # system checks
@@ -135,10 +224,10 @@ else ()
   endif ()
 endif ()
 
-set (GFLAGS_INTTYPES_FORMAT "" CACHE STRING "Format of integer types: \"C99\" (uint32_t), \"BSD\" (u_int32_t), \"VC7\" (__int32)")
-set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY STRINGS "C99;BSD;VC7")
-mark_as_advanced (GFLAGS_INTTYPES_FORMAT)
-if (NOT GFLAGS_INTTYPES_FORMAT)
+gflags_define (STRING INTTYPES_FORMAT "Format of integer types: \"C99\" (uint32_t), \"BSD\" (u_int32_t), \"VC7\" (__int32)" "")
+gflags_property (INTTYPES_FORMAT STRINGS "C99;BSD;VC7")
+gflags_property (INTTYPES_FORMAT ADVANCED TRUE)
+if (NOT INTTYPES_FORMAT)
   set (TYPES uint32_t u_int32_t)
   if (MSVC)
     list (INSERT TYPES 0 __int32)
@@ -150,29 +239,30 @@ if (NOT GFLAGS_INTTYPES_FORMAT)
     endif ()
   endforeach ()
   if (HAVE_uint32_t)
-    set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY VALUE C99)
+    gflags_set (INTTYPES_FORMAT C99)
   elseif (HAVE_u_int32_t)
-    set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY VALUE BSD)
+    gflags_set (INTTYPES_FORMAT BSD)
   elseif (HAVE___int32)
-    set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY VALUE VC7)
+    gflags_set (INTTYPES_FORMAT VC7)
   else ()
-    mark_as_advanced (CLEAR GFLAGS_INTTYPES_FORMAT)
+    gflags_property (INTTYPES_FORMAT ADVANCED FALSE)
     message (FATAL_ERROR "Do not know how to define a 32-bit integer quantity on your system!"
                          " Neither uint32_t, u_int32_t, nor __int32 seem to be available."
-                         " Set GFLAGS_INTTYPES_FORMAT to either C99, BSD, or VC7 and try again.")
+                         " Set [GFLAGS_]INTTYPES_FORMAT to either C99, BSD, or VC7 and try again.")
   endif ()
 endif ()
 # use of special characters in strings to circumvent bug #0008226
-if ("^${GFLAGS_INTTYPES_FORMAT}$" STREQUAL "^WIN$")
-  set_property (CACHE GFLAGS_INTTYPES_FORMAT PROPERTY VALUE VC7)
+if ("^${INTTYPES_FORMAT}$" STREQUAL "^WIN$")
+  gflags_set (INTTYPES_FORMAT VC7)
 endif ()
-if (NOT GFLAGS_INTTYPES_FORMAT MATCHES "^(C99|BSD|VC7)$")
-  message (FATAL_ERROR "Invalid value for GFLAGS_INTTYPES_FORMAT! Choose one of \"C99\", \"BSD\", or \"VC7\"")
+if (NOT INTTYPES_FORMAT MATCHES "^(C99|BSD|VC7)$")
+  message (FATAL_ERROR "Invalid value for [GFLAGS_]INTTYPES_FORMAT! Choose one of \"C99\", \"BSD\", or \"VC7\"")
 endif ()
+set (GFLAGS_INTTYPES_FORMAT "${INTTYPES_FORMAT}")
 set (GFLAGS_INTTYPES_FORMAT_C99 0)
 set (GFLAGS_INTTYPES_FORMAT_BSD 0)
 set (GFLAGS_INTTYPES_FORMAT_VC7 0)
-set ("GFLAGS_INTTYPES_FORMAT_${GFLAGS_INTTYPES_FORMAT}" 1)
+set ("GFLAGS_INTTYPES_FORMAT_${INTTYPES_FORMAT}" 1)
 
 if (MSVC)
   set (HAVE_strtoll 0)
@@ -184,24 +274,27 @@ else ()
   endif ()
 endif ()
 
-set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
-find_package (Threads)
-if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
-  set (HAVE_PTHREAD 1)
-  check_type_size (pthread_rwlock_t RWLOCK LANGUAGE CXX)
+if (BUILD_gflags_LIB)
+  set (CMAKE_THREAD_PREFER_PTHREAD TRUE)
+  find_package (Threads)
+  if (Threads_FOUND AND CMAKE_USE_PTHREADS_INIT)
+    set (HAVE_PTHREAD 1)
+    check_type_size (pthread_rwlock_t RWLOCK LANGUAGE CXX)
+  else ()
+    set (HAVE_PTHREAD 0)
+  endif ()
+  if (UNIX AND NOT HAVE_PTHREAD)
+    if (CMAKE_HAVE_PTHREAD_H)
+      set (what "library")
+    else ()
+      set (what ".h file")
+    endif ()
+    message (FATAL_ERROR "Could not find pthread${what}. Check the log file"
+                         "\n\t${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log"
+                         "\nor disable the build of the multi-threaded gflags library (BUILD_gflags_LIB=OFF).")
+  endif ()
 else ()
   set (HAVE_PTHREAD 0)
-endif ()
-
-if (UNIX AND NOT HAVE_PTHREAD AND BUILD_gflags_LIB)
-  if (CMAKE_HAVE_PTHREAD_H)
-    set (what "library")
-  else ()
-    set (what ".h file")
-  endif ()
-  message (FATAL_ERROR "Could not find pthread${what}. Check the log file"
-                       "\n\t${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log"
-                       "\nor disable the build of the multi-threaded gflags library (BUILD_gflags_LIB=OFF).")
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -244,19 +337,23 @@ endif ()
 
 # ----------------------------------------------------------------------------
 # configure source files
-if (CMAKE_COMPILER_IS_GNUCXX)
-  set (GFLAGS_ATTRIBUTE_UNUSED "__attribute((unused))")
-else ()
-  set (GFLAGS_ATTRIBUTE_UNUSED)
+if (NOT DEFINED GFLAGS_ATTRIBUTE_UNUSED)
+  if (CMAKE_COMPILER_IS_GNUCXX)
+    set (GFLAGS_ATTRIBUTE_UNUSED "__attribute((unused))")
+  else ()
+    set (GFLAGS_ATTRIBUTE_UNUSED)
+  endif ()
 endif ()
 
 # whenever we build a shared library (DLL on Windows), configure the public
 # headers of the API for use of this library rather than the optionally
 # also build statically linked library; users can override GFLAGS_DLL_DECL
-if (BUILD_SHARED_LIBS)
-  set (GFLAGS_IS_A_DLL 1)
-else ()
-  set (GFLAGS_IS_A_DLL 0)
+if (NOT DEFINED GFLAGS_IS_A_DLL)
+  if (BUILD_SHARED_LIBS)
+    set (GFLAGS_IS_A_DLL 1)
+  else ()
+    set (GFLAGS_IS_A_DLL 0)
+  endif ()
 endif ()
 
 configure_headers (PUBLIC_HDRS  ${PUBLIC_HDRS})
@@ -265,9 +362,11 @@ configure_sources (GFLAGS_SRCS  ${GFLAGS_SRCS})
 
 # ----------------------------------------------------------------------------
 # output directories
-set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
-set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib")
-set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib")
+if (NOT GFLAGS_IS_SUBPROJECT)
+  set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "bin")
+  set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "lib")
+  set (CMAKE_ARCHIVE_OUTPUT_DIRECTORY "lib")
+endif ()
 
 # ----------------------------------------------------------------------------
 # installation directories
@@ -281,13 +380,11 @@ else ()
   # The LIB_INSTALL_DIR and LIB_SUFFIX variables are used by the Fedora
   # package maintainers. Also package maintainers of other distribution
   # packages need to be able to specify the name of the library directory.
-  if (NOT LIB_INSTALL_DIR)
-    set (LIB_INSTALL_DIR "lib${LIB_SUFFIX}")
+  if (NOT GFLAGS_LIBRARY_INSTALL_DIR AND LIB_INSTALL_DIR)
+    set (GFLAGS_LIBRARY_INSTALL_DIR "${LIB_INSTALL_DIR}")
   endif ()
-  set (LIBRARY_INSTALL_DIR "${LIB_INSTALL_DIR}"
-    CACHE PATH "Directory of installed libraries, e.g., \"lib64\""
-  )
-  mark_as_advanced (LIBRARY_INSTALL_DIR)
+  gflags_define (PATH LIBRARY_INSTALL_DIR "Directory of installed libraries, e.g., \"lib64\"" "lib${LIB_SUFFIX}")
+  gflags_property (LIBRARY_INSTALL_DIR ADVANCED TRUE)
   set (INCLUDE_INSTALL_DIR include)
   set (CONFIG_INSTALL_DIR  ${LIBRARY_INSTALL_DIR}/cmake/${PACKAGE_NAME})
 endif ()
@@ -340,15 +437,33 @@ foreach (TYPE IN ITEMS STATIC SHARED)
         if (HAVE_SHLWAPI_H)
           target_link_libraries (gflags${opts}-${type} shlwapi.lib)
         endif ()
-        if (NOT TARGET gflags${opts})
-          add_custom_target (gflags${opts})
-        endif ()
-        add_dependencies (gflags${opts} gflags${opts}-${type})
         list (APPEND TARGETS gflags${opts}-${type})
+        # add convenience make target for build of both shared and static libraries
+        if (NOT GFLAGS_IS_SUBPROJECT)
+          if (NOT TARGET gflags${opts})
+            add_custom_target (gflags${opts})
+          endif ()
+          add_dependencies (gflags${opts} gflags${opts}-${type})
+        endif ()
       endif ()
     endforeach ()
   endif ()
 endforeach ()
+
+# add ALIAS target for use in super-project, prefer static over shared, single-threaded over multi-threaded
+if (GFLAGS_IS_SUBPROJECT)
+  foreach (type IN ITEMS static shared)
+    foreach (opts IN ITEMS "_nothreads" "")
+      if (TARGET gflags${opts}-${type})
+        add_library (gflags ALIAS gflags${opts}-${type})
+        break ()
+      endif ()
+    endforeach ()
+    if (TARGET gflags)
+       break ()
+    endif ()
+  endforeach ()
+endif ()
 
 # ----------------------------------------------------------------------------
 # installation rules
@@ -356,7 +471,21 @@ file (RELATIVE_PATH INSTALL_PREFIX_REL2CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/${CON
 configure_file (cmake/config.cmake.in  "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake" @ONLY)
 configure_file (cmake/version.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake" @ONLY)
 
-install (TARGETS ${TARGETS} DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+if (BUILD_SHARED_LIBS AND INSTALL_SHARED_LIBS)
+  foreach (opts IN ITEMS "" _nothreads)
+    if (BUILD_gflags${opts}_LIB)
+      install (TARGETS gflags${opts}-shared DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+    endif ()
+  endforeach ()
+endif ()
+if (BUILD_STATIC_LIBS AND INSTALL_STATIC_LIBS)
+  foreach (opts IN ITEMS "" _nothreads)
+    if (BUILD_gflags${opts}_LIB)
+      install (TARGETS gflags${opts}-static DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+    endif ()
+  endforeach ()
+endif ()
+
 if (INSTALL_HEADERS)
   install (FILES ${PUBLIC_HDRS} DESTINATION ${INCLUDE_INSTALL_DIR}/${GFLAGS_INCLUDE_DIR})
   install (
@@ -399,10 +528,13 @@ if (BUILD_PACKAGING)
                      "\n  BUILD_SHARED_LIBS=ON"
                      "\n  BUILD_STATIC_LIBS=OFF"
                      "\n  INSTALL_HEADERS=OFF"
+                     "\n  INSTALL_SHARED_LIBS=ON"
                      "\nRecommended options for generation of development package:"
                      "\n  BUILD_SHARED_LIBS=ON"
                      "\n  BUILD_STATIC_LIBS=ON"
-                     "\n  INSTALL_HEADERS=ON")
+                     "\n  INSTALL_HEADERS=ON"
+                     "\n  INSTALL_SHARED_LIBS=ON"
+                     "\n  INSTALL_STATIC_LIBS=ON")
   endif ()
 
   # default package generators

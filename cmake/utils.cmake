@@ -11,7 +11,7 @@ macro (bool_to_int VAR)
 endmacro ()
 
 # ----------------------------------------------------------------------------
-## Extract version numbers from version string.
+## Extract version numbers from version string
 function (version_numbers version major minor patch)
   if (version MATCHES "([0-9]+)(\\.[0-9]+)?(\\.[0-9]+)?(rc[1-9][0-9]*|[a-z]+)?")
     if (CMAKE_MATCH_1)
@@ -40,6 +40,73 @@ function (version_numbers version major minor patch)
   set ("${minor}" "${_minor}" PARENT_SCOPE)
   set ("${patch}" "${_patch}" PARENT_SCOPE)
 endfunction ()
+
+# ----------------------------------------------------------------------------
+## Determine if cache entry exists
+macro (gflags_is_cached retvar varname)
+  if (DEFINED ${varname})
+    get_property (${retvar} CACHE ${varname} PROPERTY TYPE SET)
+  else ()
+    set (${retvar} FALSE)
+  endif ()
+endmacro ()
+
+# ----------------------------------------------------------------------------
+## Add gflags configuration variable
+#
+# The default value of the (cached) configuration value can be overridden either
+# on the CMake command-line or the super-project by setting the GFLAGS_<varname>
+# variable. When gflags is a subproject of another project (GFLAGS_IS_SUBPROJECT),
+# the variable is not added to the CMake cache. Otherwise it is cached.
+macro (gflags_define type varname docstring default)
+  if (ARGC GREATER 5)
+    message (FATAL_ERROR "gflags_variable: Too many macro arguments")
+  endif ()
+  if (NOT DEFINED GFLAGS_${varname})
+    if (GFLAGS_IS_SUBPROJECT AND ARGC EQUAL 5)
+      set (GFLAGS_${varname} "${ARGV4}")
+    else ()
+      set (GFLAGS_${varname} "${default}")
+    endif ()
+  endif ()
+  if (GFLAGS_IS_SUBPROJECT)
+    if (NOT DEFINED ${varname})
+      set (${varname} "${GFLAGS_${varname}}")
+    endif ()
+  else ()
+    set (${varname} "${GFLAGS_${varname}}" CACHE ${type} "${docstring}")
+  endif ()
+endmacro ()
+
+# ----------------------------------------------------------------------------
+## Set property of cached gflags configuration variable
+macro (gflags_property varname property value)
+  gflags_is_cached (_cached ${varname})
+  if (_cached)
+    if (property STREQUAL ADVANCED)
+      if (${value})
+        mark_as_advanced (FORCE ${varname})
+      else ()
+        mark_as_advanced (CLEAR ${varname})
+      endif ()
+    else ()
+      set_property (CACHE ${varname} PROPERTY "${property}" "${value}")
+    endif ()
+  endif ()
+  unset (_cached)
+endmacro ()
+
+# ----------------------------------------------------------------------------
+## Modify value of gflags configuration variable
+macro (gflags_set varname value)
+  gflags_is_cached (_cached ${varname})
+  if (_cached)
+    set_property (CACHE ${varname} PROPERTY VALUE "${value}")
+  else ()
+    set (${varname} "${value}")
+  endif ()
+  unset (_cached)
+endmacro ()
 
 # ----------------------------------------------------------------------------
 ## Configure public header files
