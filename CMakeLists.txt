@@ -15,7 +15,7 @@ set (PACKAGE_NAME      "gflags")
 set (PACKAGE_VERSION   "2.2.0")
 set (PACKAGE_STRING    "${PACKAGE_NAME} ${PACKAGE_VERSION}")
 set (PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
-set (PACKAGE_BUGREPORT "https://github.com/schuhschuh/gflags/issues")
+set (PACKAGE_BUGREPORT "https://github.com/gflags/gflags/issues")
 
 project (${PACKAGE_NAME} CXX)
 if (CMAKE_VERSION VERSION_LESS 100)
@@ -445,7 +445,7 @@ if (BUILD_PACKAGING)
   # RPM package information -- used in cmake/package.cmake.in also for DEB
   set (CPACK_RPM_PACKAGE_GROUP   "Development/Libraries")
   set (CPACK_RPM_PACKAGE_LICENSE "BSD")
-  set (CPACK_RPM_PACKAGE_URL     "http://schuhschuh.github.com/gflags")
+  set (CPACK_RPM_PACKAGE_URL     "http://gflags.github.io/gflags")
   set (CPACK_RPM_CHANGELOG_FILE  "${CMAKE_CURRENT_LIST_DIR}/ChangeLog.txt")
 
   if (INSTALL_HEADERS)
