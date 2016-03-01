@@ -22,9 +22,9 @@ else ()
   set (type static)
 endif ()
 if (BUILD_gflags_LIB)
-  link_libraries (gflags-${type})
+  link_libraries (gflags_${type})
 else ()
-  link_libraries (gflags_nothreads-${type})
+  link_libraries (gflags_nothreads_${type})
 endif ()
 
 # ----------------------------------------------------------------------------
