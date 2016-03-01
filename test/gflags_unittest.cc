@@ -32,6 +32,7 @@
 // For now, this unit test does not cover all features of
 // gflags.cc
 
+#include "config.h"
 #include <gflags/gflags.h>
 
 #include <math.h>       // for isinf() and isnan()
