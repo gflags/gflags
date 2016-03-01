@@ -1,6 +1,6 @@
 ## gflags package configuration tests
 
-cmake_minimum_required (VERSION 2.8)
+cmake_minimum_required (VERSION 2.8.12 FATAL_ERROR)
 
 project (gflags_${TEST_NAME})
 
