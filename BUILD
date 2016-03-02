@@ -47,7 +47,7 @@ genrule(
     outs = [
         "config.h",
     ],
-    cmd = "sed -r -e 's,^#cmakedefine,// cmakedefine,' $(<) > $(@)",
+    cmd = "awk '{ gsub(/^#cmakedefine/, \"//cmakedefine\"); print; }' $(<) > $(@)",
 )
 
 genrule(
@@ -58,7 +58,7 @@ genrule(
     outs = [
         "gflags.h",
     ],
-    cmd = "sed -r -e 's/@[A-Z_]+@//' $(<) > $(@)",
+    cmd = "awk '{ gsub(/@(GFLAGS_ATTRIBUTE_UNUSED|INCLUDE_GFLAGS_NS_H)@/, \"\"); print; }' $(<) > $(@)",
 )
 
 genrule(
@@ -69,7 +69,7 @@ genrule(
     outs = [
         "gflags_completions.h",
     ],
-    cmd = "sed -r -e 's/@GFLAGS_NAMESPACE@/gflags/' $(<) > $(@)",
+    cmd = "awk '{ gsub(/@GFLAGS_NAMESPACE@/, \"gflags\"); print; }' $(<) > $(@)",
 )
 
 genrule(
@@ -80,12 +80,11 @@ genrule(
     outs = [
         "gflags_declare.h",
     ],
-    cmd = ("sed -r -e '" +
-           "s/@GFLAGS_NAMESPACE@/gflags/;" +
-           "s/@(HAVE_STDINT_H|HAVE_SYS_TYPES_H|HAVE_INTTYPES_H" +
-           "|GFLAGS_INTTYPES_FORMAT_C99)@/1/;" +
-           "s/@([A-Z0-9_]+)@/0/" +
-           "' $(<) > $(@)"),
+    cmd = ("awk '{ " +
+           "gsub(/@GFLAGS_NAMESPACE@/, \"gflags\"); " +
+           "gsub(/@(HAVE_STDINT_H|HAVE_SYS_TYPES_H|HAVE_INTTYPES_H|GFLAGS_INTTYPES_FORMAT_C99)@/, \"1\"); " +
+           "gsub(/@([A-Z0-9_]+)@/, \"0\"); " +
+           "print; }' $(<) > $(@)"),
 )
 
 genrule(
