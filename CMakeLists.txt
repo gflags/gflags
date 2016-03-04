@@ -111,7 +111,12 @@ version_numbers (
 if (GFLAGS_SOVERSION)
   set (PACKAGE_SOVERSION "${GFLAGS_SOVERSION}")
 else ()
-  set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}")
+  # TODO: Change default SOVERSION back to PACKAGE_VERSION_MAJOR with the
+  #       next increase of major version number (i.e., 3.0.0 -> SOVERSION 3)
+  #       The <major>.<minor> SOVERSION should be used for the 2.x releases
+  #       versions only which temporarily broke the API by changing the default
+  #       namespace from "google" to "gflags".
+  set (PACKAGE_SOVERSION "${PACKAGE_VERSION_MAJOR}.${PACKAGE_VERSION_MINOR}")
 endif ()
 
 # when gflags is included as subproject (e.g., as Git submodule/subtree) in the source
