@@ -213,7 +213,7 @@ class FlagValue {
     FV_UINT64 = 4,
     FV_DOUBLE = 5,
     FV_STRING = 6,
-    FV_MAX_INDEX = 7,
+    FV_MAX_INDEX = 6,
   };
   const char* TypeName() const;
   bool Equal(const FlagValue& x) const;
