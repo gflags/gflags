@@ -75,6 +75,7 @@ DECLARE_string(tryfromenv);   // in gflags.cc
 DEFINE_bool(test_bool, false, "tests bool-ness");
 DEFINE_int32(test_int32, -1, "");
 DEFINE_int64(test_int64, -2, "");
+DEFINE_uint32(test_uint32, 1, "");
 DEFINE_uint64(test_uint64, 2, "");
 DEFINE_double(test_double, -1.0, "");
 DEFINE_string(test_string, "initial", "");
@@ -115,6 +116,7 @@ DEFINE_string(changeable_string_var, ChangeableString(), "");
 DEFINE_bool(unused_bool, true, "unused bool-ness");
 DEFINE_int32(unused_int32, -1001, "");
 DEFINE_int64(unused_int64, -2001, "");
+DEFINE_uint32(unused_uint32, 1000, "");
 DEFINE_uint64(unused_uint64, 2000, "");
 DEFINE_double(unused_double, -1000.0, "");
 DEFINE_string(unused_string, "unused", "");
@@ -277,6 +279,7 @@ TEST(FlagTypes, FlagTypes) {
   AssertIsType<bool>(FLAGS_test_bool);
   AssertIsType<int32>(FLAGS_test_int32);
   AssertIsType<int64>(FLAGS_test_int64);
+  AssertIsType<uint32>(FLAGS_test_uint32);
   AssertIsType<uint64>(FLAGS_test_uint64);
   AssertIsType<double>(FLAGS_test_double);
   AssertIsType<string>(FLAGS_test_string);
@@ -591,10 +594,14 @@ TEST(SetFlagValueTest, IllegalValues) {
   FLAGS_test_bool = true;
   FLAGS_test_int32 = 119;
   FLAGS_test_int64 = 1191;
-  FLAGS_test_uint64 = 11911;
+  FLAGS_test_uint32 = 11911;
+  FLAGS_test_uint64 = 119111;
 
   EXPECT_EQ("",
             SetCommandLineOption("test_bool", "12"));
+
+  EXPECT_EQ("",
+            SetCommandLineOption("test_uint32", "1970"));
 
   EXPECT_EQ("",
             SetCommandLineOption("test_int32", "7000000000000"));
@@ -609,6 +616,7 @@ TEST(SetFlagValueTest, IllegalValues) {
   EXPECT_EQ("", SetCommandLineOption("test_bool", ""));
   EXPECT_EQ("", SetCommandLineOption("test_int32", ""));
   EXPECT_EQ("", SetCommandLineOption("test_int64", ""));
+  EXPECT_EQ("", SetCommandLineOption("test_uint32", ""));
   EXPECT_EQ("", SetCommandLineOption("test_uint64", ""));
   EXPECT_EQ("", SetCommandLineOption("test_double", ""));
   EXPECT_EQ("test_string set to \n", SetCommandLineOption("test_string", ""));
@@ -616,7 +624,8 @@ TEST(SetFlagValueTest, IllegalValues) {
   EXPECT_TRUE(FLAGS_test_bool);
   EXPECT_EQ(119, FLAGS_test_int32);
   EXPECT_EQ(1191, FLAGS_test_int64);
-  EXPECT_EQ(11911, FLAGS_test_uint64);
+  EXPECT_EQ(11911, FLAGS_test_uint32);
+  EXPECT_EQ(119111, FLAGS_test_uint64);
 }
 
 
@@ -669,14 +678,19 @@ TEST(FromEnvTest, LegalValues) {
   EXPECT_EQ(-1, Int32FromEnv("INT_VAL2", 10));
   EXPECT_EQ(10, Int32FromEnv("INT_VAL_UNKNOWN", 10));
 
-  setenv("INT_VAL3", "1099511627776", 1);
+  setenv("INT_VAL3", "4294967295", 1);
+  EXPECT_EQ(1, Uint32FromEnv("INT_VAL1", 10));
+  EXPECT_EQ(4294967295L, Uint32FromEnv("INT_VAL3", 30));
+  EXPECT_EQ(10, Uint32FromEnv("INT_VAL_UNKNOWN", 10));
+
+  setenv("INT_VAL4", "1099511627776", 1);
   EXPECT_EQ(1, Int64FromEnv("INT_VAL1", 20));
   EXPECT_EQ(-1, Int64FromEnv("INT_VAL2", 20));
-  EXPECT_EQ(1099511627776LL, Int64FromEnv("INT_VAL3", 20));
+  EXPECT_EQ(1099511627776LL, Int64FromEnv("INT_VAL4", 20));
   EXPECT_EQ(20, Int64FromEnv("INT_VAL_UNKNOWN", 20));
 
   EXPECT_EQ(1, Uint64FromEnv("INT_VAL1", 30));
-  EXPECT_EQ(1099511627776ULL, Uint64FromEnv("INT_VAL3", 30));
+  EXPECT_EQ(1099511627776ULL, Uint64FromEnv("INT_VAL4", 30));
   EXPECT_EQ(30, Uint64FromEnv("INT_VAL_UNKNOWN", 30));
 
   // I pick values here that can be easily represented exactly in floating-point
@@ -711,6 +725,11 @@ TEST(FromEnvDeathTest, IllegalValues) {
   EXPECT_DEATH(Int32FromEnv("INT_BAD2", 10), "error parsing env variable");
   EXPECT_DEATH(Int32FromEnv("INT_BAD3", 10), "error parsing env variable");
   EXPECT_DEATH(Int32FromEnv("INT_BAD4", 10), "error parsing env variable");
+
+  EXPECT_DEATH(Uint32FromEnv("INT_BAD1", 10), "error parsing env variable");
+  EXPECT_DEATH(Uint32FromEnv("INT_BAD2", 10), "error parsing env variable");
+  EXPECT_DEATH(Uint32FromEnv("INT_BAD3", 10), "error parsing env variable");
+  EXPECT_DEATH(Uint32FromEnv("INT_BAD4", 10), "error parsing env variable");
 
   setenv("BIGINT_BAD1", "18446744073709551616000", 1);
   EXPECT_DEATH(Int64FromEnv("INT_BAD1", 20), "error parsing env variable");
@@ -815,9 +834,10 @@ TEST(FlagSaverTest, CanSaveVariousTypedFlagValues) {
   // Initializes the flags.
   FLAGS_test_bool = false;
   FLAGS_test_int32 = -1;
-  FLAGS_test_int64 = -2;
-  FLAGS_test_uint64 = 3;
-  FLAGS_test_double = 4.0;
+  FLAGS_test_uint32 = 2;
+  FLAGS_test_int64 = -3;
+  FLAGS_test_uint64 = 4;
+  FLAGS_test_double = 5.0;
   FLAGS_test_string = "good";
 
   // Saves the flag states.
@@ -827,8 +847,9 @@ TEST(FlagSaverTest, CanSaveVariousTypedFlagValues) {
     // Modifies the flags.
     FLAGS_test_bool = true;
     FLAGS_test_int32 = -5;
-    FLAGS_test_int64 = -6;
-    FLAGS_test_uint64 = 7;
+    FLAGS_test_uint32 = 6;
+    FLAGS_test_int64 = -7;
+    FLAGS_test_uint64 = 8;
     FLAGS_test_double = 8.0;
     FLAGS_test_string = "bad";
 
@@ -838,8 +859,9 @@ TEST(FlagSaverTest, CanSaveVariousTypedFlagValues) {
   // Verifies the flag values were restored.
   EXPECT_FALSE(FLAGS_test_bool);
   EXPECT_EQ(-1, FLAGS_test_int32);
-  EXPECT_EQ(-2, FLAGS_test_int64);
-  EXPECT_EQ(3, FLAGS_test_uint64);
+  EXPECT_EQ(2, FLAGS_test_uint32);
+  EXPECT_EQ(-3, FLAGS_test_int64);
+  EXPECT_EQ(4, FLAGS_test_uint64);
   EXPECT_DOUBLE_EQ(4.0, FLAGS_test_double);
   EXPECT_EQ("good", FLAGS_test_string);
 }
