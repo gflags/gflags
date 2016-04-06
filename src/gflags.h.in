@@ -128,6 +128,7 @@ namespace GFLAGS_NAMESPACE {
 // validator is already registered for this flag).
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const bool*        flag, bool (*validate_fn)(const char*, bool));
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const int32*       flag, bool (*validate_fn)(const char*, int32));
+extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const uint32*      flag, bool (*validate_fn)(const char*, uint32));
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const int64*       flag, bool (*validate_fn)(const char*, int64));
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const uint64*      flag, bool (*validate_fn)(const char*, uint64));
 extern GFLAGS_DLL_DECL bool RegisterFlagValidator(const double*      flag, bool (*validate_fn)(const char*, double));
@@ -313,6 +314,7 @@ extern GFLAGS_DLL_DECL bool ReadFromFlagsFile(const std::string& filename, const
 
 extern GFLAGS_DLL_DECL bool BoolFromEnv(const char *varname, bool defval);
 extern GFLAGS_DLL_DECL int32 Int32FromEnv(const char *varname, int32 defval);
+extern GFLAGS_DLL_DECL uint32 Uint32FromEnv(const char *varname, uint32 defval);
 extern GFLAGS_DLL_DECL int64 Int64FromEnv(const char *varname, int64 defval);
 extern GFLAGS_DLL_DECL uint64 Uint64FromEnv(const char *varname, uint64 defval);
 extern GFLAGS_DLL_DECL double DoubleFromEnv(const char *varname, double defval);
@@ -506,6 +508,10 @@ GFLAGS_DLL_DECL bool IsBoolFlag(bool from);
 
 #define DEFINE_int32(name, val, txt) \
    DEFINE_VARIABLE(GFLAGS_NAMESPACE::int32, I, \
+                   name, val, txt)
+
+#define DEFINE_uint32(name,val, txt) \
+   DEFINE_VARIABLE(GFLAGS_NAMESPACE::uint32, U, \
                    name, val, txt)
 
 #define DEFINE_int64(name, val, txt) \

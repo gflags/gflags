@@ -208,11 +208,12 @@ class FlagValue {
   enum ValueType {
     FV_BOOL = 0,
     FV_INT32 = 1,
-    FV_INT64 = 2,
-    FV_UINT64 = 3,
-    FV_DOUBLE = 4,
-    FV_STRING = 5,
-    FV_MAX_INDEX = 5,
+    FV_UINT32 = 2,
+    FV_INT64 = 3,
+    FV_UINT64 = 4,
+    FV_DOUBLE = 5,
+    FV_STRING = 6,
+    FV_MAX_INDEX = 6,
   };
   const char* TypeName() const;
   bool Equal(const FlagValue& x) const;
@@ -260,6 +261,7 @@ FlagValue::~FlagValue() {
   switch (type_) {
     case FV_BOOL: delete reinterpret_cast<bool*>(value_buffer_); break;
     case FV_INT32: delete reinterpret_cast<int32*>(value_buffer_); break;
+    case FV_UINT32: delete reinterpret_cast<uint32*>(value_buffer_); break;
     case FV_INT64: delete reinterpret_cast<int64*>(value_buffer_); break;
     case FV_UINT64: delete reinterpret_cast<uint64*>(value_buffer_); break;
     case FV_DOUBLE: delete reinterpret_cast<double*>(value_buffer_); break;
@@ -308,6 +310,16 @@ bool FlagValue::ParseFrom(const char* value) {
       SET_VALUE_AS(int32, static_cast<int32>(r));
       return true;
     }
+    case FV_UINT32: {
+      while (*value == ' ') value++;
+      if (*value == '-') return false;  // negative number
+      const uint64 r = strtou64(value, &end, base);
+      if (errno || end != value + strlen(value))  return false;  // bad parse
+        if (static_cast<uint32>(r) != r)  // worked, but number out of range
+        return false;
+      SET_VALUE_AS(uint32, static_cast<uint32>(r));
+      return true;
+    }
     case FV_INT64: {
       const int64 r = strto64(value, &end, base);
       if (errno || end != value + strlen(value))  return false;  // bad parse
@@ -343,6 +355,9 @@ string FlagValue::ToString() const {
     case FV_INT32:
       snprintf(intbuf, sizeof(intbuf), "%" PRId32, VALUE_AS(int32));
       return intbuf;
+    case FV_UINT32:
+      snprintf(intbuf, sizeof(intbuf), "%" PRIu32, VALUE_AS(uint32));
+      return intbuf;
     case FV_INT64:
       snprintf(intbuf, sizeof(intbuf), "%" PRId64, VALUE_AS(int64));
       return intbuf;
@@ -369,6 +384,9 @@ bool FlagValue::Validate(const char* flagname,
     case FV_INT32:
       return reinterpret_cast<bool (*)(const char*, int32)>(
           validate_fn_proto)(flagname, VALUE_AS(int32));
+    case FV_UINT32:
+      return reinterpret_cast<bool (*)(const char*, uint32)>(
+          validate_fn_proto)(flagname, VALUE_AS(uint32));
     case FV_INT64:
       return reinterpret_cast<bool (*)(const char*, int64)>(
           validate_fn_proto)(flagname, VALUE_AS(int64));
@@ -391,6 +409,7 @@ const char* FlagValue::TypeName() const {
   static const char types[] =
       "bool\0xx"
       "int32\0x"
+      "uin32\0x"
       "int64\0x"
       "uint64\0"
       "double\0"
@@ -409,6 +428,7 @@ bool FlagValue::Equal(const FlagValue& x) const {
   switch (type_) {
     case FV_BOOL:   return VALUE_AS(bool) == OTHER_VALUE_AS(x, bool);
     case FV_INT32:  return VALUE_AS(int32) == OTHER_VALUE_AS(x, int32);
+    case FV_UINT32: return VALUE_AS(uint32) == OTHER_VALUE_AS(x, uint32);
     case FV_INT64:  return VALUE_AS(int64) == OTHER_VALUE_AS(x, int64);
     case FV_UINT64: return VALUE_AS(uint64) == OTHER_VALUE_AS(x, uint64);
     case FV_DOUBLE: return VALUE_AS(double) == OTHER_VALUE_AS(x, double);
@@ -422,6 +442,7 @@ FlagValue* FlagValue::New() const {
   switch (type_) {
     case FV_BOOL:   return new FlagValue(new bool(false), type, true);
     case FV_INT32:  return new FlagValue(new int32(0), type, true);
+    case FV_UINT32: return new FlagValue(new uint32(0), type, true);
     case FV_INT64:  return new FlagValue(new int64(0), type, true);
     case FV_UINT64: return new FlagValue(new uint64(0), type, true);
     case FV_DOUBLE: return new FlagValue(new double(0.0), type, true);
@@ -435,6 +456,7 @@ void FlagValue::CopyFrom(const FlagValue& x) {
   switch (type_) {
     case FV_BOOL:   SET_VALUE_AS(bool, OTHER_VALUE_AS(x, bool));      break;
     case FV_INT32:  SET_VALUE_AS(int32, OTHER_VALUE_AS(x, int32));    break;
+    case FV_UINT32: SET_VALUE_AS(uint32, OTHER_VALUE_AS(x, uint32));  break;
     case FV_INT64:  SET_VALUE_AS(int64, OTHER_VALUE_AS(x, int64));    break;
     case FV_UINT64: SET_VALUE_AS(uint64, OTHER_VALUE_AS(x, uint64));  break;
     case FV_DOUBLE: SET_VALUE_AS(double, OTHER_VALUE_AS(x, double));  break;
@@ -451,6 +473,7 @@ int FlagValue::ValueSize() const {
   static const uint8 valuesize[] = {
     sizeof(bool),
     sizeof(int32),
+    sizeof(uint32),
     sizeof(int64),
     sizeof(uint64),
     sizeof(double),
@@ -1781,6 +1804,7 @@ bool ReadFromFlagsFile(const string& filename, const char* prog_name,
 // --------------------------------------------------------------------
 // BoolFromEnv()
 // Int32FromEnv()
+// Uint32FromEnv()
 // Int64FromEnv()
 // Uint64FromEnv()
 // DoubleFromEnv()
@@ -1796,6 +1820,9 @@ bool BoolFromEnv(const char *v, bool dflt) {
 }
 int32 Int32FromEnv(const char *v, int32 dflt) {
   return GetFromEnv(v, "int32", dflt);
+}
+uint32 Uint32FromEnv(const char *v, uint32 dflt) {
+  return GetFromEnv(v, "uint32", dflt);
 }
 int64 Int64FromEnv(const char *v, int64 dflt)    {
   return GetFromEnv(v, "int64", dflt);
@@ -1838,6 +1865,10 @@ bool RegisterFlagValidator(const bool* flag,
 }
 bool RegisterFlagValidator(const int32* flag,
                            bool (*validate_fn)(const char*, int32)) {
+  return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
+}
+bool RegisterFlagValidator(const uint32* flag,
+                           bool (*validate_fn)(const char*, uint32)) {
   return AddFlagValidator(flag, reinterpret_cast<ValidateFnProto>(validate_fn));
 }
 bool RegisterFlagValidator(const int64* flag,
