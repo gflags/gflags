@@ -20,6 +20,10 @@ cc_library(
     ],
     hdrs = ["gflags.h"],
     copts = [
+        # The config.h gets generated to the package directory of
+        # GENDIR, and we don't want to put it into the includes
+        # otherwise the dependent may pull it in by accident.
+        "-I$(GENDIR)/" + PACKAGE_NAME,
         "-Wno-sign-compare",
         "-DHAVE_STDINT_H",
         "-DHAVE_SYS_TYPES_H",
