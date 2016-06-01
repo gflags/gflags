@@ -8,7 +8,7 @@ also the package repositories of your Linux distribution.
 For example on Debian/Ubuntu Linux, gflags can be installed using the
 following command:
 
-    sudo apt-get install gflags
+    sudo apt-get install libgflags-dev
 
 
 Compiling the source code with CMake
