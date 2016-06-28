@@ -1278,7 +1278,11 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
   for (; line_end; flagfile_contents = line_end + 1) {
     while (*flagfile_contents && isspace(*flagfile_contents))
       ++flagfile_contents;
-    line_end = strchr(flagfile_contents, '\n');
+    // Windows uses "\r\n"
+    line_end = strchr(flagfile_contents, '\r');
+    if (line_end == NULL)
+        line_end = strchr(flagfile_contents, '\n');
+
     size_t len = line_end ? line_end - flagfile_contents
                           : strlen(flagfile_contents);
     string line(flagfile_contents, len);
