@@ -122,7 +122,7 @@ static void CategorizeAllMatchingFlags(
     NotableFlags *notable_flags);
 
 static void TryFindModuleAndPackageDir(
-    const vector<CommandLineFlagInfo> all_flags,
+    const vector<CommandLineFlagInfo> &all_flags,
     string *module,
     string *package_dir);
 
@@ -472,7 +472,7 @@ static void PushNameWithSuffix(vector<string>* suffixes, const char* suffix) {
 }
 
 static void TryFindModuleAndPackageDir(
-    const vector<CommandLineFlagInfo> all_flags,
+    const vector<CommandLineFlagInfo> &all_flags,
     string *module,
     string *package_dir) {
   module->clear();
