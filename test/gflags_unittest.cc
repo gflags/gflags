@@ -601,7 +601,7 @@ TEST(SetFlagValueTest, IllegalValues) {
             SetCommandLineOption("test_bool", "12"));
 
   EXPECT_EQ("",
-            SetCommandLineOption("test_uint32", "1970"));
+            SetCommandLineOption("test_uint32", "-1970"));
 
   EXPECT_EQ("",
             SetCommandLineOption("test_int32", "7000000000000"));
@@ -862,7 +862,7 @@ TEST(FlagSaverTest, CanSaveVariousTypedFlagValues) {
   EXPECT_EQ(2, FLAGS_test_uint32);
   EXPECT_EQ(-3, FLAGS_test_int64);
   EXPECT_EQ(4, FLAGS_test_uint64);
-  EXPECT_DOUBLE_EQ(4.0, FLAGS_test_double);
+  EXPECT_DOUBLE_EQ(5.0, FLAGS_test_double);
   EXPECT_EQ("good", FLAGS_test_string);
 }
 

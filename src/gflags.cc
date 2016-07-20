@@ -409,7 +409,7 @@ const char* FlagValue::TypeName() const {
   static const char types[] =
       "bool\0xx"
       "int32\0x"
-      "uin32\0x"
+      "uint32\0"
       "int64\0x"
       "uint64\0"
       "double\0"
