@@ -191,7 +191,7 @@ static void ReportError(DieWhenReporting should_die, const char* format, ...) {
 class CommandLineFlag;
 class FlagValue {
  public:
-  FlagValue(void* valbuf, const char* type, bool transfer_ownership_of_value);
+  FlagValue(void* valbuf, FlagValueType type, bool transfer_ownership_of_value);
   ~FlagValue();
 
   bool ParseFrom(const char* spec);
@@ -201,7 +201,7 @@ class FlagValue {
   friend class CommandLineFlag;  // for many things, including Validate()
   friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // calls New()
   friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
-  template <typename T> friend T GetFromEnv(const char*, const char*, T);
+  template <typename T> friend T GetFromEnv(const char*, T);
   friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
                              const char*, string*);  // for New(), CopyFrom()
 
@@ -215,6 +215,11 @@ class FlagValue {
     FV_STRING = 6,
     FV_MAX_INDEX = 6,
   };
+
+  friend ValueType FromFlagValueType(FlagValueType flag_type);
+
+  FlagValue(void* valbuf, ValueType type, bool transfer_ownership_of_value);
+
   const char* TypeName() const;
   bool Equal(const FlagValue& x) const;
   FlagValue* New() const;   // creates a new one with default value
@@ -228,12 +233,18 @@ class FlagValue {
   bool Validate(const char* flagname, ValidateFnProto validate_fn_proto) const;
 
   void* value_buffer_;          // points to the buffer holding our data
-  int8 type_;                   // how to interpret value_
+  const int8 type_;             // how to interpret value_
   bool owns_value_;         // whether to free value on destruct
 
   FlagValue(const FlagValue&);   // no copying!
   void operator=(const FlagValue&);
 };
+
+inline FlagValue::ValueType FromFlagValueType(FlagValueType flag_type) {
+  COMPILE_ASSERT((int)FVT_MAX_INDEX == (int)FlagValue::FV_MAX_INDEX,
+                 FlagValueType_enum_is_out_of_sync_with_ValueType_enum);
+  return static_cast<FlagValue::ValueType>(flag_type);
+}
 
 
 // This could be a templated method of FlagValue, but doing so adds to the
@@ -242,16 +253,19 @@ class FlagValue {
 #define OTHER_VALUE_AS(fv, type)  *reinterpret_cast<type*>(fv.value_buffer_)
 #define SET_VALUE_AS(type, value)  VALUE_AS(type) = (value)
 
-FlagValue::FlagValue(void* valbuf, const char* type,
+FlagValue::FlagValue(void* valbuf, FlagValueType type,
                      bool transfer_ownership_of_value)
     : value_buffer_(valbuf),
+      type_(FromFlagValueType(type)),
       owns_value_(transfer_ownership_of_value) {
-  for (type_ = 0; type_ <= FV_MAX_INDEX; ++type_) {
-    if (!strcmp(type, TypeName())) {
-      break;
-    }
-  }
   assert(type_ <= FV_MAX_INDEX);  // Unknown typename
+}
+
+FlagValue::FlagValue(void* valbuf, FlagValue::ValueType type,
+                     bool transfer_ownership_of_value)
+    : value_buffer_(valbuf),
+      type_(type),
+      owns_value_(transfer_ownership_of_value) {
 }
 
 FlagValue::~FlagValue() {
@@ -438,7 +452,7 @@ bool FlagValue::Equal(const FlagValue& x) const {
 }
 
 FlagValue* FlagValue::New() const {
-  const char *type = TypeName();
+  const ValueType type = static_cast<ValueType>(type_);
   switch (type_) {
     case FV_BOOL:   return new FlagValue(new bool(false), type, true);
     case FV_INT32:  return new FlagValue(new int32(0), type, true);
@@ -1163,8 +1177,8 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
     }
 
     const string envname = string("FLAGS_") + string(flagname);
-	string envval;
-	if (!SafeGetEnv(envname.c_str(), envval)) {
+  string envval;
+  if (!SafeGetEnv(envname.c_str(), envval)) {
       if (errors_are_fatal) {
         error_flags_[flagname] = (string(kError) + envname +
                                   " not found in environment\n");
@@ -1362,14 +1376,14 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 // --------------------------------------------------------------------
 
 template<typename T>
-T GetFromEnv(const char *varname, const char* type, T dflt) {
+T GetFromEnv(const char *varname, T dflt) {
   std::string valstr;
   if (SafeGetEnv(varname, valstr)) {
-    FlagValue ifv(new T, type, true);
+    FlagValue ifv(new T, FlagTraits<T>::Type(), true);
     if (!ifv.ParseFrom(valstr.c_str())) {
       ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
                   varname, valstr.c_str());
-	}
+  }
     return OTHER_VALUE_AS(ifv, T);
   } else return dflt;
 }
@@ -1416,15 +1430,12 @@ bool AddFlagValidator(const void* flag_ptr, ValidateFnProto validate_fn_proto) {
 //    values in a global destructor.
 // --------------------------------------------------------------------
 
-FlagRegisterer::FlagRegisterer(const char* name, const char* type,
+FlagRegisterer::FlagRegisterer(const char* name, FlagValueType type,
                                const char* help, const char* filename,
                                void* current_storage, void* defvalue_storage) {
   if (help == NULL)
     help = "";
-  // FlagValue expects the type-name to not include any namespace
-  // components, so we get rid of those, if any.
-  if (strchr(type, ':'))
-    type = strrchr(type, ':') + 1;
+
   FlagValue* current = new FlagValue(current_storage, type, false);
   FlagValue* defvalue = new FlagValue(defvalue_storage, type, false);
   // Importantly, flag_ will never be deleted, so storage is always good.
@@ -1820,22 +1831,22 @@ bool ReadFromFlagsFile(const string& filename, const char* prog_name,
 // --------------------------------------------------------------------
 
 bool BoolFromEnv(const char *v, bool dflt) {
-  return GetFromEnv(v, "bool", dflt);
+  return GetFromEnv(v, dflt);
 }
 int32 Int32FromEnv(const char *v, int32 dflt) {
-  return GetFromEnv(v, "int32", dflt);
+  return GetFromEnv(v, dflt);
 }
 uint32 Uint32FromEnv(const char *v, uint32 dflt) {
-  return GetFromEnv(v, "uint32", dflt);
+  return GetFromEnv(v, dflt);
 }
 int64 Int64FromEnv(const char *v, int64 dflt)    {
-  return GetFromEnv(v, "int64", dflt);
+  return GetFromEnv(v, dflt);
 }
 uint64 Uint64FromEnv(const char *v, uint64 dflt) {
-  return GetFromEnv(v, "uint64", dflt);
+  return GetFromEnv(v, dflt);
 }
 double DoubleFromEnv(const char *v, double dflt) {
-  return GetFromEnv(v, "double", dflt);
+  return GetFromEnv(v, dflt);
 }
 
 #ifdef _MSC_VER

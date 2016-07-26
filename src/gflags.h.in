@@ -429,11 +429,57 @@ extern GFLAGS_DLL_DECL void ShutDownCommandLineFlags();
 // people can't DECLARE_int32 something that they DEFINE_bool'd
 // elsewhere.
 
+enum FlagValueType {
+  FVT_BOOL = 0,
+  FVT_INT32 = 1,
+  FVT_UINT32 = 2,
+  FVT_INT64 = 3,
+  FVT_UINT64 = 4,
+  FVT_DOUBLE = 5,
+  FVT_STRING = 6,
+  FVT_MAX_INDEX = 6
+};
+
+template <typename T, const FlagValueType type>
+class FlagTraitsBase {
+ public:
+  typedef T ValueType;
+
+  static FlagValueType Type() { return type; }
+};
+
+template <typename T>
+class FlagTraits;
+
+template <>
+class FlagTraits<bool> : public FlagTraitsBase<bool, FVT_BOOL> {};
+template <>
+class FlagTraits<int32> : public FlagTraitsBase<int32, FVT_INT32> {};
+template <>
+class FlagTraits<int64> : public FlagTraitsBase<int64, FVT_INT64> {};
+template <>
+class FlagTraits<uint32> : public FlagTraitsBase<uint32, FVT_UINT32> {};
+template <>
+class FlagTraits<uint64> : public FlagTraitsBase<uint64, FVT_UINT64> {};
+template <>
+class FlagTraits<double> : public FlagTraitsBase<double, FVT_DOUBLE> {};
+template <>
+class FlagTraits<std::string> : public FlagTraitsBase<std::string, FVT_STRING> {
+};
+
 class GFLAGS_DLL_DECL FlagRegisterer {
  public:
-  FlagRegisterer(const char* name, const char* type,
+  FlagRegisterer(const char* name, FlagValueType type,
                  const char* help, const char* filename,
                  void* current_storage, void* defvalue_storage);
+
+  template <typename T>
+  FlagRegisterer(const char* name, const char* help, const char* filename,
+                 T* current_storage, T* defvalue_storage) {
+    // Create a temporary value to call proper constructor.
+    (void)FlagRegisterer(name, FlagTraits<T>::Type(), help, filename,
+                         current_storage, defvalue_storage);
+  }
 };
 
 // If your application #defines STRIP_FLAG_HELP to a non-zero value
@@ -475,7 +521,7 @@ extern GFLAGS_DLL_DECL const char kStrippedFlagHelp[];
     GFLAGS_DLL_DEFINE_FLAG type FLAGS_##name = FLAGS_nono##name;        \
     type FLAGS_no##name = FLAGS_nono##name;                             \
     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                   \
-      #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,                \
+      #name, MAYBE_STRIPPED_HELP(help), __FILE__,                       \
       &FLAGS_##name, &FLAGS_no##name);                                  \
   }                                                                     \
   using fL##shorttype::FLAGS_##name
@@ -581,7 +627,8 @@ public:
                                    dont_pass0toDEFINE_string(s_##name[0].s, \
                                                              val);          \
     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                       \
-        #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
+        #name, GFLAGS_NAMESPACE::FlagTraits<std::string>::Type(),           \
+        MAYBE_STRIPPED_HELP(txt), __FILE__,                                 \
         s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
     static StringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);     \
     extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \

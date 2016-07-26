@@ -216,7 +216,7 @@ namespace fLI {
   int32 FLAGS_tldflag1 = FLAGS_nonotldflag1;
   int32 FLAGS_notldflag1 = FLAGS_nonotldflag1;
   static FlagRegisterer o_tldflag1(
-    "tldflag1", "int32",
+    "tldflag1", GFLAGS_NAMESPACE::FlagTraits<int32>::Type(),
     "should show up in --helpshort", "gflags_unittest.cc",
     &FLAGS_tldflag1, &FLAGS_notldflag1);
 }
@@ -227,7 +227,7 @@ namespace fLI {
   int32 FLAGS_tldflag2 = FLAGS_nonotldflag2;
   int32 FLAGS_notldflag2 = FLAGS_nonotldflag2;
   static FlagRegisterer o_tldflag2(
-    "tldflag2", "int32",
+    "tldflag2", GFLAGS_NAMESPACE::FlagTraits<int32>::Type(),
     "should show up in --helpshort", "gflags_unittest.",
     &FLAGS_tldflag2, &FLAGS_notldflag2);
 }
@@ -1353,9 +1353,9 @@ TEST(ParseCommandLineFlagsWrongFields,
   // command line flags' values.  If these are on the stack, then when
   // later tests attempt to save and restore their values, the stack
   // addresses of these variables will be overwritten...  Stack smash!
-  static bool current_storage;
-  static bool defvalue_storage;
-  FlagRegisterer fr("flag_name", "bool", 0, "filename",
+  static int32 current_storage;
+  static int32 defvalue_storage;
+  FlagRegisterer fr("flag_name", NULL, "filename",
                     &current_storage, &defvalue_storage);
   CommandLineFlagInfo fi;
   EXPECT_TRUE(GetCommandLineFlagInfo("flag_name", &fi));
