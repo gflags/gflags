@@ -216,7 +216,7 @@ namespace fLI {
   int32 FLAGS_tldflag1 = FLAGS_nonotldflag1;
   int32 FLAGS_notldflag1 = FLAGS_nonotldflag1;
   static FlagRegisterer o_tldflag1(
-    "tldflag1", GFLAGS_NAMESPACE::FlagTraits<int32>::Type(),
+    "tldflag1",
     "should show up in --helpshort", "gflags_unittest.cc",
     &FLAGS_tldflag1, &FLAGS_notldflag1);
 }
@@ -227,7 +227,7 @@ namespace fLI {
   int32 FLAGS_tldflag2 = FLAGS_nonotldflag2;
   int32 FLAGS_notldflag2 = FLAGS_nonotldflag2;
   static FlagRegisterer o_tldflag2(
-    "tldflag2", GFLAGS_NAMESPACE::FlagTraits<int32>::Type(),
+    "tldflag2",
     "should show up in --helpshort", "gflags_unittest.",
     &FLAGS_tldflag2, &FLAGS_notldflag2);
 }
