@@ -1096,7 +1096,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
 
     if (value == NULL) {
       // Boolean options are always assigned a value by SplitArgumentLocked()
-      assert(!flag->OfType<bool>());
+      assert(flag->Type() != FlagValue::FV_BOOL);
       if (i+1 >= first_nonopt) {
         // This flag needs a value, but there is nothing available
         error_flags_[key] = (string(kError) + "flag '" + (*argv)[i] + "'"
@@ -1121,7 +1121,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
         // "-lat -30.5" would trigger the warning.  The common cases we
         // want to solve talk about true and false as values.
         if (value[0] == '-'
-            && flag->Type() != FlagValue::FV_STRING
+            && flag->Type() == FlagValue::FV_STRING
             && (strstr(flag->help(), "true")
                 || strstr(flag->help(), "false"))) {
           LOG(WARNING) << "Did you really mean to set flag '"
