@@ -1,3 +1,5 @@
+[![Build Status](https://travis-ci.org/gflags/gflags.svg?branch=master)](https://travis-ci.org/gflags/gflags)
+
 24 March 2015
 -------------
 
