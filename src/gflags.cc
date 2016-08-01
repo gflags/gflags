@@ -191,24 +191,6 @@ static void ReportError(DieWhenReporting should_die, const char* format, ...) {
 class CommandLineFlag;
 class FlagValue {
  public:
-  template <typename FlagType>
-  FlagValue(FlagType* valbuf, bool transfer_ownership_of_value);
-  ~FlagValue();
-
-  bool ParseFrom(const char* spec);
-  string ToString() const;
-
-  template <typename FlagType>
-  bool OfType() const { return type_ == FlagValueTraits<FlagType>::kValueType; }
-
- private:
-  friend class CommandLineFlag;  // for many things, including Validate()
-  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // calls New()
-  friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
-  template <typename T> friend T GetFromEnv(const char*, T);
-  friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
-                             const char*, string*);  // for New(), CopyFrom()
-
   enum ValueType {
     FV_BOOL = 0,
     FV_INT32 = 1,
@@ -219,6 +201,23 @@ class FlagValue {
     FV_STRING = 6,
     FV_MAX_INDEX = 6,
   };
+
+  template <typename FlagType>
+  FlagValue(FlagType* valbuf, bool transfer_ownership_of_value);
+  ~FlagValue();
+
+  bool ParseFrom(const char* spec);
+  string ToString() const;
+
+  ValueType Type() const { return static_cast<ValueType>(type_); }
+
+ private:
+  friend class CommandLineFlag;  // for many things, including Validate()
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // calls New()
+  friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
+  template <typename T> friend T GetFromEnv(const char*, T);
+  friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
+                             const char*, string*);  // for New(), CopyFrom()
 
   template <typename FlagType>
   struct FlagValueTraits;
@@ -533,8 +532,7 @@ class CommandLineFlag {
   ValidateFnProto validate_function() const { return validate_fn_proto_; }
   const void* flag_ptr() const { return current_->value_buffer_; }
 
-  template <typename FlagType>
-  bool OfType() const { return defvalue_->OfType<FlagType>(); }
+  FlagValue::ValueType Type() const { return defvalue_->Type(); }
 
   void FillCommandLineFlagInfo(struct CommandLineFlagInfo* result);
 
@@ -826,7 +824,7 @@ CommandLineFlag* FlagRegistry::SplitArgumentLocked(const char* arg,
                                     kError, key->c_str());
       return NULL;
     }
-    if (!flag->OfType<bool>()) {
+    if (flag->Type() != FlagValue::FV_BOOL) {
       // 'x' exists but is not boolean, so we're not in the exception case.
       *error_message = StringPrintf(
           "%sboolean value (%s) specified for %s command line flag\n",
@@ -840,7 +838,7 @@ CommandLineFlag* FlagRegistry::SplitArgumentLocked(const char* arg,
   }
 
   // Assign a value if this is a boolean flag
-  if (*v == NULL && flag->OfType<bool>()) {
+  if (*v == NULL && flag->Type() == FlagValue::FV_BOOL) {
     *v = "1";    // the --nox case was already handled, so this is the --x case
   }
 
@@ -1124,7 +1122,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
         // "-lat -30.5" would trigger the warning.  The common cases we
         // want to solve talk about true and false as values.
         if (value[0] == '-'
-            && flag->OfType<string>()
+            && flag->Type() != FlagValue::FV_STRING
             && (strstr(flag->help(), "true")
                 || strstr(flag->help(), "false"))) {
           LOG(WARNING) << "Did you really mean to set flag '"
