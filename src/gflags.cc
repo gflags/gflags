@@ -191,20 +191,6 @@ static void ReportError(DieWhenReporting should_die, const char* format, ...) {
 class CommandLineFlag;
 class FlagValue {
  public:
-  FlagValue(void* valbuf, const char* type, bool transfer_ownership_of_value);
-  ~FlagValue();
-
-  bool ParseFrom(const char* spec);
-  string ToString() const;
-
- private:
-  friend class CommandLineFlag;  // for many things, including Validate()
-  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // calls New()
-  friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
-  template <typename T> friend T GetFromEnv(const char*, const char*, T);
-  friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
-                             const char*, string*);  // for New(), CopyFrom()
-
   enum ValueType {
     FV_BOOL = 0,
     FV_INT32 = 1,
@@ -215,6 +201,27 @@ class FlagValue {
     FV_STRING = 6,
     FV_MAX_INDEX = 6,
   };
+
+  template <typename FlagType>
+  FlagValue(FlagType* valbuf, bool transfer_ownership_of_value);
+  ~FlagValue();
+
+  bool ParseFrom(const char* spec);
+  string ToString() const;
+
+  ValueType Type() const { return static_cast<ValueType>(type_); }
+
+ private:
+  friend class CommandLineFlag;  // for many things, including Validate()
+  friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // calls New()
+  friend class FlagRegistry;     // checks value_buffer_ for flags_by_ptr_ map
+  template <typename T> friend T GetFromEnv(const char*, T);
+  friend bool TryParseLocked(const CommandLineFlag*, FlagValue*,
+                             const char*, string*);  // for New(), CopyFrom()
+
+  template <typename FlagType>
+  struct FlagValueTraits;
+
   const char* TypeName() const;
   bool Equal(const FlagValue& x) const;
   FlagValue* New() const;   // creates a new one with default value
@@ -227,13 +234,32 @@ class FlagValue {
   // (*validate_fn)(bool) for a bool flag).
   bool Validate(const char* flagname, ValidateFnProto validate_fn_proto) const;
 
-  void* value_buffer_;          // points to the buffer holding our data
-  int8 type_;                   // how to interpret value_
-  bool owns_value_;         // whether to free value on destruct
+  void* const value_buffer_;          // points to the buffer holding our data
+  const int8 type_;                   // how to interpret value_
+  const bool owns_value_;             // whether to free value on destruct
 
   FlagValue(const FlagValue&);   // no copying!
   void operator=(const FlagValue&);
 };
+
+// Map the given C++ type to a value of the ValueType enum at compile time.
+#define DEFINE_FLAG_TRAITS(type, value)        \
+  template <>                                  \
+  struct FlagValue::FlagValueTraits<type> {    \
+    static const ValueType kValueType = value; \
+  }
+
+// Define full template specializations of the FlagValueTraits template
+// for all supported flag types.
+DEFINE_FLAG_TRAITS(bool, FV_BOOL);
+DEFINE_FLAG_TRAITS(int32, FV_INT32);
+DEFINE_FLAG_TRAITS(uint32, FV_UINT32);
+DEFINE_FLAG_TRAITS(int64, FV_INT64);
+DEFINE_FLAG_TRAITS(uint64, FV_UINT64);
+DEFINE_FLAG_TRAITS(double, FV_DOUBLE);
+DEFINE_FLAG_TRAITS(std::string, FV_STRING);
+
+#undef DEFINE_FLAG_TRAITS
 
 
 // This could be a templated method of FlagValue, but doing so adds to the
@@ -242,16 +268,12 @@ class FlagValue {
 #define OTHER_VALUE_AS(fv, type)  *reinterpret_cast<type*>(fv.value_buffer_)
 #define SET_VALUE_AS(type, value)  VALUE_AS(type) = (value)
 
-FlagValue::FlagValue(void* valbuf, const char* type,
+template <typename FlagType>
+FlagValue::FlagValue(FlagType* valbuf,
                      bool transfer_ownership_of_value)
     : value_buffer_(valbuf),
+      type_(FlagValueTraits<FlagType>::kValueType),
       owns_value_(transfer_ownership_of_value) {
-  for (type_ = 0; type_ <= FV_MAX_INDEX; ++type_) {
-    if (!strcmp(type, TypeName())) {
-      break;
-    }
-  }
-  assert(type_ <= FV_MAX_INDEX);  // Unknown typename
 }
 
 FlagValue::~FlagValue() {
@@ -438,15 +460,14 @@ bool FlagValue::Equal(const FlagValue& x) const {
 }
 
 FlagValue* FlagValue::New() const {
-  const char *type = TypeName();
   switch (type_) {
-    case FV_BOOL:   return new FlagValue(new bool(false), type, true);
-    case FV_INT32:  return new FlagValue(new int32(0), type, true);
-    case FV_UINT32: return new FlagValue(new uint32(0), type, true);
-    case FV_INT64:  return new FlagValue(new int64(0), type, true);
-    case FV_UINT64: return new FlagValue(new uint64(0), type, true);
-    case FV_DOUBLE: return new FlagValue(new double(0.0), type, true);
-    case FV_STRING: return new FlagValue(new string, type, true);
+    case FV_BOOL:   return new FlagValue(new bool(false), true);
+    case FV_INT32:  return new FlagValue(new int32(0), true);
+    case FV_UINT32: return new FlagValue(new uint32(0), true);
+    case FV_INT64:  return new FlagValue(new int64(0), true);
+    case FV_UINT64: return new FlagValue(new uint64(0), true);
+    case FV_DOUBLE: return new FlagValue(new double(0.0), true);
+    case FV_STRING: return new FlagValue(new string, true);
     default: assert(false); return NULL;  // unknown type
   }
 }
@@ -509,6 +530,8 @@ class CommandLineFlag {
   const char* type_name() const { return defvalue_->TypeName(); }
   ValidateFnProto validate_function() const { return validate_fn_proto_; }
   const void* flag_ptr() const { return current_->value_buffer_; }
+
+  FlagValue::ValueType Type() const { return defvalue_->Type(); }
 
   void FillCommandLineFlagInfo(struct CommandLineFlagInfo* result);
 
@@ -800,7 +823,7 @@ CommandLineFlag* FlagRegistry::SplitArgumentLocked(const char* arg,
                                     kError, key->c_str());
       return NULL;
     }
-    if (strcmp(flag->type_name(), "bool") != 0) {
+    if (flag->Type() != FlagValue::FV_BOOL) {
       // 'x' exists but is not boolean, so we're not in the exception case.
       *error_message = StringPrintf(
           "%sboolean value (%s) specified for %s command line flag\n",
@@ -814,7 +837,7 @@ CommandLineFlag* FlagRegistry::SplitArgumentLocked(const char* arg,
   }
 
   // Assign a value if this is a boolean flag
-  if (*v == NULL && strcmp(flag->type_name(), "bool") == 0) {
+  if (*v == NULL && flag->Type() == FlagValue::FV_BOOL) {
     *v = "1";    // the --nox case was already handled, so this is the --x case
   }
 
@@ -1073,7 +1096,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
 
     if (value == NULL) {
       // Boolean options are always assigned a value by SplitArgumentLocked()
-      assert(strcmp(flag->type_name(), "bool") != 0);
+      assert(flag->Type() != FlagValue::FV_BOOL);
       if (i+1 >= first_nonopt) {
         // This flag needs a value, but there is nothing available
         error_flags_[key] = (string(kError) + "flag '" + (*argv)[i] + "'"
@@ -1098,7 +1121,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
         // "-lat -30.5" would trigger the warning.  The common cases we
         // want to solve talk about true and false as values.
         if (value[0] == '-'
-            && strcmp(flag->type_name(), "string") == 0
+            && flag->Type() == FlagValue::FV_STRING
             && (strstr(flag->help(), "true")
                 || strstr(flag->help(), "false"))) {
           LOG(WARNING) << "Did you really mean to set flag '"
@@ -1163,8 +1186,8 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
     }
 
     const string envname = string("FLAGS_") + string(flagname);
-	string envval;
-	if (!SafeGetEnv(envname.c_str(), envval)) {
+    string envval;
+    if (!SafeGetEnv(envname.c_str(), envval)) {
       if (errors_are_fatal) {
         error_flags_[flagname] = (string(kError) + envname +
                                   " not found in environment\n");
@@ -1362,14 +1385,14 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 // --------------------------------------------------------------------
 
 template<typename T>
-T GetFromEnv(const char *varname, const char* type, T dflt) {
+T GetFromEnv(const char *varname, T dflt) {
   std::string valstr;
   if (SafeGetEnv(varname, valstr)) {
-    FlagValue ifv(new T, type, true);
+    FlagValue ifv(new T, true);
     if (!ifv.ParseFrom(valstr.c_str())) {
       ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
                   varname, valstr.c_str());
-	}
+    }
     return OTHER_VALUE_AS(ifv, T);
   } else return dflt;
 }
@@ -1416,22 +1439,48 @@ bool AddFlagValidator(const void* flag_ptr, ValidateFnProto validate_fn_proto) {
 //    values in a global destructor.
 // --------------------------------------------------------------------
 
-FlagRegisterer::FlagRegisterer(const char* name, const char* type,
-                               const char* help, const char* filename,
-                               void* current_storage, void* defvalue_storage) {
+namespace {
+void RegisterCommandLineFlag(const char* name,
+                             const char* help,
+                             const char* filename,
+                             FlagValue* current,
+                             FlagValue* defvalue) {
   if (help == NULL)
     help = "";
-  // FlagValue expects the type-name to not include any namespace
-  // components, so we get rid of those, if any.
-  if (strchr(type, ':'))
-    type = strrchr(type, ':') + 1;
-  FlagValue* current = new FlagValue(current_storage, type, false);
-  FlagValue* defvalue = new FlagValue(defvalue_storage, type, false);
   // Importantly, flag_ will never be deleted, so storage is always good.
-  CommandLineFlag* flag = new CommandLineFlag(name, help, filename,
-                                              current, defvalue);
-  FlagRegistry::GlobalRegistry()->RegisterFlag(flag);   // default registry
+  CommandLineFlag* flag =
+      new CommandLineFlag(name, help, filename, current, defvalue);
+  FlagRegistry::GlobalRegistry()->RegisterFlag(flag);  // default registry
 }
+}
+
+template <typename FlagType>
+FlagRegisterer::FlagRegisterer(const char* name,
+                               const char* help,
+                               const char* filename,
+                               FlagType* current_storage,
+                               FlagType* defvalue_storage) {
+  FlagValue* const current = new FlagValue(current_storage, false);
+  FlagValue* const defvalue = new FlagValue(defvalue_storage, false);
+  RegisterCommandLineFlag(name, help, filename, current, defvalue);
+}
+
+// Force compiler to generate code for the given template specialization.
+#define INSTANTIATE_FLAG_REGISTERER_CTOR(type)                  \
+  template FlagRegisterer::FlagRegisterer(                      \
+      const char* name, const char* help, const char* filename, \
+      type* current_storage, type* defvalue_storage)
+
+// Do this for all supported flag types.
+INSTANTIATE_FLAG_REGISTERER_CTOR(bool);
+INSTANTIATE_FLAG_REGISTERER_CTOR(int32);
+INSTANTIATE_FLAG_REGISTERER_CTOR(uint32);
+INSTANTIATE_FLAG_REGISTERER_CTOR(int64);
+INSTANTIATE_FLAG_REGISTERER_CTOR(uint64);
+INSTANTIATE_FLAG_REGISTERER_CTOR(double);
+INSTANTIATE_FLAG_REGISTERER_CTOR(std::string);
+
+#undef INSTANTIATE_FLAG_REGISTERER_CTOR
 
 // --------------------------------------------------------------------
 // GetAllFlags()
@@ -1820,22 +1869,22 @@ bool ReadFromFlagsFile(const string& filename, const char* prog_name,
 // --------------------------------------------------------------------
 
 bool BoolFromEnv(const char *v, bool dflt) {
-  return GetFromEnv(v, "bool", dflt);
+  return GetFromEnv(v, dflt);
 }
 int32 Int32FromEnv(const char *v, int32 dflt) {
-  return GetFromEnv(v, "int32", dflt);
+  return GetFromEnv(v, dflt);
 }
 uint32 Uint32FromEnv(const char *v, uint32 dflt) {
-  return GetFromEnv(v, "uint32", dflt);
+  return GetFromEnv(v, dflt);
 }
 int64 Int64FromEnv(const char *v, int64 dflt)    {
-  return GetFromEnv(v, "int64", dflt);
+  return GetFromEnv(v, dflt);
 }
 uint64 Uint64FromEnv(const char *v, uint64 dflt) {
-  return GetFromEnv(v, "uint64", dflt);
+  return GetFromEnv(v, dflt);
 }
 double DoubleFromEnv(const char *v, double dflt) {
-  return GetFromEnv(v, "double", dflt);
+  return GetFromEnv(v, dflt);
 }
 
 #ifdef _MSC_VER

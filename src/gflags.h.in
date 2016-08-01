@@ -431,9 +431,14 @@ extern GFLAGS_DLL_DECL void ShutDownCommandLineFlags();
 
 class GFLAGS_DLL_DECL FlagRegisterer {
  public:
-  FlagRegisterer(const char* name, const char* type,
+  // We instantiate this template ctor for all supported types,
+  // so it is possible to place implementation of the FlagRegisterer ctor in
+  // .cc file.
+  // Calling this constructor with unsupported type will produce linker error.
+  template <typename FlagType>
+  FlagRegisterer(const char* name,
                  const char* help, const char* filename,
-                 void* current_storage, void* defvalue_storage);
+                 FlagType* current_storage, FlagType* defvalue_storage);
 };
 
 // If your application #defines STRIP_FLAG_HELP to a non-zero value
@@ -475,7 +480,7 @@ extern GFLAGS_DLL_DECL const char kStrippedFlagHelp[];
     GFLAGS_DLL_DEFINE_FLAG type FLAGS_##name = FLAGS_nono##name;        \
     type FLAGS_no##name = FLAGS_nono##name;                             \
     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                   \
-      #name, #type, MAYBE_STRIPPED_HELP(help), __FILE__,                \
+      #name, MAYBE_STRIPPED_HELP(help), __FILE__,                       \
       &FLAGS_##name, &FLAGS_no##name);                                  \
   }                                                                     \
   using fL##shorttype::FLAGS_##name
@@ -581,8 +586,8 @@ public:
                                    dont_pass0toDEFINE_string(s_##name[0].s, \
                                                              val);          \
     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                       \
-        #name, "string", MAYBE_STRIPPED_HELP(txt), __FILE__,                \
-        s_##name[0].s, new (s_##name[1].s) clstring(*FLAGS_no##name));      \
+        #name, MAYBE_STRIPPED_HELP(txt), __FILE__,                          \
+        FLAGS_no##name, new (s_##name[1].s) clstring(*FLAGS_no##name));     \
     static StringFlagDestructor d_##name(s_##name[0].s, s_##name[1].s);     \
     extern GFLAGS_DLL_DEFINE_FLAG clstring& FLAGS_##name;                   \
     using fLS::FLAGS_##name;                                                \
