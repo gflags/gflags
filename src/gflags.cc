@@ -1440,18 +1440,30 @@ bool AddFlagValidator(const void* flag_ptr, ValidateFnProto validate_fn_proto) {
 //    values in a global destructor.
 // --------------------------------------------------------------------
 
-template <typename FlagType>
-FlagRegisterer::FlagRegisterer(const char* name,
-                               const char* help, const char* filename,
-                               FlagType* current_storage, FlagType* defvalue_storage) {
+namespace {
+void RegisterCommandLineFlag(const char* name,
+                             const char* help,
+                             const char* filename,
+                             FlagValue* current,
+                             FlagValue* defvalue) {
   if (help == NULL)
     help = "";
-  FlagValue* current = new FlagValue(current_storage, false);
-  FlagValue* defvalue = new FlagValue(defvalue_storage, false);
   // Importantly, flag_ will never be deleted, so storage is always good.
-  CommandLineFlag* flag = new CommandLineFlag(name, help, filename,
-                                              current, defvalue);
-  FlagRegistry::GlobalRegistry()->RegisterFlag(flag);   // default registry
+  CommandLineFlag* flag =
+      new CommandLineFlag(name, help, filename, current, defvalue);
+  FlagRegistry::GlobalRegistry()->RegisterFlag(flag);  // default registry
+}
+}
+
+template <typename FlagType>
+FlagRegisterer::FlagRegisterer(const char* name,
+                               const char* help,
+                               const char* filename,
+                               FlagType* current_storage,
+                               FlagType* defvalue_storage) {
+  FlagValue* const current = new FlagValue(current_storage, false);
+  FlagValue* const defvalue = new FlagValue(defvalue_storage, false);
+  RegisterCommandLineFlag(name, help, filename, current, defvalue);
 }
 
 // Force compiler to generate code for the given template specialization.
