@@ -9,10 +9,7 @@ dist: trusty
 language: cpp
 
 script:
-  - mkdir build && cd build
-  - cmake -DGFLAGS_BUILD_TESTING=True ..
-  - make
-  - ctest
+  - mkdir out && cd out && cmake -DGFLAGS_BUILD_TESTING=True .. && make && ctest
 
 compiler:
   - clang
