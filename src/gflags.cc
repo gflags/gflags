@@ -274,7 +274,6 @@ FlagValue::FlagValue(FlagType* valbuf,
     : value_buffer_(valbuf),
       type_(FlagValueTraits<FlagType>::kValueType),
       owns_value_(transfer_ownership_of_value) {
-  assert(type_ <= FV_MAX_INDEX);  // Unknown typename
 }
 
 FlagValue::~FlagValue() {
@@ -1187,8 +1186,8 @@ string CommandLineFlagParser::ProcessFromenvLocked(const string& flagval,
     }
 
     const string envname = string("FLAGS_") + string(flagname);
-  string envval;
-  if (!SafeGetEnv(envname.c_str(), envval)) {
+    string envval;
+    if (!SafeGetEnv(envname.c_str(), envval)) {
       if (errors_are_fatal) {
         error_flags_[flagname] = (string(kError) + envname +
                                   " not found in environment\n");
@@ -1393,7 +1392,7 @@ T GetFromEnv(const char *varname, T dflt) {
     if (!ifv.ParseFrom(valstr.c_str())) {
       ReportError(DIE, "ERROR: error parsing env variable '%s' with value '%s'\n",
                   varname, valstr.c_str());
-  }
+    }
     return OTHER_VALUE_AS(ifv, T);
   } else return dflt;
 }
