@@ -1,0 +1,16 @@
+os:
+  - linux
+  - osx
+
+# Ubuntu 14.04 Trusty support, to get newer cmake and compilers.
+sudo: required
+dist: trusty
+
+language: cpp
+
+script:
+  - mkdir out && cd out && cmake -DGFLAGS_BUILD_TESTING=True .. && make && ctest
+
+compiler:
+  - clang
+  - gcc
