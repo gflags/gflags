@@ -14,10 +14,17 @@ clone_folder: c:\projects\gflags
 matrix:
   fast_finish: true
 
+platform:
+  - Win32
+
+configuration:
+  - Debug
+  - Release
+
 install:
   # show all available env vars
   - set
-  - echo cmake on AppVeyor
+  - echo cmake on AppVeyor, %configuration%-%platform%
   - cmake -version
   - call "C:\Program Files (x86)\Microsoft Visual Studio 14.0\VC\vcvarsall.bat"
 
@@ -25,7 +32,12 @@ build_script:
   - cd c:\projects\gflags
   - mkdir out && cd out
   - cmake -G "Visual Studio 14 2015"
-    -DCMAKE_BUILD_TYPE=Release
+    -DCMAKE_BUILD_TYPE=%configuration%
     -DGFLAGS_BUILD_TESTING=True
     ..
-  - msbuild gflags.sln /toolsversion:14.0 /p:PlatformToolset=v140
+  - cmake --build . --config %configuration%
+
+test_script:
+  # strip_flags_binary test currently fails on AppVeyor in Debug configuration.
+  - IF %configuration%==Debug SET GFLAGS_EXCLUDED_TESTS=strip_flags_binary
+  - ctest -C %configuration% -E %GFLAGS_EXCLUDED_TESTS%
