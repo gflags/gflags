@@ -40,6 +40,7 @@ add_test (
   NAME strip_flags_binary
   COMMAND "${CMAKE_COMMAND}" "-DBINARY=$<TARGET_FILE:gflags_strip_flags_test>"
           -P "${CMAKE_CURRENT_SOURCE_DIR}/gflags_strip_flags_test.cmake"
+  CONFIGURATIONS Release MinSizeRel
 )
 
 # ----------------------------------------------------------------------------
