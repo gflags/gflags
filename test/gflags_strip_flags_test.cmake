@@ -1,5 +1,5 @@
 if (NOT BINARY)
-  message (FATAl_ERROR "BINARY file to check not specified!")
+  message (FATAL_ERROR "BINARY file to check not specified!")
 endif ()
 file (STRINGS "${BINARY}" strings REGEX "This text should be stripped out")
 if (strings)
