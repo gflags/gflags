@@ -38,6 +38,4 @@ build_script:
   - cmake --build . --config %configuration%
 
 test_script:
-  # strip_flags_binary test currently fails on AppVeyor in Debug configuration.
-  - IF %configuration%==Debug SET GFLAGS_EXCLUDED_TESTS=strip_flags_binary
-  - ctest -C %configuration% -E %GFLAGS_EXCLUDED_TESTS%
+  - ctest -C %configuration%
