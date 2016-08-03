@@ -32,8 +32,10 @@ build_script:
   - cd c:\projects\gflags
   - mkdir out && cd out
   - cmake -G "Visual Studio 14 2015"
-    -DCMAKE_BUILD_TYPE=%configuration%
-    -DGFLAGS_BUILD_TESTING=True
+    -D CMAKE_BUILD_TYPE=%configuration%
+    -D GFLAGS_BUILD_TESTING=ON
+    -D GFLAGS_BUILD_SHARED_LIBS=ON
+    -D GFLAGS_BUILD_STATIC_LIBS=ON
     ..
   - cmake --build . --config %configuration%
 
