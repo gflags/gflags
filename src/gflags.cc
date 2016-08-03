@@ -96,6 +96,7 @@
 #if defined(HAVE_FNMATCH_H)
 #  include <fnmatch.h>
 #elif defined(HAVE_SHLWAPI_H)
+#  define NO_SHLWAPI_ISOS
 #  include <shlwapi.h>
 #endif
 #include <stdarg.h> // For va_list and related operations
@@ -1467,7 +1468,7 @@ FlagRegisterer::FlagRegisterer(const char* name,
 
 // Force compiler to generate code for the given template specialization.
 #define INSTANTIATE_FLAG_REGISTERER_CTOR(type)                  \
-  template FlagRegisterer::FlagRegisterer(                      \
+  template GFLAGS_DLL_DECL FlagRegisterer::FlagRegisterer(      \
       const char* name, const char* help, const char* filename, \
       type* current_storage, type* defvalue_storage)
 
