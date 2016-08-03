@@ -1468,7 +1468,7 @@ FlagRegisterer::FlagRegisterer(const char* name,
 
 // Force compiler to generate code for the given template specialization.
 #define INSTANTIATE_FLAG_REGISTERER_CTOR(type)                  \
-  template GFLAGS_DLL_DECL FlagRegisterer::FlagRegisterer(                      \
+  template GFLAGS_DLL_DECL FlagRegisterer::FlagRegisterer(      \
       const char* name, const char* help, const char* filename, \
       type* current_storage, type* defvalue_storage)
 
