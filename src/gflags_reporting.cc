@@ -122,7 +122,7 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
                 flag.name.c_str(),
                 flag.description.c_str());
   const char* c_string = main_part.c_str();
-  int chars_left = main_part.length();
+  int chars_left = static_cast<int>(main_part.length());
   string final_string = "";
   int chars_in_line = 0;  // how many chars in current line so far?
   while (1) {
