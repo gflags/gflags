@@ -539,6 +539,7 @@ class CommandLineFlag {
   // If validate_fn_proto_ is non-NULL, calls it on value, returns result.
   bool Validate(const FlagValue& value) const;
   bool ValidateCurrent() const { return Validate(*current_); }
+  bool Modified() const { return modified_; }
 
  private:
   // for SetFlagLocked() and setting flags_by_ptr_
@@ -711,7 +712,7 @@ class FlagRegistry {
 
  private:
   friend class GFLAGS_NAMESPACE::FlagSaverImpl;  // reads all the flags in order to copy them
-  friend class CommandLineFlagParser;    // for ValidateAllFlags
+  friend class CommandLineFlagParser;    // for ValidateUnmodifiedFlags
   friend void GFLAGS_NAMESPACE::GetAllFlags(vector<CommandLineFlagInfo>*);
 
   // The map from name to flag, for FindFlagLocked().
@@ -967,8 +968,10 @@ class CommandLineFlagParser {
   // In gflags_reporting.cc:HandleCommandLineHelpFlags().
 
   // Stage 3: validate all the commandline flags that have validators
-  // registered.
+  // registered and were not set/modified by ParseNewCommandLineFlags.
+  void ValidateFlags(bool all);
   void ValidateAllFlags();
+  void ValidateUnmodifiedFlags();
 
   // Stage 4: report any errors and return true if any were found.
   bool ReportErrors();
@@ -1234,21 +1237,33 @@ string CommandLineFlagParser::ProcessSingleOptionLocked(
   return msg;
 }
 
-void CommandLineFlagParser::ValidateAllFlags() {
+void CommandLineFlagParser::ValidateFlags(bool all) {
   FlagRegistryLock frl(registry_);
   for (FlagRegistry::FlagConstIterator i = registry_->flags_.begin();
        i != registry_->flags_.end(); ++i) {
-    if (!i->second->ValidateCurrent()) {
+    if ((all || !i->second->Modified()) && !i->second->ValidateCurrent()) {
       // only set a message if one isn't already there.  (If there's
       // an error message, our job is done, even if it's not exactly
       // the same error.)
-      if (error_flags_[i->second->name()].empty())
+      if (error_flags_[i->second->name()].empty()) {
         error_flags_[i->second->name()] =
             string(kError) + "--" + i->second->name() +
-            " must be set on the commandline"
-            " (default value fails validation)\n";
+            " must be set on the commandline";
+        if (!i->second->Modified()) {
+          error_flags_[i->second->name()] += " (default value fails validation)";
+        }
+        error_flags_[i->second->name()] += "\n";
+      }
     }
   }
+}
+
+void CommandLineFlagParser::ValidateAllFlags() {
+  ValidateFlags(true);
+}
+
+void CommandLineFlagParser::ValidateUnmodifiedFlags() {
+  ValidateFlags(false);
 }
 
 bool CommandLineFlagParser::ReportErrors() {
@@ -1980,7 +1995,7 @@ static uint32 ParseCommandLineFlagsInternal(int* argc, char*** argv,
     HandleCommandLineHelpFlags();   // may cause us to exit on --help, etc.
 
   // See if any of the unset flags fail their validation checks
-  parser.ValidateAllFlags();
+  parser.ValidateUnmodifiedFlags();
 
   if (parser.ReportErrors())        // may cause us to exit on illegal flags
     gflags_exitfunc(1);
