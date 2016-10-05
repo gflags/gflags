@@ -171,12 +171,10 @@ enum DieWhenReporting { DIE, DO_NOT_DIE };
 
 // Report Error and exit if requested.
 static void ReportError(DieWhenReporting should_die, const char* format, ...) {
-  char error_message[255];
   va_list ap;
   va_start(ap, format);
-  vsnprintf(error_message, sizeof(error_message), format, ap);
+  vfprintf(stderr, format, ap);
   va_end(ap);
-  fprintf(stderr, "%s", error_message);
   fflush(stderr);   // should be unnecessary, but cygwin's rxvt buffers stderr
   if (should_die == DIE) gflags_exitfunc(1);
 }
