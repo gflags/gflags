@@ -357,6 +357,19 @@ TEST(FlagFileTest, ReadFlagsFromString) {
       false,
       123,
       123.0);
+
+  // Test that flags can use dashes instead of underscores.
+  TestFlagString(
+      // Flag string
+      "-test-string=initial\n"
+      "--test-bool=false\n"
+      "--test-int32=123\n"
+      "--test-double=123.0\n",
+      // Expected values
+      "initial",
+      false,
+      123,
+      123.0);
 }
 
 // Tests the filename part of the flagfile

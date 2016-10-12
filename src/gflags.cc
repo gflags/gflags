@@ -771,7 +771,12 @@ void FlagRegistry::RegisterFlag(CommandLineFlag* flag) {
 CommandLineFlag* FlagRegistry::FindFlagLocked(const char* name) {
   FlagConstIterator i = flags_.find(name);
   if (i == flags_.end()) {
-    return NULL;
+    // If the name has dashes in it, try again after replacing with
+    // underscores.
+    if (strchr(name, '-') == NULL) return NULL;
+    string name_rep = name;
+    std::replace(name_rep.begin(), name_rep.end(), '-', '_');
+    return FindFlagLocked(name_rep.c_str());
   } else {
     return i->second;
   }
