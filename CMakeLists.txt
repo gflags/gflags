@@ -164,6 +164,8 @@ gflags_define (BOOL BUILD_TESTING              "Enable build of the unit tests a
 gflags_define (BOOL INSTALL_HEADERS            "Request installation of headers and other development files."             ON  OFF)
 gflags_define (BOOL INSTALL_SHARED_LIBS        "Request installation of shared libraries."                                ON  ON)
 gflags_define (BOOL INSTALL_STATIC_LIBS        "Request installation of static libraries."                                ON  OFF)
+gflags_define (BOOL REGISTER_BUILD_DIR         "Request entry of build directory in CMake's package registry."            OFF OFF)
+gflags_define (BOOL REGISTER_INSTALL_PREFIX    "Request entry of installed package in CMake's package registry."          ON  OFF)
 
 gflags_property (BUILD_STATIC_LIBS   ADVANCED TRUE)
 gflags_property (INSTALL_HEADERS     ADVANCED TRUE)
@@ -523,7 +525,12 @@ endif ()
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
 export (TARGETS ${TARGETS} FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake")
-export (PACKAGE gflags)
+if (REGISTER_BUILD_DIR)
+  export (PACKAGE ${PACKAGE_NAME})
+endif ()
+if (REGISTER_INSTALL_PREFIX)
+  register_gflags_package(${CONFIG_INSTALL_DIR})
+endif ()
 configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake" @ONLY)
 
 # ----------------------------------------------------------------------------

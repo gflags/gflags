@@ -161,3 +161,41 @@ macro (add_gflags_test name expected_rc expected_output unexpected_output cmd)
     WORKING_DIRECTORY "${GFLAGS_FLAGFILES_DIR}"
   )
 endmacro ()
+
+# ------------------------------------------------------------------------------
+## Register installed package with CMake
+#
+# This function adds an entry to the CMake registry for packages with the
+# path of the directory where the package configuration file of the installed
+# package is located in order to help CMake find the package in a custom
+# installation prefix. This differs from CMake's export(PACKAGE) command
+# which registers the build directory instead.
+function (register_gflags_package CONFIG_DIR)
+  if (NOT IS_ABSOLUTE "${CONFIG_DIR}")
+    set (CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/${CONFIG_DIR}")
+  endif ()
+  string (MD5 REGISTRY_ENTRY "${CONFIG_DIR}")
+  if (WIN32)
+    install (CODE
+      "execute_process (
+         COMMAND reg add \"HKCU\\\\Software\\\\Kitware\\\\CMake\\\\Packages\\\\${PACKAGE_NAME}\" /v \"${REGISTRY_ENTRY}\" /d \"${CONFIG_DIR}\" /t REG_SZ /f
+         RESULT_VARIABLE RT
+         ERROR_VARIABLE  ERR
+         OUTPUT_QUIET
+       )
+       if (RT EQUAL 0)
+         message (STATUS \"Register:   Added HKEY_CURRENT_USER\\\\Software\\\\Kitware\\\\CMake\\\\Packages\\\\${PACKAGE_NAME}\\\\${REGISTRY_ENTRY}\")
+       else ()
+         string (STRIP \"\${ERR}\" ERR)
+         message (STATUS \"Register:   Failed to add registry entry: \${ERR}\")
+       endif ()"
+    )
+  elseif (IS_DIRECTORY "$ENV{HOME}")
+    file (WRITE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-registry-entry" "${CONFIG_DIR}")
+    install (
+      FILES       "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-registry-entry"
+      DESTINATION "$ENV{HOME}/.cmake/packages/${PACKAGE_NAME}"
+      RENAME      "${REGISTRY_ENTRY}"
+    )
+  endif ()
+endfunction ()
