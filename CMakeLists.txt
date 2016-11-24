@@ -482,6 +482,7 @@ endif ()
 
 # ----------------------------------------------------------------------------
 # installation rules
+set (EXPORT_NAME ${PACKAGE_NAME}-targets)
 file (RELATIVE_PATH INSTALL_PREFIX_REL2CONFIG_DIR "${CMAKE_INSTALL_PREFIX}/${CONFIG_INSTALL_DIR}" "${CMAKE_INSTALL_PREFIX}")
 configure_file (cmake/config.cmake.in  "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-install.cmake" @ONLY)
 configure_file (cmake/version.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake" @ONLY)
@@ -489,14 +490,14 @@ configure_file (cmake/version.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-co
 if (BUILD_SHARED_LIBS AND INSTALL_SHARED_LIBS)
   foreach (opts IN ITEMS "" _nothreads)
     if (BUILD_gflags${opts}_LIB)
-      install (TARGETS gflags${opts}_shared DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+      install (TARGETS gflags${opts}_shared DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT ${EXPORT_NAME})
     endif ()
   endforeach ()
 endif ()
 if (BUILD_STATIC_LIBS AND INSTALL_STATIC_LIBS)
   foreach (opts IN ITEMS "" _nothreads)
     if (BUILD_gflags${opts}_LIB)
-      install (TARGETS gflags${opts}_static DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT gflags-lib)
+      install (TARGETS gflags${opts}_static DESTINATION ${LIBRARY_INSTALL_DIR} EXPORT ${EXPORT_NAME})
     endif ()
   endforeach ()
 endif ()
@@ -512,7 +513,7 @@ if (INSTALL_HEADERS)
     FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake"
     DESTINATION ${CONFIG_INSTALL_DIR}
   )
-  install (EXPORT gflags-lib DESTINATION ${CONFIG_INSTALL_DIR} FILE ${PACKAGE_NAME}-targets.cmake)
+  install (EXPORT ${EXPORT_NAME} DESTINATION ${CONFIG_INSTALL_DIR})
   if (UNIX)
     install (PROGRAMS src/gflags_completions.sh DESTINATION ${RUNTIME_INSTALL_DIR})
   endif ()
@@ -521,7 +522,7 @@ endif ()
 # ----------------------------------------------------------------------------
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
-export (TARGETS ${TARGETS} FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-targets.cmake")
+export (TARGETS ${TARGETS} FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake")
 export (PACKAGE gflags)
 configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config.cmake" @ONLY)
 
