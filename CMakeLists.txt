@@ -133,6 +133,10 @@ endif ()
 # prefix for package variables in CMake configuration file
 string (TOUPPER "${PACKAGE_NAME}" PACKAGE_PREFIX)
 
+# convert file path on Windows with back slashes to path with forward slashes
+# otherwise this causes an issue with the cmake_install.cmake script
+file (TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
+
 # ----------------------------------------------------------------------------
 # options
 
@@ -196,6 +200,7 @@ endif ()
 
 gflags_define (STRING INCLUDE_DIR "Name of include directory of installed header files relative to CMAKE_INSTALL_PREFIX/include/" "${PACKAGE_NAME}")
 gflags_property (INCLUDE_DIR ADVANCED TRUE)
+file (TO_CMAKE_PATH "${INCLUDE_DIR}" INCLUDE_DIR)
 if (IS_ABSOLUTE INCLUDE_DIR)
   message (FATAL_ERROR "[GFLAGS_]INCLUDE_DIR must be a path relative to CMAKE_INSTALL_PREFIX/include/")
 endif ()
