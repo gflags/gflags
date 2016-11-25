@@ -40,6 +40,7 @@ cc_library(
     includes = [
         "include",
     ],
+    linkopts = ["-lpthread"],
     visibility = ["//visibility:public"],
 )
 
