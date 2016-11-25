@@ -106,7 +106,7 @@
 #ifndef GFLAGS_MUTEX_H_
 #define GFLAGS_MUTEX_H_
 
-#include "gflags/gflags_declare.h"     // to figure out pthreads support
+#include "gflags_declare.h"     // to figure out pthreads support
 
 #if defined(NO_THREADS)
   typedef int MutexType;        // to keep a lock-count
