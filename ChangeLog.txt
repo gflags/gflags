@@ -1,3 +1,22 @@
+* Fri Nov 25 2016 - Andreas Schuh <andreas.schuh.84@gmail.com>
+
+- gflags: version 2.2.0
+- Merged 178: Implicitly convert dashes in option names to underscores
+- Merged 159: CI builds and automatic tests with Travis CI and AppVeyor
+- Merged 158: Use enum for flag value types
+- Merged 126: File name postfix for static libraries on Windows
+- Closed issue 120: Configure and install gflags.pc file for pkg-config users
+- Fixed issue 127: snprintf already defined when building with MSVC 2015
+- Fixed issue 51/138: Memory leaks reported by valgrind
+- Fixed issue 173: Validate flags only once
+- Fixed issue 168: Unsigned and signed comparison in gflags_reporting.cc
+- Fixed issues 176/153: Add -lpthread link argument to Bazel build, refactor BUILD rules
+- Fixed issue 89: Add GFLAGS_IS_A_DLL to imported CMake target INTERFACE_COMPILE_DEFINITIONS
+- Fixed issue 104: Set INTERFACE_INCLUDE_DIRECTORIES of exported CMake targets
+- Fixed issue 174: Missing gflags-targets.cmake file after installation
+- Fixed issue 186: Error linking to gflags IMPLIB with MSVC using CMake
+- Closed issue 106: Add example project to test use of gflags library
+
 * Tue Mar 24 2014 - Andreas Schuh <andreas.schuh.84@gmail.com>
 
 - gflags: version 2.1.2
