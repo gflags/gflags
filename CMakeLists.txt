@@ -368,8 +368,10 @@ if (NOT DEFINED GFLAGS_ATTRIBUTE_UNUSED)
 endif ()
 
 # whenever we build a shared library (DLL on Windows), configure the public
-# headers of the API for use of this library rather than the optionally
+# headers of the API for use of this shared library rather than the optionally
 # also build statically linked library; users can override GFLAGS_DLL_DECL
+# in particular, this done by setting the INTERFACE_COMPILE_DEFINITIONS of
+# static libraries to include an empty definition for GFLAGS_DLL_DECL
 if (NOT DEFINED GFLAGS_IS_A_DLL)
   if (BUILD_SHARED_LIBS)
     set (GFLAGS_IS_A_DLL 1)
@@ -433,39 +435,37 @@ foreach (TYPE IN ITEMS STATIC SHARED)
     # multi-threaded vs. single-threaded
     foreach (opts IN ITEMS "" _nothreads)
       if (BUILD_gflags${opts}_LIB)
-        add_library (gflags${opts}_${type} ${TYPE} ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
+        set (target_name "gflags${opts}_${type}")
+        add_library (${target_name} ${TYPE} ${GFLAGS_SRCS} ${PRIVATE_HDRS} ${PUBLIC_HDRS})
+        set_target_properties (${target_name} PROPERTIES
+          OUTPUT_NAME "gflags${opts}${type_suffix}"
+          VERSION     "${PACKAGE_VERSION}"
+          SOVERSION   "${PACKAGE_SOVERSION}"
+        )
         set (include_dirs "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>")
         if (INSTALL_HEADERS)
           list (APPEND include_dirs "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>")
         endif ()
-        target_include_directories (gflags${opts}_${type}
+        target_include_directories (${target_name}
           PUBLIC  "${include_dirs}"
           PRIVATE "${PROJECT_SOURCE_DIR}/src;${PROJECT_BINARY_DIR}/include/${GFLAGS_INCLUDE_DIR}"
         )
+        target_compile_definitions (${target_name} PUBLIC GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL})
         if (opts MATCHES "nothreads")
-          set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL};NO_THREADS")
-        else ()
-          set (defines "GFLAGS_IS_A_DLL=${GFLAGS_IS_A_DLL}")
-          if (CMAKE_USE_PTHREADS_INIT)
-            target_link_libraries (gflags${opts}_${type} ${CMAKE_THREAD_LIBS_INIT})
-          endif ()
+          target_compile_definitions (${target_name} PRIVATE NO_THREADS)
+        elseif (CMAKE_USE_PTHREADS_INIT)
+          target_link_libraries (${target_name} ${CMAKE_THREAD_LIBS_INIT})
         endif ()
-        set_target_properties (
-          gflags${opts}_${type} PROPERTIES COMPILE_DEFINITIONS "${defines}"
-                                           OUTPUT_NAME         "gflags${opts}${type_suffix}"
-                                           VERSION             "${PACKAGE_VERSION}"
-                                           SOVERSION           "${PACKAGE_SOVERSION}"
-        )
         if (HAVE_SHLWAPI_H)
-          target_link_libraries (gflags${opts}_${type} shlwapi.lib)
+          target_link_libraries (${target_name} shlwapi.lib)
         endif ()
-        list (APPEND TARGETS gflags${opts}_${type})
+        list (APPEND TARGETS ${target_name})
         # add convenience make target for build of both shared and static libraries
         if (NOT GFLAGS_IS_SUBPROJECT)
           if (NOT TARGET gflags${opts})
             add_custom_target (gflags${opts})
           endif ()
-          add_dependencies (gflags${opts} gflags${opts}_${type})
+          add_dependencies (gflags${opts} ${target_name})
         endif ()
       endif ()
     endforeach ()
