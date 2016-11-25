@@ -46,11 +46,6 @@
 //     5a) Force bash to place most-relevent groups at the top of the list
 //     5b) Trim most flag's descriptions to fit on a single terminal line
 
-
-#include "gflags_completions.h"
-
-#include "config.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>   // for strlen
@@ -60,7 +55,9 @@
 #include <utility>
 #include <vector>
 
-#include "gflags.h"
+#include "config.h"
+#include "gflags/gflags.h"
+#include "gflags/gflags_completions.h"
 #include "util.h"
 
 using std::set;
