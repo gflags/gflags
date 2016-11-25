@@ -1,5 +1,6 @@
 /xcode/
 /build/
+/builds/
 /build-*/
 .DS_Store
 CMakeCache.txt
