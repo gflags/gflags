@@ -73,14 +73,14 @@ To use gflags in a Bazel project, map it in as an external dependency by editing
 your WORKSPACE file:
 
     git_repository(
-        name = "gflags_git",
-        commit = "",  # Use the current HEAD commit
+        name = "com_github_gflags_gflags",
+        commit = "<INSERT COMMIT SHA HERE>",
         remote = "https://github.com/gflags/gflags.git",
     )
 
     bind(
         name = "gflags",
-        actual = "@gflags_git//:gflags",
+        actual = "@com_github_gflags_gflags//:gflags",
     )
 
 You can then add `//external:gflags` to the `deps` section of a `cc_binary` or
