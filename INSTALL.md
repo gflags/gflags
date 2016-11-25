@@ -33,12 +33,12 @@ the name of this package and the obtained version of the software.
     $ cd gflags-$version
     $ mkdir build && cd build
     $ ccmake ..
-    
+
       - Press 'c' to configure the build system and 'e' to ignore warnings.
       - Set CMAKE_INSTALL_PREFIX and other CMake variables and options.
       - Continue pressing 'c' until the option 'g' is available.
       - Then press 'g' to generate the configuration files for GNU Make.
-    
+
     $ make
     $ make test    (optional)
     $ make install (optional)
@@ -73,14 +73,14 @@ To use gflags in a Bazel project, map it in as an external dependency by editing
 your WORKSPACE file:
 
     git_repository(
-        name = "gflags_git",
+        name = "com_googlesource_code_gflags",
         commit = "",  # Use the current HEAD commit
         remote = "https://github.com/gflags/gflags.git",
     )
 
     bind(
         name = "gflags",
-        actual = "@gflags_git//:gflags",
+        actual = "@com_googlesource_code_gflags//:gflags",
     )
 
 You can then add `//external:gflags` to the `deps` section of a `cc_binary` or

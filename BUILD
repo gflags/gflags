@@ -37,9 +37,6 @@ cc_library(
         "-DHAVE_RWLOCK",
         "-DGFLAGS_INTTYPES_FORMAT_C99",
     ],
-    includes = [
-        "include",
-    ],
     visibility = ["//visibility:public"],
 )
 
