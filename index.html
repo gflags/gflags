@@ -39,7 +39,8 @@
   <dt> Table of contents </dt>
   <dd> <a href="#intro">Introduction</a> </dd>
   <dd> <a href="#download">Download and Installation</a> </dd>
-  <dd> <a href="#cmake">Linking to gflags using CMake</a></dd>
+  <dd> <a href="#cmake">Declare dependency on gflags with CMake</a></dd>
+  <dd> <a href="#bazel">Declare dependency on gflags with Bazel</a></dd>
   <dd> <a href="#define">DEFINE: Defining Flags In Program</A> </dd>
   <dd> <a href="#using">Accessing the Flag</A> </dd>
   <dd> <a href="#declare">DECLARE: Using the Flag in a Different File</a> </dd>
@@ -101,9 +102,14 @@ You can clone the project using the command:</p>
 <pre>
    git clone https://github.com/gflags/gflags.git
 </pre>
-<p>Build and installation instructions are provided in the <A href="https://github.com/gflags/gflags/blob/master/INSTALL.md">INSTALL</A> file.</p>
+<p>Build and installation instructions are provided in the
+<A href="https://github.com/gflags/gflags/blob/master/INSTALL.md">INSTALL</A> file.
+The installation of the gflags package includes configuration files for popular build systems
+such as <A href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-config</A>,
+<A href="#cmake">CMake</A>, and <A href="#bazel">Bazel</A>.</p>
 
-<h2> <A name=cmake>Linking to gflags </A> using CMake</h2>
+
+<h2> <A name=cmake>Declare dependency on gflags with CMake</A></h2>
 
 <p>Using gflags within a project which uses <A href="http://www.cmake.org">CMake</A> for its build system is easy.
 You can either require an external installation of the gflags package and find it using CMake's find_package
@@ -139,6 +145,38 @@ imported gflags library target:</p>
 <pre>
    add_executable(foo main.cc)
    target_link_libraries(foo gflags)
+</pre>
+
+<h2> <A name=bazel>Declare dependency on gflags with Bazel</A></h2>
+
+<p>To use gflags within a project which uses <A href="https://bazel.build/">Bazel</A> as build tool,
+add the following lines to your <code>WORKSPACE</code> file
+(see also Bazel documentation of <A href="https://www.bazel.io/versions/master/docs/be/workspace.html#git_repository">git_repository</A>):
+
+<pre>
+git_repository(
+    name   = "com_github_gflags_gflags",
+    commit = "&lt;INSERT COMMIT SHA HERE&gt;",
+    remote = "https://github.com/gflags/gflags.git",
+)
+
+bind(
+    name = "gflags",
+    actual = "@com_github_gflags_gflags//:gflags",
+)
+</pre>
+
+<p>You can then add <code>//external:gflags</code> to the <code>deps</code> section of a <code>cc_binary</code>
+or <code>cc_library</code> rule, and <code>#include "gflags/gflags.h"</code> to include it in your source code.</p>
+
+<p>For example, see the following <code>BUILD</code> rule of the gflags/example project:</p>
+
+<pre>
+cc_binary(
+    name = "foo",
+    srcs = ["main.cc"],
+    deps = ["//external:gflags"],
+)
 </pre>
 
 <h2> <A name=define>DEFINE: Defining Flags In Program</A> </h2>
@@ -284,17 +322,20 @@ static bool ValidatePort(const char* flagname, int32 value) {
    return false;
 }
 DEFINE_int32(port, 0, "What port to listen on");
-static const bool port_dummy = RegisterFlagValidator(&FLAGS_port, &ValidatePort);
+DEFINE_validator(port, &ValidatePort);
 </pre>
 
 <p>By doing the registration at global initialization time (right
-after the DEFINE), we ensure that the registration happens before
+after the DEFINE_int32), we ensure that the registration happens before
 the commandline is parsed at the beginning of <code>main()</code>.</p>
 
-<p><code>RegisterFlagValidator()</code> returns true if the
-registration is successful.  It return false if the registration fails
+<p>The above used <code>DEFINE_validator</code> macro calls the
+<code>RegisterFlagValidator()</code> function which returns true if the
+registration is successful.  It returns false if the registration fails
 because a) the first argument does not refer to a commandline flag, or
-b) a different validator has already been registered for this flag.</p>
+b) a different validator has already been registered for this flag.
+The return value is available as global static boolean variable named
+<code>&lt;flag&gt;_validator_registered</code>.</p>
 
 
 <h2> <A name=together>Putting It Together: How to Set Up Flags</A> </h2>
