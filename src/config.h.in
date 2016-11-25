@@ -87,11 +87,6 @@
 // ---------------------------------------------------------------------------
 // Windows
 
-// Whether gflags library is a DLL.
-#ifndef GFLAGS_IS_A_DLL
-#  define GFLAGS_IS_A_DLL 0
-#endif
-
 // Always export symbols when compiling a shared library as this file is only
 // included by internal modules when building the gflags library itself.
 // The gflags_declare.h header file will set it to import these symbols otherwise.
