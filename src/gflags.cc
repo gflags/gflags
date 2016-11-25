@@ -88,7 +88,7 @@
 // are, similarly, mostly hooks into the functionality described above.
 
 #include "config.h"
-#include "gflags.h"
+#include "gflags/gflags.h"
 
 #include <assert.h>
 #include <ctype.h>
