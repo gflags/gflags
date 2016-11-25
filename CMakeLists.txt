@@ -83,11 +83,13 @@ include (utils)
 
 # ----------------------------------------------------------------------------
 # package information
-set (PACKAGE_NAME      "gflags")
-set (PACKAGE_VERSION   "2.2.0")
-set (PACKAGE_STRING    "${PACKAGE_NAME} ${PACKAGE_VERSION}")
-set (PACKAGE_TARNAME   "${PACKAGE_NAME}-${PACKAGE_VERSION}")
-set (PACKAGE_BUGREPORT "https://github.com/gflags/gflags/issues")
+set (PACKAGE_NAME        "gflags")
+set (PACKAGE_VERSION     "2.2.0")
+set (PACKAGE_STRING      "${PACKAGE_NAME} ${PACKAGE_VERSION}")
+set (PACKAGE_TARNAME     "${PACKAGE_NAME}-${PACKAGE_VERSION}")
+set (PACKAGE_BUGREPORT   "https://github.com/gflags/gflags/issues")
+set (PACKAGE_DESCRIPTION "A commandline flags library that allows for distributed flags.")
+set (PACKAGE_URL         "http://gflags.github.io/gflags")
 
 project (${PACKAGE_NAME} CXX)
 if (CMAKE_VERSION VERSION_LESS 100)
@@ -399,6 +401,7 @@ if (OS_WINDOWS)
   set (LIBRARY_INSTALL_DIR Lib)
   set (INCLUDE_INSTALL_DIR Include)
   set (CONFIG_INSTALL_DIR  CMake)
+  set (PKGCONFIG_INSTALL_DIR)
 else ()
   set (RUNTIME_INSTALL_DIR bin)
   # The LIB_INSTALL_DIR and LIB_SUFFIX variables are used by the Fedora
@@ -411,6 +414,7 @@ else ()
   gflags_property (LIBRARY_INSTALL_DIR ADVANCED TRUE)
   set (INCLUDE_INSTALL_DIR include)
   set (CONFIG_INSTALL_DIR  ${LIBRARY_INSTALL_DIR}/cmake/${PACKAGE_NAME})
+  set (PKGCONFIG_INSTALL_DIR ${LIBRARY_INSTALL_DIR}/pkgconfig)
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -526,6 +530,11 @@ if (INSTALL_HEADERS)
   endif ()
 endif ()
 
+if (PKGCONFIG_INSTALL_DIR)
+  configure_file ("cmake/package.pc.in" "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}.pc" @ONLY)
+  install (FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+endif ()
+
 # ----------------------------------------------------------------------------
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
@@ -593,7 +602,7 @@ if (BUILD_PACKAGING)
   set (CPACK_PACKAGE_VERSION_MAJOR       "${PACKAGE_VERSION_MAJOR}")
   set (CPACK_PACKAGE_VERSION_MINOR       "${PACKAGE_VERSION_MINOR}")
   set (CPACK_PACKAGE_VERSION_PATCH       "${PACKAGE_VERSION_PATCH}")
-  set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "A commandline flags library that allows for distributed flags.")
+  set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "${PACKAGE_DESCRIPTION}")
   set (CPACK_RESOURCE_FILE_WELCOME       "${CMAKE_CURRENT_BINARY_DIR}/README.txt")
   set (CPACK_RESOURCE_FILE_LICENSE       "${CMAKE_CURRENT_LIST_DIR}/COPYING.txt")
   set (CPACK_PACKAGE_DESCRIPTION_FILE    "${CMAKE_CURRENT_BINARY_DIR}/README.txt")
@@ -605,7 +614,7 @@ if (BUILD_PACKAGING)
   # RPM package information -- used in cmake/package.cmake.in also for DEB
   set (CPACK_RPM_PACKAGE_GROUP   "Development/Libraries")
   set (CPACK_RPM_PACKAGE_LICENSE "BSD")
-  set (CPACK_RPM_PACKAGE_URL     "http://gflags.github.io/gflags")
+  set (CPACK_RPM_PACKAGE_URL     "${PACKAGE_URL}")
   set (CPACK_RPM_CHANGELOG_FILE  "${CMAKE_CURRENT_LIST_DIR}/ChangeLog.txt")
 
   if (INSTALL_HEADERS)
