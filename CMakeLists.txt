@@ -350,8 +350,8 @@ set (PRIVATE_HDRS
 
 set (GFLAGS_SRCS
   "gflags.cc"
-  "reporting.cc"
-  "completions.cc"
+  "gflags_reporting.cc"
+  "gflags_completions.cc"
 )
 
 if (OS_WINDOWS)

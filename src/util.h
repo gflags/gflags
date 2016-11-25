@@ -35,7 +35,6 @@
 #define GFLAGS_UTIL_H_
 
 #include "config.h"
-#include "gflags/gflags_declare.h" // GFLAGS_NAMESPACE
 
 #include <assert.h>
 #ifdef HAVE_INTTYPES_H

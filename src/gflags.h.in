@@ -81,7 +81,7 @@
 #include <string>
 #include <vector>
 
-#include "gflags/gflags_declare.h" // IWYU pragma: export
+#include "gflags_declare.h" // IWYU pragma: export
 
 
 // We always want to export variables defined in user code
