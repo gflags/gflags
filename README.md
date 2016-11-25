@@ -1,6 +1,25 @@
 [![Build Status](https://travis-ci.org/gflags/gflags.svg?branch=master)](https://travis-ci.org/gflags/gflags)
 [![Build status](https://ci.appveyor.com/api/projects/status/4ctod566ysraus74/branch/master?svg=true)](https://ci.appveyor.com/project/schuhschuh/gflags/branch/master)
 
+25 November 2016
+----------------
+
+I've finally released gflags 2.2.0.
+
+This release adds support for use of the gflags library as external dependency
+not only in projects using CMake, but also [Bazel](https://bazel.build/),
+or [pkg-config](https://www.freedesktop.org/wiki/Software/pkg-config/).
+One new minor feature is added in this release: when a command flag argument
+contains dashes, these are implicitly converted to underscores.
+This is to allow those used to separate words of the flag name by dashes
+to do so, while the flag variable names are required to use underscores.
+
+Memory leaks reported by valgrind should be resolved by this release.
+This release fixes build errors with MS Visual Studio 2015.
+
+Please report any further issues with this release using the GitHub issue tracker.
+
+
 24 March 2015
 -------------
 
