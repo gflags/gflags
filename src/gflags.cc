@@ -1061,9 +1061,6 @@ static string ReadFileIntoString(const char* filename) {
 
 uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
                                                        bool remove_flags) {
-  const char *program_name = strrchr((*argv)[0], PATH_SEPARATOR);   // nix path
-  program_name = (program_name == NULL ? (*argv)[0] : program_name+1);
-
   int first_nonopt = *argc;        // for non-options moved to the end
 
   registry_->Lock();
