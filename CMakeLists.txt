@@ -91,12 +91,12 @@ set (PACKAGE_DESCRIPTION "A commandline flags library that allows for distribute
 set (PACKAGE_URL         "http://gflags.github.io/gflags")
 
 project (${PACKAGE_NAME} CXX)
-if (CMAKE_VERSION VERSION_LESS 100)
+if (CMAKE_VERSION VERSION_LESS 3.4)
   # C language still needed because the following required CMake modules
   # (or their dependencies, respectively) are not correctly handling
-  # the case where only CXX is enabled.
-  # - CheckTypeSize.cmake (fixed in CMake 3.1, cf. http://www.cmake.org/Bug/view.php?id=14056)
-  # - FindThreads.cmake (--> CheckIncludeFiles.cmake <--)
+  # the case where only CXX is enabled
+  # - CheckTypeSize.cmake (fixed in CMake 3.1, cf. https://cmake.org/Bug/view.php?id=14056)
+  # - FindThreads.cmake   (fixed in CMake 3.4, cf. https://cmake.org/Bug/view.php?id=14905)
   enable_language (C)
 endif ()
 
