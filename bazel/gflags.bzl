@@ -62,6 +62,7 @@ def gflags_sources(namespace=["google", "gflags"]):
 def gflags_library(hdrs=[], srcs=[], threads=1):
     name = "gflags"
     copts = [
+        "-I$(GENDIR)/" + PACKAGE_NAME,
         "-DHAVE_STDINT_H",
         "-DHAVE_SYS_TYPES_H",
         "-DHAVE_INTTYPES_H",
@@ -85,7 +86,6 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         name       = name,
         hdrs       = hdrs,
         srcs       = srcs,
-        includes   = ["$(GENDIR)"],
         copts      = copts,
         linkopts   = linkopts,
         visibility = ["//visibility:public"]
