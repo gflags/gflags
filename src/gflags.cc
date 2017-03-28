@@ -87,10 +87,6 @@
 // other hand, hooks into CommandLineFlagParser.  Other API functions
 // are, similarly, mostly hooks into the functionality described above.
 
-#ifdef STRIP_INTERNAL_FLAG_HELP
-#  define STRIP_FLAG_HELP 1
-#endif
-
 #include "config.h"
 
 #ifdef STRIP_INTERNAL_FLAG_HELP
