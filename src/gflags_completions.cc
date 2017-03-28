@@ -56,6 +56,11 @@
 #include <vector>
 
 #include "config.h"
+
+#ifdef STRIP_INTERNAL_FLAG_HELP
+#  define STRIP_FLAG_HELP 1
+#endif
+
 #include "gflags/gflags.h"
 #include "gflags/gflags_completions.h"
 #include "util.h"

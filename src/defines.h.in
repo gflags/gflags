@@ -44,5 +44,6 @@
 // Define if your pthread library defines the type pthread_rwlock_t
 #cmakedefine HAVE_RWLOCK
 
+#cmakedefine STRIP_INTERNAL_FLAG_HELP
 
 #endif // GFLAGS_DEFINES_H_
