@@ -109,10 +109,14 @@ inline void setenv(const char* name, const char* value, int) {
 #define unlink   _unlink
 #endif
 
+#if defined(_MSC_VER) && _MSC_VER >= 1800
+#include <inttypes.h>
+#else
 #define PRId32  "d"
 #define PRIu32  "u"
 #define PRId64  "I64d"
 #define PRIu64  "I64u"
+#endif
 
 #if !defined(__MINGW32__) && !defined(__MINGW64__)
 #define strtoq   _strtoi64
