@@ -726,7 +726,6 @@ class FlagRegistry {
   static FlagRegistry* global_registry_;   // a singleton registry
 
   Mutex lock_;
-  static Mutex global_registry_lock_;
 
   static void InitGlobalRegistry();
 
@@ -929,10 +928,10 @@ bool FlagRegistry::SetFlagLocked(CommandLineFlag* flag,
 
 // Get the singleton FlagRegistry object
 FlagRegistry* FlagRegistry::global_registry_ = NULL;
-Mutex FlagRegistry::global_registry_lock_(Mutex::LINKER_INITIALIZED);
 
 FlagRegistry* FlagRegistry::GlobalRegistry() {
-  MutexLock acquire_lock(&global_registry_lock_);
+  static Mutex lock(Mutex::LINKER_INITIALIZED);
+  MutexLock acquire_lock(&lock);
   if (!global_registry_) {
     global_registry_ = new FlagRegistry;
   }
