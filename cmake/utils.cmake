@@ -60,6 +60,7 @@ endmacro ()
 # the variable is not added to the CMake cache. Otherwise it is cached.
 macro (gflags_define type varname docstring default)
   # note that ARGC must be expanded here, as it is not a "real" variable
+  # (see the CMake documentation for the macro command)
   if ("${ARGC}" GREATER 5)
     message (FATAL_ERROR "gflags_variable: Too many macro arguments")
   endif ()
@@ -84,6 +85,8 @@ endmacro ()
 macro (gflags_property varname property value)
   gflags_is_cached (_cached ${varname})
   if (_cached)
+    # note that property must be expanded here, as it is not a "real" variable
+    # (see the CMake documentation for the macro command)
     if ("${property}" STREQUAL "ADVANCED")
       if (${value})
         mark_as_advanced (FORCE ${varname})
