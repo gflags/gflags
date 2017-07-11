@@ -3,6 +3,17 @@
 
 The documentation of the gflags library is available online at https://gflags.github.io/gflags/.
 
+11 July 2017
+------------
+
+I've just released gflags 2.2.1.
+
+This maintenance release primarily fixes build issues on Windows and
+false alarms reported by static code analyzers.
+
+Please report any further issues with this release using the GitHub issue tracker.
+
+
 25 November 2016
 ----------------
 

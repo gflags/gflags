@@ -1,3 +1,20 @@
+* Tue Jul 11 2017 - Andreas Schuh <andreas.schuh.84@gmail.com>
+
+- gflags: version 2.2.1
+- Link to online documentation in README
+- Merged 194: Include utils by file instead of CMAKE_MODULE_PATH search
+- Merged 195: Remove unused program_name variable
+- Merged 196: Enable language C for older CMake versions when needed
+- Merged 202: Changed include directory in bazel build
+- Merged 207: Mark single argument constructors in mutex.h as explicit
+- Merged 209: Use inttypes.h on VC++ 2013 and later
+- Merged 212: Fix statically linked gflags library with MSVC
+- Meregd 213: Modify installation paths on Windows for vcpkg
+- Merged 215: Fix static initialization order fiasco caused by global registry lock
+- Merged 216: Fix use of ARGC in CMake macros
+- Merged 222: Static code analyzer error regarding strncmp with empty kRootDir
+- Merged 224: Check HAVE_STDINT_H or HAVE_INTTYPES_H for older MSVC versions
+
 * Fri Nov 25 2016 - Andreas Schuh <andreas.schuh.84@gmail.com>
 
 - gflags: version 2.2.0
