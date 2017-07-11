@@ -591,7 +591,7 @@ const char* CommandLineFlag::CleanFileName() const {
   const char* clean_name = filename() + strlen(filename()) - 1;
   while ( clean_name > filename() ) {
     if (*clean_name == PATH_SEPARATOR) {
-      if (strncmp(clean_name, kRootDir, sizeof(kRootDir)-1) == 0) {
+      if (sizeof(kRootDir) > 1 && strncmp(clean_name, kRootDir, sizeof(kRootDir)-1) == 0) {
         clean_name += sizeof(kRootDir)-1;    // past root-dir
         break;
       }
