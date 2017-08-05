@@ -144,7 +144,6 @@ typedef std::string clstring;
 #define DECLARE_string(name) \
   /* We always want to import declared variables, dll or no */ \
   namespace fLS { \
-  using ::fLS::clstring; \
   extern GFLAGS_DLL_DECLARE_FLAG ::fLS::clstring& FLAGS_##name; \
   } \
   using fLS::FLAGS_##name
