@@ -4,7 +4,7 @@
 
 licenses(["notice"])
 
-exports_files(["src/gflags_complections.sh", "COPYING.txt"])
+exports_files(["src/gflags_completions.sh", "COPYING.txt"])
 
 load(":bazel/gflags.bzl", "gflags_sources", "gflags_library")
 (hdrs, srcs) = gflags_sources(namespace=["gflags", "google"])
