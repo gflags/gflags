@@ -50,6 +50,8 @@
 #  define __STDC_FORMAT_MACROS 1
 #endif
 
+#cmakedefine STRIP_INTERNAL_FLAG_HELP
+
 // ---------------------------------------------------------------------------
 // Package information
 
@@ -109,6 +111,5 @@
 #  endif
 #  include "windows_port.h"
 #endif
-
 
 #endif // GFLAGS_CONFIG_H_
