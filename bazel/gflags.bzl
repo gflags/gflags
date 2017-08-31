@@ -2,15 +2,9 @@
 # Add native rules to configure source files
 def gflags_sources(namespace=["google", "gflags"]):
     native.genrule(
-        name = "config_h",
-        srcs = ["src/config.h.in"],
-        outs = ["config.h"],
-        cmd  = "awk '{ gsub(/^#cmakedefine/, \"//cmakedefine\"); print; }' $(<) > $(@)"
-    )
-    native.genrule(
         name = "gflags_declare_h",
         srcs = ["src/gflags_declare.h.in"],
-        outs = ["include/gflags/gflags_declare.h"],
+        outs = ["gflags_declare.h"],
         cmd  = ("awk '{ " +
                 "gsub(/@GFLAGS_NAMESPACE@/, \"" + namespace[0] + "\"); " +
                 "gsub(/@(HAVE_STDINT_H|HAVE_SYS_TYPES_H|HAVE_INTTYPES_H|GFLAGS_INTTYPES_FORMAT_C99)@/, \"1\"); " +
@@ -23,7 +17,7 @@ def gflags_sources(namespace=["google", "gflags"]):
         native.genrule(
             name = gflags_ns_h_file.replace('.', '_'),
             srcs = ["src/gflags_ns.h.in"],
-            outs = ["include/gflags/" + gflags_ns_h_file],
+            outs = [gflags_ns_h_file],
             cmd  = ("awk '{ " +
                     "gsub(/@ns@/, \"" + ns + "\"); " +
                     "gsub(/@NS@/, \"" + ns.upper() + "\"); " +
@@ -33,7 +27,7 @@ def gflags_sources(namespace=["google", "gflags"]):
     native.genrule(
         name = "gflags_h",
         srcs = ["src/gflags.h.in"],
-        outs = ["include/gflags/gflags.h"],
+        outs = ["gflags.h"],
         cmd  = ("awk '{ " +
                 "gsub(/@GFLAGS_ATTRIBUTE_UNUSED@/, \"\"); " +
                 "gsub(/@INCLUDE_GFLAGS_NS_H@/, \"" + '\n'.join(["#include \\\"gflags/{}\\\"".format(hdr) for hdr in gflags_ns_h_files]) + "\"); " +
@@ -42,13 +36,13 @@ def gflags_sources(namespace=["google", "gflags"]):
     native.genrule(
         name = "gflags_completions_h",
         srcs = ["src/gflags_completions.h.in"],
-        outs = ["include/gflags/gflags_completions.h"],
+        outs = ["gflags_completions.h"],
         cmd  = "awk '{ gsub(/@GFLAGS_NAMESPACE@/, \"" + namespace[0] + "\"); print; }' $(<) > $(@)"
     )
     hdrs = [":gflags_h", ":gflags_declare_h", ":gflags_completions_h"]
     hdrs.extend([':' + hdr.replace('.', '_') for hdr in gflags_ns_h_files])
     srcs = [
-        ":config_h",
+        "src/config.h",
         "src/gflags.cc",
         "src/gflags_completions.cc",
         "src/gflags_reporting.cc",
@@ -62,6 +56,10 @@ def gflags_sources(namespace=["google", "gflags"]):
 def gflags_library(hdrs=[], srcs=[], threads=1):
     name = "gflags"
     copts = [
+        "-DGFLAGS_BAZEL_BUILD",
+        "-DGFLAGS_INTTYPES_FORMAT_C99",
+        "-DGFLAGS_IS_A_DLL=0",
+        # macros otherwise defined by CMake configured defines.h file
         "-DHAVE_STDINT_H",
         "-DHAVE_SYS_TYPES_H",
         "-DHAVE_INTTYPES_H",
@@ -72,8 +70,6 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         "-DHAVE_STRTOQ",
         "-DHAVE_PTHREAD",
         "-DHAVE_RWLOCK",
-        "-DGFLAGS_INTTYPES_FORMAT_C99",
-        "-DGFLAGS_IS_A_DLL=0",
     ]
     linkopts = []
     if threads:
@@ -85,8 +81,8 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         name       = name,
         hdrs       = hdrs,
         srcs       = srcs,
-        includes   = ["include/"],
         copts      = copts,
         linkopts   = linkopts,
-        visibility = ["//visibility:public"]
+        visibility = ["//visibility:public"],
+        include_prefix = 'gflags'
     )
