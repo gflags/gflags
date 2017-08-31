@@ -352,6 +352,7 @@ else ()
 endif ()
 
 set (PRIVATE_HDRS
+  "defines.h"
   "config.h"
   "util.h"
   "mutex.h"
