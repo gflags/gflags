@@ -4,7 +4,7 @@ def gflags_sources(namespace=["google", "gflags"]):
     native.genrule(
         name = "config_h",
         srcs = ["src/config.h.in"],
-        outs = ["config.h"],
+        outs = ["gflags_internal/config.h"],
         cmd  = "awk '{ gsub(/^#cmakedefine/, \"//cmakedefine\"); print; }' $(<) > $(@)"
     )
     native.genrule(
@@ -61,6 +61,10 @@ def gflags_sources(namespace=["google", "gflags"]):
 # Add native rule to build gflags library
 def gflags_library(hdrs=[], srcs=[], threads=1):
     name = "gflags"
+    if native.repository_name() != "@":
+      gendir = "$(GENDIR)/external/" + native.repository_name().lstrip("@")
+    else:
+      gendir = "$(GENDIR)"
     copts = [
         "-DHAVE_STDINT_H",
         "-DHAVE_SYS_TYPES_H",
@@ -74,6 +78,7 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         "-DHAVE_RWLOCK",
         "-DGFLAGS_INTTYPES_FORMAT_C99",
         "-DGFLAGS_IS_A_DLL=0",
+        "-I" + gendir + "/gflags_internal",
     ]
     linkopts = []
     if threads:
