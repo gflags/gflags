@@ -225,7 +225,6 @@ class FlagValue {
   bool Equal(const FlagValue& x) const;
   FlagValue* New() const;   // creates a new one with default value
   void CopyFrom(const FlagValue& x);
-  int ValueSize() const;
 
   // Calls the given validate-fn on value_buffer_, and returns
   // whatever it returns.  But first casts validate_fn_proto to a
@@ -483,23 +482,6 @@ void FlagValue::CopyFrom(const FlagValue& x) {
     case FV_STRING: SET_VALUE_AS(string, OTHER_VALUE_AS(x, string));  break;
     default: assert(false);  // unknown type
   }
-}
-
-int FlagValue::ValueSize() const {
-  if (type_ > FV_MAX_INDEX) {
-    assert(false);  // unknown type
-    return 0;
-  }
-  static const uint8 valuesize[] = {
-    sizeof(bool),
-    sizeof(int32),
-    sizeof(uint32),
-    sizeof(int64),
-    sizeof(uint64),
-    sizeof(double),
-    sizeof(string),
-  };
-  return valuesize[type_];
 }
 
 // --------------------------------------------------------------------
@@ -960,7 +942,6 @@ class CommandLineFlagParser {
   // Stage 3: validate all the commandline flags that have validators
   // registered and were not set/modified by ParseNewCommandLineFlags.
   void ValidateFlags(bool all);
-  void ValidateAllFlags();
   void ValidateUnmodifiedFlags();
 
   // Stage 4: report any errors and return true if any were found.
@@ -1243,10 +1224,6 @@ void CommandLineFlagParser::ValidateFlags(bool all) {
       }
     }
   }
-}
-
-void CommandLineFlagParser::ValidateAllFlags() {
-  ValidateFlags(true);
 }
 
 void CommandLineFlagParser::ValidateUnmodifiedFlags() {
