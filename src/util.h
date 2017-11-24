@@ -246,6 +246,7 @@ inline void MakeTmpdir(std::string* path) {
 }
 #elif defined(_MSC_VER)
 #include <direct.h>
+#include <Windows.h>
 inline void MakeTmpdir(std::string* path) {
   if (!path->empty()) {
 	int err = _mkdir(path->c_str());
