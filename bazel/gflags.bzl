@@ -1,3 +1,10 @@
+def if_windows(a):
+  return select({
+      "//:windows": a,
+      "//:windows_msvc": a,
+      "//conditions:default": [],
+  })
+
 # ------------------------------------------------------------------------------
 # Add native rules to configure source files
 def gflags_sources(namespace=["google", "gflags"]):
@@ -48,35 +55,83 @@ def gflags_sources(namespace=["google", "gflags"]):
         "src/gflags_reporting.cc",
         "src/mutex.h",
         "src/util.h"
-    ]
+    ] + if_windows(["src/windows_port.h"])
     return [hdrs, srcs]
+
+WIN_COPTS = [
+    "-DGFLAGS_BAZEL_BUILD",
+    "-DOS_WINDOWS",
+    "-DHAVE_STDINT_H",
+    "-DHAVE_SYS_TYPES_H",
+    "-DHAVE_INTTYPES_H",
+    "-DHAVE_SYS_STAT_H",
+    "-DHAVE_SHLWAPI_H",
+    "-DNOMINMAX",
+]
+
+POSIX_COPTS = [
+    "-DGFLAGS_BAZEL_BUILD",
+    "-DGFLAGS_INTTYPES_FORMAT_C99",
+    "-DGFLAGS_IS_A_DLL=0",
+    # macros otherwise defined by CMake configured defines.h file
+    "-DHAVE_STDINT_H",
+    "-DHAVE_SYS_TYPES_H",
+    "-DHAVE_INTTYPES_H",
+    "-DHAVE_SYS_STAT_H",
+    "-DHAVE_UNISTD_H",
+    "-DHAVE_FNMATCH_H",
+    "-DHAVE_STRTOLL",
+    "-DHAVE_STRTOQ",
+    "-DHAVE_PTHREAD",
+    "-DHAVE_RWLOCK",
+]
+
+POSIX_COPTS_NO_THREAD = [
+    "-DGFLAGS_BAZEL_BUILD",
+    "-DGFLAGS_INTTYPES_FORMAT_C99",
+    "-DGFLAGS_IS_A_DLL=0",
+    # macros otherwise defined by CMake configured defines.h file
+    "-DHAVE_STDINT_H",
+    "-DHAVE_SYS_TYPES_H",
+    "-DHAVE_INTTYPES_H",
+    "-DHAVE_SYS_STAT_H",
+    "-DHAVE_UNISTD_H",
+    "-DHAVE_FNMATCH_H",
+    "-DHAVE_STRTOLL",
+    "-DHAVE_STRTOQ",
+    "-DHAVE_PTHREAD",
+    "-DHAVE_RWLOCK",
+    "-DNO_THREADS",
+]
 
 # ------------------------------------------------------------------------------
 # Add native rule to build gflags library
 def gflags_library(hdrs=[], srcs=[], threads=1):
     name = "gflags"
-    copts = [
-        "-DGFLAGS_BAZEL_BUILD",
-        "-DGFLAGS_INTTYPES_FORMAT_C99",
-        "-DGFLAGS_IS_A_DLL=0",
-        # macros otherwise defined by CMake configured defines.h file
-        "-DHAVE_STDINT_H",
-        "-DHAVE_SYS_TYPES_H",
-        "-DHAVE_INTTYPES_H",
-        "-DHAVE_SYS_STAT_H",
-        "-DHAVE_UNISTD_H",
-        "-DHAVE_FNMATCH_H",
-        "-DHAVE_STRTOLL",
-        "-DHAVE_STRTOQ",
-        "-DHAVE_PTHREAD",
-        "-DHAVE_RWLOCK",
-    ]
+    copts = select({
+      "//:windows": WIN_COPTS,
+      "//:windows_msvc": WIN_COPTS,
+      "//conditions:default": POSIX_COPTS,
+  })
     linkopts = []
     if threads:
-        linkopts.append("-lpthread")
+      linkopts = select({
+      "//:windows": ["-DEFAULTLIB:Shlwapi.lib"],
+      "//:windows_msvc": ["-DEFAULTLIB:Shlwapi.lib"],
+      "//conditions:default": ["-lpthread"],
+    })
     else:
         name += "_nothreads"
-        copts.append("-DNO_THREADS")
+        copts = select({
+          "//:windows": WIN_COPTS,
+          "//:windows_msvc": WIN_COPTS,
+          "//conditions:default": POSIX_COPTS_NO_THREAD,
+        })
+        linkopts = select({
+          "//:windows": ["-DEFAULTLIB:Shlwapi.lib"],
+          "//:windows_msvc": ["-DEFAULTLIB:Shlwapi.lib"],
+          "//conditions:default": [],
+        })
     native.cc_library(
         name       = name,
         hdrs       = hdrs,
