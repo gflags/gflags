@@ -65,10 +65,8 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         "-DHAVE_INTTYPES_H",
         "-DHAVE_SYS_STAT_H",
         "-DHAVE_UNISTD_H",
-        "-DHAVE_FNMATCH_H",
         "-DHAVE_STRTOLL",
         "-DHAVE_STRTOQ",
-        "-DHAVE_PTHREAD",
         "-DHAVE_RWLOCK",
     ]
     linkopts = []
@@ -80,8 +78,21 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
     native.cc_library(
         name       = name,
         hdrs       = hdrs,
-        srcs       = srcs,
-        copts      = copts,
+        srcs       = srcs + select({
+            "//:windows": [
+                "src/windows_port.h",
+            ],
+            "//conditions:default": [],
+        }),
+        copts      = copts + select({
+            "//:windows": [
+                "-DOS_WINDOWS",
+            ],
+            "//conditions:default": [
+                "-DHAVE_FNMATCH_H",
+                "-DHAVE_PTHREAD",
+            ],
+        }),
         linkopts   = linkopts,
         visibility = ["//visibility:public"],
         include_prefix = 'gflags'
