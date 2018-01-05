@@ -47,8 +47,14 @@ def gflags_sources(namespace=["google", "gflags"]):
         "src/gflags_completions.cc",
         "src/gflags_reporting.cc",
         "src/mutex.h",
-        "src/util.h"
-    ]
+        "src/util.h",
+    ] + select({
+        "//:x64_windows": [
+            "src/windows_port.cc",
+            "src/windows_port.h",
+        ],
+        "//conditions:default": [],
+    })
     return [hdrs, srcs]
 
 # ------------------------------------------------------------------------------
@@ -64,19 +70,28 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         "-DHAVE_SYS_TYPES_H",
         "-DHAVE_INTTYPES_H",
         "-DHAVE_SYS_STAT_H",
-        "-DHAVE_UNISTD_H",
-        "-DHAVE_FNMATCH_H",
         "-DHAVE_STRTOLL",
         "-DHAVE_STRTOQ",
-        "-DHAVE_PTHREAD",
         "-DHAVE_RWLOCK",
-    ]
+    ] + select({
+        "//:x64_windows": [
+            "-DOS_WINDOWS",
+        ],
+        "//conditions:default": [
+            "-DHAVE_UNISTD_H",
+            "-DHAVE_FNMATCH_H",
+            "-DHAVE_PTHREAD",
+        ],
+    })
     linkopts = []
     if threads:
-        linkopts.append("-lpthread")
+        linkopts = linkopts + select({
+            "//:x64_windows": [],
+            "//conditions:default": ["-lpthread"],
+        })
     else:
         name += "_nothreads"
-        copts.append("-DNO_THREADS")
+        copts = copts + ["-DNO_THREADS"]
     native.cc_library(
         name       = name,
         hdrs       = hdrs,
