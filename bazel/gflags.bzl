@@ -85,13 +85,13 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
     })
     linkopts = []
     if threads:
-        linkopts = linkopts + select({
+        linkopts += select({
             "//:x64_windows": [],
             "//conditions:default": ["-lpthread"],
         })
     else:
         name += "_nothreads"
-        copts = copts + ["-DNO_THREADS"]
+        copts += ["-DNO_THREADS"]
     native.cc_library(
         name       = name,
         hdrs       = hdrs,
