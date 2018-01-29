@@ -14,9 +14,9 @@
 ##
 ## When this project is a subproject (GFLAGS_IS_SUBPROJECT is TRUE), the default
 ## settings are such that only the static single-threaded library is built without
-## installation of the gflags files. The "gflags" target is in this case an ALIAS
+## installation of the gflags files. The "gflags::gflags" target is in this case an ALIAS
 ## library target for the "gflags_nothreads_static" library target. Targets which
-## depend on the gflags library should link to the "gflags" library target.
+## depend on the gflags library should link to the "gflags::gflags" library target.
 ##
 ## Example CMakeLists.txt of user project which requires separate gflags installation:
 ##   cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
@@ -26,7 +26,7 @@
 ##   find_package(gflags REQUIRED)
 ##
 ##   add_executable(foo src/foo.cc)
-##   target_link_libraries(foo gflags)
+##   target_link_libraries(foo gflags::gflags)
 ##
 ## Example CMakeLists.txt of user project which requires separate single-threaded static gflags installation:
 ##   cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
@@ -36,7 +36,7 @@
 ##   find_package(gflags COMPONENTS nothreads_static)
 ##
 ##   add_executable(foo src/foo.cc)
-##   target_link_libraries(foo gflags)
+##   target_link_libraries(foo gflags::gflags)
 ##
 ## Example CMakeLists.txt of super-project which contains gflags source tree:
 ##   cmake_minimum_required(VERSION 2.8.12 FATAL_ERROR)
@@ -46,7 +46,7 @@
 ##   add_subdirectory(gflags)
 ##
 ##   add_executable(foo src/foo.cc)
-##   target_link_libraries(foo gflags)
+##   target_link_libraries(foo gflags::gflags)
 ##
 ## Variables to configure the source files:
 ## - GFLAGS_IS_A_DLL
@@ -495,11 +495,11 @@ if (GFLAGS_IS_SUBPROJECT)
   foreach (type IN ITEMS static shared)
     foreach (opts IN ITEMS "_nothreads" "")
       if (TARGET gflags${opts}_${type})
-        add_library (gflags ALIAS gflags${opts}_${type})
+        add_library (gflags::gflags ALIAS gflags${opts}_${type})
         break ()
       endif ()
     endforeach ()
-    if (TARGET gflags)
+    if (TARGET gflags::gflags)
        break ()
     endif ()
   endforeach ()
@@ -546,7 +546,11 @@ if (INSTALL_HEADERS)
     FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake"
     DESTINATION ${CONFIG_INSTALL_DIR}
   )
-  install (EXPORT ${EXPORT_NAME} DESTINATION ${CONFIG_INSTALL_DIR})
+  install (
+    EXPORT ${EXPORT_NAME}
+    DESTINATION ${CONFIG_INSTALL_DIR}
+    NAMESPACE gflags::
+  )
   if (UNIX)
     install (PROGRAMS src/gflags_completions.sh DESTINATION ${RUNTIME_INSTALL_DIR})
   endif ()
@@ -560,7 +564,10 @@ endif ()
 # ----------------------------------------------------------------------------
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
-export (TARGETS ${TARGETS} FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake")
+export (
+  TARGETS ${TARGETS}
+  NAMESPACE gflags::
+  FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake")
 if (REGISTER_BUILD_DIR)
   export (PACKAGE ${PACKAGE_NAME})
 endif ()
