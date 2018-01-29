@@ -70,10 +70,14 @@
 ## - GFLAGS_INSTALL_SHARED_LIBS
 ## - GFLAGS_INSTALL_STATIC_LIBS
 
-cmake_minimum_required (VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.0.2 FATAL_ERROR)
 
 if (POLICY CMP0042)
   cmake_policy (SET CMP0042 NEW)
+endif ()
+
+if (POLICY CMP0048)
+  cmake_policy (SET CMP0048 NEW)
 endif ()
 
 # ----------------------------------------------------------------------------
@@ -90,7 +94,7 @@ set (PACKAGE_BUGREPORT   "https://github.com/gflags/gflags/issues")
 set (PACKAGE_DESCRIPTION "A commandline flags library that allows for distributed flags.")
 set (PACKAGE_URL         "http://gflags.github.io/gflags")
 
-project (${PACKAGE_NAME} CXX)
+project (${PACKAGE_NAME} VERSION ${PACKAGE_VERSION} LANGUAGES CXX)
 if (CMAKE_VERSION VERSION_LESS 3.4)
   # C language still needed because the following required CMake modules
   # (or their dependencies, respectively) are not correctly handling
