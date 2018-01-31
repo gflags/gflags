@@ -573,7 +573,6 @@ configure_file (cmake/config.cmake.in "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-con
 # testing - MUST follow the generation of the build tree config file
 if (BUILD_TESTING)
   include (CTest)
-  enable_testing ()
   add_subdirectory (test)
 endif ()
 
