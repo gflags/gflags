@@ -179,6 +179,11 @@ struct CompletionOptions {
   bool flag_description_substring_search;
   bool return_all_matching_flags;
   bool force_no_update;
+  CompletionOptions(): flag_name_substring_search(false),
+                       flag_location_substring_search(false),
+                       flag_description_substring_search(false),
+                       return_all_matching_flags(false),
+                       force_no_update(false) { }
 };
 
 // Notable flags are flags that are special or preferred for some
@@ -202,7 +207,7 @@ struct NotableFlags {
 static void PrintFlagCompletionInfo(void) {
   string cursor_word = FLAGS_tab_completion_word;
   string canonical_token;
-  CompletionOptions options = { };
+  CompletionOptions options = CompletionOptions();
   CanonicalizeCursorWordAndSearchOptions(
       cursor_word,
       &canonical_token,
