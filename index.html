@@ -159,22 +159,13 @@ git_repository(
     commit = "&lt;INSERT COMMIT SHA HERE&gt;",
     remote = "https://github.com/gflags/gflags.git",
 )
-
-bind(
-    name = "gflags",
-    actual = "@com_github_gflags_gflags//:gflags",
-)
-
-bind(
-    name = "gflags_nothreads",
-    actual = "@com_github_gflags_gflags//:gflags_nothreads",
-)
 </pre>
 
-<p>You can then add <code>//external:gflags</code> to the <code>deps</code> section of a <code>cc_binary</code>
-or <code>cc_library</code> rule, and <code>#include "gflags/gflags.h"</code> to include it in your source code.
-This use the shared gflags library with multi-threading enabled. In order to use the single-threaded shared
-gflags library, use the external dependency <code>//external:gflags_nothreads</code> instead.</p>
+<p>You can then add <code>@com_github_gflags_gflags//:gflags</code> to the <code>deps</code> section of a
+<code>cc_binary</code> or <code>cc_library</code> rule, and <code>#include "gflags/gflags.h"</code> to
+include it in your source code. This use the shared gflags library with multi-threading enabled.
+In order to use the single-threaded shared gflags library, use the dependency
+<code>@com_github_gflags_gflags//:gflags_nothreads</code> instead.</p>
 
 <p>For example, see the following <code>BUILD</code> rule of the gflags/example project:</p>
 
