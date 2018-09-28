@@ -1036,7 +1036,7 @@ uint32 CommandLineFlagParser::ParseNewCommandLineFlags(int* argc, char*** argv,
     char* arg = (*argv)[i];
 
     // Like getopt(), we permute non-option flags to be at the end.
-	if (arg[0] != '-' || arg[1] == '\0') {	// must be a program argument "-" is an argument, not a flag
+    if (arg[0] != '-' || arg[1] == '\0') {	// must be a program argument "-" is an argument, not a flag
       memmove((*argv) + i, (*argv) + i+1, (*argc - (i+1)) * sizeof((*argv)[i]));
       (*argv)[*argc-1] = arg;      // we go last
       first_nonopt--;              // we've been pushed onto the stack
