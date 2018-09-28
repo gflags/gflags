@@ -526,7 +526,8 @@ if (BUILD_SHARED_LIBS AND INSTALL_SHARED_LIBS)
                EXPORT ${EXPORT_NAME}
                RUNTIME DESTINATION ${RUNTIME_INSTALL_DIR}
                LIBRARY DESTINATION ${LIBRARY_INSTALL_DIR}
-               ARCHIVE DESTINATION ${LIBRARY_INSTALL_DIR})
+               ARCHIVE DESTINATION ${LIBRARY_INSTALL_DIR}
+      )
     endif ()
   endforeach ()
 endif ()
@@ -537,7 +538,8 @@ if (BUILD_STATIC_LIBS AND INSTALL_STATIC_LIBS)
                EXPORT ${EXPORT_NAME}
                RUNTIME DESTINATION ${RUNTIME_INSTALL_DIR}
                LIBRARY DESTINATION ${LIBRARY_INSTALL_DIR}
-               ARCHIVE DESTINATION ${LIBRARY_INSTALL_DIR})
+               ARCHIVE DESTINATION ${LIBRARY_INSTALL_DIR}
+      )
     endif ()
   endforeach ()
 endif ()
@@ -555,8 +557,13 @@ if (INSTALL_HEADERS)
   )
   install (
     EXPORT ${EXPORT_NAME}
+    NAMESPACE ${PACKAGE_NAME}::
     DESTINATION ${CONFIG_INSTALL_DIR}
-    NAMESPACE gflags::
+  )
+  install (
+    EXPORT ${EXPORT_NAME}
+    FILE ${EXPORT_NAME}-nonamespace.cmake
+    DESTINATION ${CONFIG_INSTALL_DIR}
   )
   if (UNIX)
     install (PROGRAMS src/gflags_completions.sh DESTINATION ${RUNTIME_INSTALL_DIR})
@@ -573,8 +580,13 @@ endif ()
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
 export (
   TARGETS ${TARGETS}
-  NAMESPACE gflags::
-  FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake")
+  NAMESPACE ${PACKAGE_NAME}::
+  FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake"
+)
+export (
+  TARGETS ${TARGETS}
+  FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}-nonamespace.cmake"
+)
 if (REGISTER_BUILD_DIR)
   export (PACKAGE ${PACKAGE_NAME})
 endif ()
@@ -606,7 +618,8 @@ if (BUILD_PACKAGING)
                      "\n  BUILD_STATIC_LIBS=ON"
                      "\n  INSTALL_HEADERS=ON"
                      "\n  INSTALL_SHARED_LIBS=ON"
-                     "\n  INSTALL_STATIC_LIBS=ON")
+                     "\n  INSTALL_STATIC_LIBS=ON"
+    )
   endif ()
 
   # default package generators
