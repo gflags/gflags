@@ -562,7 +562,7 @@ if (INSTALL_HEADERS)
   )
   install (
     EXPORT ${EXPORT_NAME}
-    FILE ${EXPORT_NAME}-nonamespace.cmake
+    FILE ${PACKAGE_NAME}-nonamespace-targets.cmake
     DESTINATION ${CONFIG_INSTALL_DIR}
   )
   if (UNIX)
@@ -585,7 +585,7 @@ export (
 )
 export (
   TARGETS ${TARGETS}
-  FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}-nonamespace.cmake"
+  FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-nonamespace-targets.cmake"
 )
 if (REGISTER_BUILD_DIR)
   export (PACKAGE ${PACKAGE_NAME})
