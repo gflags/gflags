@@ -441,6 +441,23 @@ class GFLAGS_DLL_DECL FlagRegisterer {
                  FlagType* current_storage, FlagType* defvalue_storage);
 };
 
+// Force compiler to not generate code for the given template specialization.
+#define GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(type)                  \
+  extern template GFLAGS_DLL_DECL FlagRegisterer::FlagRegisterer(  \
+      const char* name, const char* help, const char* filename,    \
+      type* current_storage, type* defvalue_storage)
+
+// Do this for all supported flag types.
+GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(bool);
+GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(int32);
+GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(uint32);
+GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(int64);
+GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(uint64);
+GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(double);
+GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(std::string);
+
+#undef GFLAGS_DECLARE_FLAG_REGISTERER_CTOR
+
 // If your application #defines STRIP_FLAG_HELP to a non-zero value
 // before #including this file, we remove the help message from the
 // binary file. This can reduce the size of the resulting binary
