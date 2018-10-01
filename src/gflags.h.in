@@ -478,7 +478,7 @@ extern GFLAGS_DLL_DECL const char kStrippedFlagHelp[];
     static const type FLAGS_nono##name = value;                         \
     /* We always want to export defined variables, dll or no */         \
     GFLAGS_DLL_DEFINE_FLAG type FLAGS_##name = FLAGS_nono##name;        \
-    type FLAGS_no##name = FLAGS_nono##name;                             \
+    static type FLAGS_no##name = FLAGS_nono##name;                      \
     static GFLAGS_NAMESPACE::FlagRegisterer o_##name(                   \
       #name, MAYBE_STRIPPED_HELP(help), __FILE__,                       \
       &FLAGS_##name, &FLAGS_no##name);                                  \
