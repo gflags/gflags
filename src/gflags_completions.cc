@@ -550,8 +550,7 @@ static void FinalizeCompletionOutput(
 
   vector<DisplayInfoGroup> output_groups;
   bool perfect_match_found = false;
-  if (lines_so_far < max_desired_lines &&
-      !notable_flags->perfect_match_flag.empty()) {
+  if (!notable_flags->perfect_match_flag.empty()) {
     perfect_match_found = true;
     DisplayInfoGroup group =
         { "",
