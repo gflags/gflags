@@ -442,10 +442,14 @@ class GFLAGS_DLL_DECL FlagRegisterer {
 };
 
 // Force compiler to not generate code for the given template specialization.
-#define GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(type)                  \
-  extern template GFLAGS_DLL_DECL FlagRegisterer::FlagRegisterer(  \
-      const char* name, const char* help, const char* filename,    \
-      type* current_storage, type* defvalue_storage)
+#if defined(_MSC_VER) && _MSC_VER < 1800 // Visual Studio 2013 version 12.0
+  #define GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(type)
+#else
+  #define GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(type)                  \
+    extern template GFLAGS_DLL_DECL FlagRegisterer::FlagRegisterer(  \
+        const char* name, const char* help, const char* filename,    \
+        type* current_storage, type* defvalue_storage)
+#endif
 
 // Do this for all supported flag types.
 GFLAGS_DECLARE_FLAG_REGISTERER_CTOR(bool);
