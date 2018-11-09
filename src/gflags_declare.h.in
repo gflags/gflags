@@ -58,6 +58,8 @@
 #ifndef GFLAGS_DLL_DECL
 #  if GFLAGS_IS_A_DLL && defined(_MSC_VER)
 #    define GFLAGS_DLL_DECL __declspec(dllimport)
+#  elif defined(__GNUC__) && __GNUC__ >= 4
+#    define GFLAGS_DLL_DECL __attribute__((visibility("default")))
 #  else
 #    define GFLAGS_DLL_DECL
 #  endif
@@ -67,6 +69,8 @@
 #ifndef GFLAGS_DLL_DECLARE_FLAG
 #  if GFLAGS_IS_A_DLL && defined(_MSC_VER)
 #    define GFLAGS_DLL_DECLARE_FLAG __declspec(dllimport)
+#  elif defined(__GNUC__) && __GNUC__ >= 4
+#    define GFLAGS_DLL_DECLARE_FLAG __attribute__((visibility("default")))
 #  else
 #    define GFLAGS_DLL_DECLARE_FLAG
 #  endif
