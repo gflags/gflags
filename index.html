@@ -114,7 +114,7 @@ such as <A href="https://www.freedesktop.org/wiki/Software/pkg-config/">pkg-conf
 You can either require an external installation of the gflags package and find it using CMake's find_package
 command, or include the gflags project as subtree or submodule within your project's source tree and add the directory
 using CMake's add_subdirectory command.
-    
+
 <p>To use an external gflags installation, add the following CMake code to your <code>CMakeLists.txt</code> file.</p>
 
 <p>Find gflags installation. The <code>gflags_DIR</code> variable must be set to the &lt;prefix&gt;/lib/cmake/gflags directory
@@ -143,7 +143,7 @@ any installation of the gflags subproject products.</p>
 imported gflags library target:</p>
 <pre>
    add_executable(foo main.cc)
-   target_link_libraries(foo gflags)
+   target_link_libraries(foo gflags::gflags)
 </pre>
 
 <h2> <A name=bazel>Declare dependency on gflags with Bazel</A></h2>
@@ -154,15 +154,15 @@ add the following lines to your <code>WORKSPACE</code> file
 
 <pre>
 git_repository(
-    name   = "com_github_gflags_gflags",
-    commit = "&lt;INSERT COMMIT SHA HERE&gt;",
+    name = "com_github_gflags_gflags",
     remote = "https://github.com/gflags/gflags.git",
+    tags = "v2.2.2"
 )
 </pre>
 
 <p>You can then add <code>@com_github_gflags_gflags//:gflags</code> to the <code>deps</code> section of a
 <code>cc_binary</code> or <code>cc_library</code> rule, and <code>#include "gflags/gflags.h"</code> to
-include it in your source code. This use the shared gflags library with multi-threading enabled.
+include it in your source code. This uses the shared gflags library with multi-threading enabled.
 In order to use the single-threaded shared gflags library, use the dependency
 <code>@com_github_gflags_gflags//:gflags_nothreads</code> instead.</p>
 
