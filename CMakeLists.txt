@@ -568,11 +568,10 @@ if (INSTALL_HEADERS)
   if (UNIX)
     install (PROGRAMS src/gflags_completions.sh DESTINATION ${RUNTIME_INSTALL_DIR})
   endif ()
-endif ()
-
-if (PKGCONFIG_INSTALL_DIR)
-  configure_file ("cmake/package.pc.in" "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}.pc" @ONLY)
-  install (FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+  if (PKGCONFIG_INSTALL_DIR)
+    configure_file ("cmake/package.pc.in" "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}.pc" @ONLY)
+    install (FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}.pc" DESTINATION "${PKGCONFIG_INSTALL_DIR}")
+  endif ()
 endif ()
 
 # ----------------------------------------------------------------------------
