@@ -43,6 +43,7 @@
 #include <stdarg.h>     // for va_*
 #include <stdlib.h>
 #include <stdio.h>
+#include <unistd.h>
 #include <iostream>
 #include <string>
 #include <errno.h>
@@ -74,6 +75,9 @@ extern GFLAGS_DLL_DECL void (*gflags_exitfunc)(int);
 // If not, take our best guess.
 #ifndef PRId32
 #  define PRId32 "d"
+#endif
+#ifndef PRIu32
+#  define PRIu32 "u"
 #endif
 #ifndef PRId64
 #  define PRId64 "lld"
@@ -258,13 +262,40 @@ inline void MakeTmpdir(std::string* path) {
   *path = std::string(tmppath_buffer) + "gflags_unittest";
   _mkdir(path->c_str());
 }
-#else
+#elif defined(HAVE_SYS_STAT_H)
 inline void MakeTmpdir(std::string* path) {
   if (!path->empty()) {
 	int err = mkdir(path->c_str(), 0755);
 	if (err == 0 || errno == EEXIST) return;
   }
   mkdir("/tmp/gflags_unittest", 0755);
+}
+#elif __cplusplus >= 201703L
+inline void MakeTmpdir(std::string* path) {
+  if (!path->empty()) {
+    char *c = mkdtemp(path->data());
+    if (c != nullptr || errno == EEXIST) return;
+  }
+  mkdtemp(path->data());
+}
+#else
+inline void MakeTmpdir(std::string* path) {
+  if (!path->empty()) {
+    char *tmp = new char[path->size() + 1];
+    strcpy(tmp, path->c_str());
+    char *c = mkdtemp(tmp);
+    if (c != nullptr || errno == EEXIST) {
+      path->replace(path->begin(), path->end(), c);
+      delete [] tmp;
+      return;
+    }
+    delete [] tmp;
+  }
+  path->replace(path->begin(), path->end(), "/tmp/gflags_unittest");
+  char *tmp = new char[path->size() + 1];
+  strcpy(tmp, path->c_str());
+  mkdtemp(tmp);
+  delete [] tmp;
 }
 #endif
 
