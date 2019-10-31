@@ -123,7 +123,7 @@ string DescribeOneFlag(const CommandLineFlagInfo& flag) {
                 flag.description.c_str());
   const char* c_string = main_part.c_str();
   int chars_left = static_cast<int>(main_part.length());
-  string final_string = "";
+  string final_string;
   int chars_in_line = 0;  // how many chars in current line so far?
   while (1) {
     assert(static_cast<size_t>(chars_left)
@@ -353,7 +353,7 @@ static void ShowVersion() {
 
 static void AppendPrognameStrings(vector<string>* substrings,
                                   const char* progname) {
-  string r("");
+  string r;
   r += PATH_SEPARATOR;
   r += progname;
   substrings->push_back(r + ".");
