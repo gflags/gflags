@@ -90,18 +90,18 @@
 #include "config.h"
 #include "gflags/gflags.h"
 
-#include <assert.h>
-#include <ctype.h>
-#include <errno.h>
+#include <cassert>
+#include <cctype>
+#include <cerrno>
 #if defined(HAVE_FNMATCH_H)
 #  include <fnmatch.h>
 #elif defined(HAVE_SHLWAPI_H)
 #  define NO_SHLWAPI_ISOS
 #  include <shlwapi.h>
 #endif
-#include <stdarg.h> // For va_list and related operations
-#include <stdio.h>
-#include <string.h>
+#include <cstdarg> // For va_list and related operations
+#include <cstdio>
+#include <cstring>
 
 #include <algorithm>
 #include <map>

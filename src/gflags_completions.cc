@@ -46,9 +46,9 @@
 //     5a) Force bash to place most-relevent groups at the top of the list
 //     5b) Trim most flag's descriptions to fit on a single terminal line
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>   // for strlen
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>   // for strlen
 
 #include <set>
 #include <string>
