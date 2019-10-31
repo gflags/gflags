@@ -48,10 +48,10 @@
 // called after all flag-values have been assigned, that is, after
 // parsing the command-line.
 
-#include <stdio.h>
-#include <string.h>
-#include <ctype.h>
-#include <assert.h>
+#include <cstdio>
+#include <cstring>
+#include <cctype>
+#include <cassert>
 #include <string>
 #include <vector>
 
