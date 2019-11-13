@@ -275,9 +275,9 @@ static void ShowUsageWithFlagsMatching(const char *argv0,
        ++flag) {
     if (substrings.empty() ||
         FileMatchesSubstring(flag->filename, substrings)) {
+      found_match = true;     // this flag passed the match!
       // If the flag has been stripped, pretend that it doesn't exist.
       if (flag->description == kStrippedFlagHelp) continue;
-      found_match = true;     // this flag passed the match!
       if (flag->filename != last_filename) {                      // new file
         if (Dirname(flag->filename) != Dirname(last_filename)) {  // new dir!
           if (!first_directory)
