@@ -80,6 +80,10 @@ if (POLICY CMP0048)
   cmake_policy (SET CMP0048 NEW)
 endif ()
 
+if (POLICY CMP0063)
+  cmake_policy (SET CMP0063 NEW)
+endif ()
+
 # ----------------------------------------------------------------------------
 # includes
 include ("${CMAKE_CURRENT_SOURCE_DIR}/cmake/utils.cmake")
