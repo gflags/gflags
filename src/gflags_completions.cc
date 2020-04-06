@@ -453,10 +453,6 @@ static void CategorizeAllMatchingFlags(
       // In the package, since there was no slash after the package portion
       notable_flags->package_flags.insert(*it);
       DVLOG(3) << "Result: package match";
-    } else if (false) {
-      // In the list of the XXX most commonly supplied flags overall
-      // TODO(user): Compile this list.
-      DVLOG(3) << "Result: most-common match";
     } else if (!package_dir.empty() &&
         pos != string::npos && slash != string::npos) {
       // In a subdirectory of the package
