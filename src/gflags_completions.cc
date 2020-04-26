@@ -327,8 +327,8 @@ static void CanonicalizeCursorWordAndSearchOptions(
   }
 
   switch (found_question_marks) {  // all fallthroughs
-    case 3: options->flag_description_substring_search = true;
-    case 2: options->flag_location_substring_search = true;
+    case 3: options->flag_description_substring_search = true; [[fallthrough]];
+    case 2: options->flag_location_substring_search = true; [[fallthrough]];
     case 1: options->flag_name_substring_search = true;
   };
 
