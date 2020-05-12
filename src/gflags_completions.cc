@@ -325,12 +325,21 @@ static void CanonicalizeCursorWordAndSearchOptions(
     }
     break;
   }
-
-  switch (found_question_marks) {  // all fallthroughs
-    case 3: options->flag_description_substring_search = true;
-    case 2: options->flag_location_substring_search = true;
-    case 1: options->flag_name_substring_search = true;
-  };
+  
+  if (found_question_marks == 3) {
+    options->flag_description_substring_search = true;
+    options->flag_location_substring_search = true;
+    options->flag_name_substring_search = true;
+  }
+  
+  if (found_question_marks == 2) {
+    options->flag_location_substring_search = true;
+    options->flag_name_substring_search = true;
+  }
+  
+  if (found_question_marks == 1) {
+    options->flag_name_substring_search = true;
+  }
 
   options->return_all_matching_flags = (found_plusses > 0);
 }
