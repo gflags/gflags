@@ -2,6 +2,7 @@
 #include <regex>
 #include <streambuf>
 #include <string>
+#include <string.h>
 #include <vector>
 
 struct Substitution {
