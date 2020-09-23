@@ -156,7 +156,7 @@ add the following lines to your <code>WORKSPACE</code> file
 git_repository(
     name = "com_github_gflags_gflags",
     remote = "https://github.com/gflags/gflags.git",
-    tags = ["v2.2.2"]
+    tag = "v2.2.2"
 )
 </pre>
 
@@ -172,7 +172,7 @@ In order to use the single-threaded shared gflags library, use the dependency
 cc_binary(
     name = "foo",
     srcs = ["main.cc"],
-    deps = ["//external:gflags"],
+    deps = ["@com_github_gflags_gflags//:gflags"],
 )
 </pre>
 
