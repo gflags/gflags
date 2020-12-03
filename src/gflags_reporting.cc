@@ -289,9 +289,7 @@ static void ShowUsageWithFlagsMatching(const char *argv0,
             fprintf(stdout, "\n\n");   // put blank lines between directories
           first_directory = false;
         }
-#ifdef STRIP_INTERNAL_FLAG_HELP
-        fprintf(stdout, "\n\n");
-#else
+#ifndef STRIP_INTERNAL_FLAG_HELP
         fprintf(stdout, "\n  Flags from %s:\n", flag->filename.c_str());
 #endif  // STRIP_INTERNAL_FLAG_HELP
         last_filename = flag->filename;
