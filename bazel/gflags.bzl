@@ -1,7 +1,8 @@
 load("//bazel/expanded_template:expanded_template.bzl", "expanded_template")
+
 # ------------------------------------------------------------------------------
 # Add native rules to configure source files
-def gflags_sources(namespace=["google", "gflags"]):
+def gflags_sources(namespace = ["google", "gflags"]):
     expanded_template(
         name = "gflags_declare_h",
         template = "src/gflags_declare.h.in",
@@ -16,13 +17,13 @@ def gflags_sources(namespace=["google", "gflags"]):
     for ns in namespace[1:]:
         gflags_ns_h_file = "gflags_{}.h".format(ns)
         expanded_template(
-            name = gflags_ns_h_file.replace('.', '_'),
+            name = gflags_ns_h_file.replace(".", "_"),
             template = "src/gflags_ns.h.in",
             out = gflags_ns_h_file,
             substitutions = {
                 "@ns@": ns,
                 "@NS@": ns.upper(),
-            }
+            },
         )
         gflags_ns_h_files.append(gflags_ns_h_file)
     expanded_template(
@@ -31,7 +32,7 @@ def gflags_sources(namespace=["google", "gflags"]):
         out = "gflags.h",
         substitutions = {
             "@GFLAGS_ATTRIBUTE_UNUSED@": "",
-            "@INCLUDE_GFLAGS_NS_H@": '\n'.join(["#include \"gflags/{}\"".format(hdr) for hdr in gflags_ns_h_files]),
+            "@INCLUDE_GFLAGS_NS_H@": "\n".join(["#include \"gflags/{}\"".format(hdr) for hdr in gflags_ns_h_files]),
         },
     )
     expanded_template(
@@ -43,7 +44,7 @@ def gflags_sources(namespace=["google", "gflags"]):
         },
     )
     hdrs = [":gflags_h", ":gflags_declare_h", ":gflags_completions_h"]
-    hdrs.extend([':' + hdr.replace('.', '_') for hdr in gflags_ns_h_files])
+    hdrs.extend([":" + hdr.replace(".", "_") for hdr in gflags_ns_h_files])
     srcs = [
         "src/config.h",
         "src/gflags.cc",
@@ -62,7 +63,7 @@ def gflags_sources(namespace=["google", "gflags"]):
 
 # ------------------------------------------------------------------------------
 # Add native rule to build gflags library
-def gflags_library(hdrs=[], srcs=[], threads=1):
+def gflags_library(hdrs = [], srcs = [], threads = 1):
     name = "gflags"
     copts = [
         "-DGFLAGS_BAZEL_BUILD",
@@ -89,6 +90,7 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
     linkopts = []
     if threads:
         linkopts += select({
+            "//:android": [],
             "//:x64_windows": [],
             "//conditions:default": ["-lpthread"],
         })
@@ -96,11 +98,11 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         name += "_nothreads"
         copts += ["-DNO_THREADS"]
     native.cc_library(
-        name       = name,
-        hdrs       = hdrs,
-        srcs       = srcs,
-        copts      = copts,
-        linkopts   = linkopts,
+        name = name,
+        hdrs = hdrs,
+        srcs = srcs,
+        copts = copts,
+        linkopts = linkopts,
         visibility = ["//visibility:public"],
-        include_prefix = 'gflags'
+        include_prefix = "gflags",
     )
