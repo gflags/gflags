@@ -90,6 +90,7 @@ def gflags_library(hdrs = [], srcs = [], threads = 1):
     linkopts = []
     if threads:
         linkopts += select({
+            "//:android": [],
             "//:x64_windows": [],
             "//conditions:default": ["-lpthread"],
         })

@@ -14,6 +14,11 @@ config_setting(
     values = {"cpu": "x64_windows"},
 )
 
+config_setting(
+    name = "android",
+    values = {"crosstool_top": "//external:android/crosstool"},
+)
+
 load(":bazel/gflags.bzl", "gflags_library", "gflags_sources")
 
 (hdrs, srcs) = gflags_sources(namespace = [
