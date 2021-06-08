@@ -123,7 +123,7 @@ static string PrintStringFlagsWithQuotes(const CommandLineFlagInfo& flag,
 // Goes to some trouble to make pretty line breaks.
 string DescribeOneFlag(const CommandLineFlagInfo& flag) {
   string main_part;
-  SStringPrintf(&main_part, "    -%s (%s)",
+  SStringPrintf(&main_part, "    --%s (%s)",
                 flag.name.c_str(),
                 flag.description.c_str());
   const char* c_string = main_part.c_str();
