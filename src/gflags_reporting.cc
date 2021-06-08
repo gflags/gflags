@@ -56,6 +56,11 @@
 #include <vector>
 
 #include "config.h"
+
+#ifdef STRIP_INTERNAL_FLAG_HELP
+#  define STRIP_FLAG_HELP 1
+#endif
+
 #include "gflags/gflags.h"
 #include "gflags/gflags_completions.h"
 #include "util.h"
@@ -118,7 +123,7 @@ static string PrintStringFlagsWithQuotes(const CommandLineFlagInfo& flag,
 // Goes to some trouble to make pretty line breaks.
 string DescribeOneFlag(const CommandLineFlagInfo& flag) {
   string main_part;
-  SStringPrintf(&main_part, "    -%s (%s)",
+  SStringPrintf(&main_part, "    --%s (%s)",
                 flag.name.c_str(),
                 flag.description.c_str());
   const char* c_string = main_part.c_str();
@@ -284,7 +289,9 @@ static void ShowUsageWithFlagsMatching(const char *argv0,
             fprintf(stdout, "\n\n");   // put blank lines between directories
           first_directory = false;
         }
+#ifndef STRIP_INTERNAL_FLAG_HELP
         fprintf(stdout, "\n  Flags from %s:\n", flag->filename.c_str());
+#endif  // STRIP_INTERNAL_FLAG_HELP
         last_filename = flag->filename;
       }
       // Now print this flag

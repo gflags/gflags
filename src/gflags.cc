@@ -88,6 +88,11 @@
 // are, similarly, mostly hooks into the functionality described above.
 
 #include "config.h"
+
+#ifdef STRIP_INTERNAL_FLAG_HELP
+#  define STRIP_FLAG_HELP 1
+#endif
+
 #include "gflags/gflags.h"
 
 #include <cassert>
