@@ -13,6 +13,6 @@ config_setting(
 
 load(":bazel/gflags.bzl", "gflags_sources", "gflags_library")
 
-(hdrs, srcs) = gflags_sources(namespace=["gflags", "google"])
+(hdrs, srcs) = gflags_sources(namespace=["google", "gflags"])
 gflags_library(hdrs=hdrs, srcs=srcs, threads=0)
 gflags_library(hdrs=hdrs, srcs=srcs, threads=1)
