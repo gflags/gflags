@@ -417,7 +417,7 @@ set(CMAKE_DEBUG_POSTFIX "_debug")
 
 # ----------------------------------------------------------------------------
 # installation directories
-if (OS_WINDOWS)
+if (OS_WINDOWS AND NOT MINGW)
   set (RUNTIME_INSTALL_DIR "bin")
   set (LIBRARY_INSTALL_DIR "lib")
   set (INCLUDE_INSTALL_DIR "include")
