@@ -451,8 +451,8 @@ foreach (TYPE IN ITEMS STATIC SHARED)
     else ()
       set (GFLAGS_IS_A_DLL 0)
     endif ()
-    # filename suffix for static libraries on Windows
-    if (OS_WINDOWS AND "^${TYPE}$" STREQUAL "^STATIC$")
+    # filename suffix for static libraries on Windows for MSVC toolchain only
+    if (OS_WINDOWS AND NOT MINGW AND "^${TYPE}$" STREQUAL "^STATIC$")
       set (type_suffix "_${type}")
     else ()
       set (type_suffix "")
