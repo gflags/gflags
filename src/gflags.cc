@@ -1288,6 +1288,13 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
                           : strlen(flagfile_contents);
     string line(flagfile_contents, len);
 
+    //Remove trailing spaces
+    while(isspace(line.data()[len-1]))
+    {
+        line = line.substr(0, line.length()-1);
+        len = line.length();
+    }
+    
     // Each line can be one of four things:
     // 1) A comment line -- we skip it
     // 2) An empty line -- we skip it
