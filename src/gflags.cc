@@ -1991,9 +1991,7 @@ void AllowCommandLineReparsing() {
 
 void ReparseCommandLineNonHelpFlags() {
   // Check reparse status
-  if (!allow_command_line_reparsing) {
-    return;
-  }
+  assert(allow_command_line_reparsing);
   // We make a copy of argc and argv to pass in
   const vector<string>& argvs = GetArgvs();
   int tmp_argc = static_cast<int>(argvs.size());
