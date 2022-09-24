@@ -1983,7 +1983,6 @@ uint32 ParseCommandLineNonHelpFlags(int* argc, char*** argv,
 //    dlopen, to get the new flags.  But you have to explicitly
 //    Allow() it; otherwise, you get the normal default behavior
 //    of unrecognized flags calling a fatal error.
-// TODO(csilvers): this isn't used.  Just delete it?
 // --------------------------------------------------------------------
 
 void AllowCommandLineReparsing() {
@@ -1991,6 +1990,10 @@ void AllowCommandLineReparsing() {
 }
 
 void ReparseCommandLineNonHelpFlags() {
+  // Check reparse status
+  if (!allow_command_line_reparsing) {
+    return;
+  }
   // We make a copy of argc and argv to pass in
   const vector<string>& argvs = GetArgvs();
   int tmp_argc = static_cast<int>(argvs.size());
