@@ -77,8 +77,8 @@ add_gflags_test(changeable_string_var 1 "-changeable_string_var () type: string 
 add_gflags_test(nohelp     0 "PASS" ""  gflags_unittest  --nohelp)
 add_gflags_test(help=false 0 "PASS" ""  gflags_unittest  --help=false)
 
-# --helpfull is the same as help
-add_gflags_test(helpfull 1 "${SLASH}gflags_reporting.cc:" ""  gflags_unittest  --helpfull)
+# --helpful is the same as help
+add_gflags_test(helpful 1 "${SLASH}gflags_reporting.cc:" ""  gflags_unittest  --helpful)
 
 # --helpshort should show only flags from the  gflags_unittest  itself
 add_gflags_test(helpshort 1 "${SLASH}gflags_unittest.cc:" "${SLASH}gflags_reporting.cc:"  gflags_unittest  --helpshort)
@@ -140,8 +140,8 @@ add_gflags_test(fromenv=version      0 "gflags_unittest" "${SLASH}gflags_unittes
 add_gflags_test(tryfromenv=version   0 "gflags_unittest" "${SLASH}gflags_unittest.cc:"  gflags_unittest  --tryfromenv=version)
 add_gflags_test(fromenv=help         0 "PASS" ""  gflags_unittest  --fromenv=help)
 add_gflags_test(tryfromenv=help      0 "PASS" ""  gflags_unittest  --tryfromenv=help)
-add_gflags_test(fromenv=helpfull     1 "helpfull not found in environment" ""  gflags_unittest  --fromenv=helpfull)
-add_gflags_test(tryfromenv=helpfull  0 "PASS" ""  gflags_unittest  --tryfromenv=helpfull)
+add_gflags_test(fromenv=helpful      1 "helpful not found in environment" ""  gflags_unittest  --fromenv=helpful)
+add_gflags_test(tryfromenv=helpful   0 "PASS" ""  gflags_unittest  --tryfromenv=helpful)
 add_gflags_test(tryfromenv=undefok   0 "PASS" ""  gflags_unittest  --tryfromenv=undefok --foo)
 add_gflags_test(tryfromenv=weirdo    1 "unknown command line flag" ""  gflags_unittest  --tryfromenv=weirdo)
 add_gflags_test(tryfromenv-multiple  0 "gflags_unittest" "${SLASH}gflags_unittest.cc:"  gflags_unittest  --tryfromenv=test_bool,version,unused_bool)
