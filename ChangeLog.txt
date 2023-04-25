@@ -166,8 +166,8 @@ Merged 221: Add convenience 'uninstall' target
 - BUG FIX: gflags_nothreads was linking against the wrong lib (ajenjo)
 - BUG FIX: threads-detection failed on FreeBSD; replace it (ajenjo)
 - PORTABILITY: Quiet an internal compiler error with SUSE 10 (csilvers)
-- PORTABILITY: Update deb.sh for more recenty debuilds (csilvers)
-- PORTABILITY: #include more headers to satify new gcc's (csilvers)
+- PORTABILITY: Update deb.sh for more recently debuilds (csilvers)
+- PORTABILITY: #include more headers to satisfy new gcc's (csilvers)
 - INSTALL: Updated to autoconf 2.61 and libtool 1.5.26 (csilvers)
 
 * Fri Oct  3 2008 - Google Inc. <opensource@google.com>

@@ -45,7 +45,7 @@
 // handling.
 //
 // ** Overview of Bash completions:
-// Bash can be told to programatically determine completions for the
+// Bash can be told to programmatically determine completions for the
 // current 'cursor word'.  It does this by (in this case) invoking a
 // command with some additional arguments identifying the command
 // being executed, the word being completed, and the previous word
@@ -63,7 +63,7 @@
 // we'll include the default flag value and as much of the flag's
 // description as can fit on a single terminal line width, as specified
 // by the flag --tab_completion_columns).  Furthermore, we'll try to
-// make bash order the output such that the most useful or relevent
+// make bash order the output such that the most useful or relevant
 // flags are the most likely to be shown at the top.
 //
 // ** Additional features:

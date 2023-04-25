@@ -63,7 +63,7 @@
 
 // The 'reporting' flags.  They all call gflags_exitfunc().
 DEFINE_bool  (help,        false, "show help on all flags [tip: all flags can have two dashes]");
-DEFINE_bool  (helpfull,    false, "show help on all flags -- same as -help");
+DEFINE_bool  (helpful,    false, "show help on all flags -- same as -help");
 DEFINE_bool  (helpshort,   false, "show help on only the main module for this program");
 DEFINE_string(helpon,      "",    "show help on the modules named by this flag value");
 DEFINE_string(helpmatch,   "",    "show help on modules whose name contains the specified substr");
@@ -383,7 +383,7 @@ void HandleCommandLineHelpFlags() {
     ShowUsageWithFlagsMatching(progname, substrings);
     gflags_exitfunc(1);
 
-  } else if (FLAGS_help || FLAGS_helpfull) {
+  } else if (FLAGS_help || FLAGS_helpful) {
     // show all options
     ShowUsageWithFlagsRestrict(progname, "");   // empty restrict
     gflags_exitfunc(1);
