@@ -149,6 +149,13 @@ file (TO_CMAKE_PATH "${CMAKE_INSTALL_PREFIX}" CMAKE_INSTALL_PREFIX)
 # ----------------------------------------------------------------------------
 # options
 
+OPTION(GFLAGS_STRIP_INTERNAL_FLAG_HELP "Hide help from GFLAGS modules" OFF)
+IF(GFLAGS_STRIP_INTERNAL_FLAG_HELP)   
+  SET(STRIP_INTERNAL_FLAG_HELP 1)
+ELSE(GFLAGS_STRIP_INTERNAL_FLAG_HELP)
+  SET(STRIP_INTERNAL_FLAG_HELP 0)
+ENDIF(GFLAGS_STRIP_INTERNAL_FLAG_HELP)
+
 # maintain binary backwards compatibility with gflags library version <= 2.0,
 # but at the same time enable the use of the preferred new "gflags" namespace
 gflags_define (STRING NAMESPACE "Name(s) of library namespace (separate multiple options by semicolon)" "google;${PACKAGE_NAME}" "${PACKAGE_NAME}")
