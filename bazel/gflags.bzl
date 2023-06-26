@@ -103,5 +103,5 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
             "//conditions:default": []
         }),
         visibility = ["//visibility:public"],
-        includes   = ['src']
+        include_prefix = 'gflags'
     )
