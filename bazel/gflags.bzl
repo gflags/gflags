@@ -99,7 +99,7 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         copts      = copts,
         linkopts   = linkopts,
         defines    = select({
-            "//:gflags_debug_build": ["GFLAGS_DEBUG_BUILD"],
+            "//:debug_build": ["GFLAGS_DEBUG_BUILD"],
             "//conditions:default": []
         }),
         visibility = ["//visibility:public"],

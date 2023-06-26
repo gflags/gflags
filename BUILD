@@ -12,7 +12,7 @@ config_setting(
 )
 
 config_setting(
-    name = "gflags_debug_build",
+    name = "debug_build",
     values = {
         "compilation_mode": "dbg",
     },
