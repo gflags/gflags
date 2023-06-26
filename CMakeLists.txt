@@ -470,6 +470,10 @@ foreach (TYPE IN ITEMS STATIC SHARED)
           VERSION     "${PACKAGE_VERSION}"
           SOVERSION   "${PACKAGE_SOVERSION}"
         )
+        target_compile_definitions(${target_name}
+          PRIVATE
+          $<$<CONFIG:Debug>:GFLAGS_DEBUG_BUILD>
+        )
         set (include_dirs "$<BUILD_INTERFACE:${PROJECT_BINARY_DIR}/include>")
         if (INSTALL_HEADERS)
           list (APPEND include_dirs "$<INSTALL_INTERFACE:${INCLUDE_INSTALL_DIR}>")

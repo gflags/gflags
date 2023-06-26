@@ -353,8 +353,8 @@ static void ShowVersion() {
   } else {
     fprintf(stdout, "%s\n", ProgramInvocationShortName());
   }
-# if !defined(NDEBUG)
-  fprintf(stdout, "Debug build (NDEBUG not #defined)\n");
+# ifdef GFLAGS_DEBUG_BUILD
+  fprintf(stdout, "Debug build\n");
 # endif
 }
 
