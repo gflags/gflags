@@ -92,12 +92,6 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
     else:
         name += "_nothreads"
         copts += ["-DNO_THREADS"]
-    native.config_setting(
-        name = "gflags_debug_build",
-        values = {
-            "compilation_mode": "dbg",
-        },
-    )
     native.cc_library(
         name       = name,
         hdrs       = hdrs,
@@ -105,7 +99,7 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         copts      = copts,
         linkopts   = linkopts,
         defines    = select({
-            ":gflags_debug_build": ["GFLAGS_DEBUG_BUILD"],
+            "//:gflags_debug_build": ["GFLAGS_DEBUG_BUILD"],
             "//conditions:default": []
         }),
         visibility = ["//visibility:public"],
