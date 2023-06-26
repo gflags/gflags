@@ -92,7 +92,7 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
     else:
         name += "_nothreads"
         copts += ["-DNO_THREADS"]
-    config_setting(
+    native.config_setting(
         name = "gflags_debug_build",
         values = {
             "compilation_mode": "dbg",
