@@ -98,6 +98,10 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
         srcs       = srcs,
         copts      = copts,
         linkopts   = linkopts,
+        defines    = select({
+            "//:debug_build": ["GFLAGS_DEBUG_BUILD"],
+            "//conditions:default": []
+        }),
         visibility = ["//visibility:public"],
         include_prefix = 'gflags'
     )

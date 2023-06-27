@@ -353,6 +353,9 @@ static void ShowVersion() {
   } else {
     fprintf(stdout, "%s\n", ProgramInvocationShortName());
   }
+# ifdef GFLAGS_DEBUG_BUILD
+  fprintf(stdout, "Debug build\n");
+# endif
 }
 
 static void AppendPrognameStrings(vector<string>* substrings,

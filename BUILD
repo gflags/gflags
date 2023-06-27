@@ -11,6 +11,13 @@ config_setting(
     values = {"cpu": "x64_windows"},
 )
 
+config_setting(
+    name = "debug_build",
+    values = {
+        "compilation_mode": "dbg",
+    },
+)
+
 load(":bazel/gflags.bzl", "gflags_sources", "gflags_library")
 
 (hdrs, srcs) = gflags_sources(namespace=["gflags", "google"])
