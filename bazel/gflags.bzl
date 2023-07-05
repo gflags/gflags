@@ -4,7 +4,7 @@ def gflags_sources(namespace=["google", "gflags"]):
     native.genrule(
         name = "gflags_declare_h",
         srcs = ["src/gflags_declare.h.in"],
-        outs = ["gflags_declare.h"],
+        outs = ["gen/gflags/gflags_declare.h"],
         cmd  = ("awk '{ " +
                 "gsub(/@GFLAGS_NAMESPACE@/, \"" + namespace[0] + "\"); " +
                 "gsub(/@(HAVE_STDINT_H|HAVE_SYS_TYPES_H|HAVE_INTTYPES_H|GFLAGS_INTTYPES_FORMAT_C99)@/, \"1\"); " +
@@ -17,7 +17,7 @@ def gflags_sources(namespace=["google", "gflags"]):
         native.genrule(
             name = gflags_ns_h_file.replace('.', '_'),
             srcs = ["src/gflags_ns.h.in"],
-            outs = [gflags_ns_h_file],
+            outs = ["gen/gflags/" + gflags_ns_h_file],
             cmd  = ("awk '{ " +
                     "gsub(/@ns@/, \"" + ns + "\"); " +
                     "gsub(/@NS@/, \"" + ns.upper() + "\"); " +
@@ -27,7 +27,7 @@ def gflags_sources(namespace=["google", "gflags"]):
     native.genrule(
         name = "gflags_h",
         srcs = ["src/gflags.h.in"],
-        outs = ["gflags.h"],
+        outs = ["gen/gflags/gflags.h"],
         cmd  = ("awk '{ " +
                 "gsub(/@GFLAGS_ATTRIBUTE_UNUSED@/, \"\"); " +
                 "gsub(/@INCLUDE_GFLAGS_NS_H@/, \"" + '\n'.join(["#include \\\"gflags/{}\\\"".format(hdr) for hdr in gflags_ns_h_files]) + "\"); " +
@@ -36,7 +36,7 @@ def gflags_sources(namespace=["google", "gflags"]):
     native.genrule(
         name = "gflags_completions_h",
         srcs = ["src/gflags_completions.h.in"],
-        outs = ["gflags_completions.h"],
+        outs = ["gen/gflags/gflags_completions.h"],
         cmd  = "awk '{ gsub(/@GFLAGS_NAMESPACE@/, \"" + namespace[0] + "\"); print; }' $(<) > $(@)"
     )
     hdrs = [":gflags_h", ":gflags_declare_h", ":gflags_completions_h"]
@@ -103,5 +103,5 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
             "//conditions:default": []
         }),
         visibility = ["//visibility:public"],
-        include_prefix = 'gflags'
+        includes = ['gen']
     )
