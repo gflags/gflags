@@ -179,6 +179,8 @@ gflags_define (BOOL INSTALL_SHARED_LIBS        "Request installation of shared l
 gflags_define (BOOL INSTALL_STATIC_LIBS        "Request installation of static libraries."                                ON  OFF)
 gflags_define (BOOL REGISTER_BUILD_DIR         "Request entry of build directory in CMake's package registry."            OFF OFF)
 gflags_define (BOOL REGISTER_INSTALL_PREFIX    "Request entry of installed package in CMake's package registry."          ON  OFF)
+gflags_define (BOOL EXPORT_NAMESPACE_SET       "Request export namespace targets set."                                    ON  ON)
+gflags_define (BOOL EXPORT_NONAMESPACE_SET     "Request export nonamespace targets set."                                  ON  OFF)
 
 gflags_property (BUILD_STATIC_LIBS   ADVANCED TRUE)
 gflags_property (INSTALL_HEADERS     ADVANCED TRUE)
@@ -559,16 +561,20 @@ if (INSTALL_HEADERS)
     FILES "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-config-version.cmake"
     DESTINATION ${CONFIG_INSTALL_DIR}
   )
-  install (
-    EXPORT ${EXPORT_NAME}
-    NAMESPACE ${PACKAGE_NAME}::
-    DESTINATION ${CONFIG_INSTALL_DIR}
-  )
-  install (
-    EXPORT ${EXPORT_NAME}
-    FILE ${PACKAGE_NAME}-nonamespace-targets.cmake
-    DESTINATION ${CONFIG_INSTALL_DIR}
-  )
+  if (EXPORT_NAMESPACE_SET)
+    install (
+      EXPORT ${EXPORT_NAME}
+      NAMESPACE ${PACKAGE_NAME}::
+      DESTINATION ${CONFIG_INSTALL_DIR}
+    )
+  endif ()
+  if (EXPORT_NONAMESPACE_SET)
+    install (
+      EXPORT ${EXPORT_NAME}
+      FILE ${PACKAGE_NAME}-nonamespace-targets.cmake
+      DESTINATION ${CONFIG_INSTALL_DIR}
+    )
+  endif ()
   if (UNIX)
     install (PROGRAMS src/gflags_completions.sh DESTINATION ${RUNTIME_INSTALL_DIR})
   endif ()
@@ -581,15 +587,19 @@ endif ()
 # ----------------------------------------------------------------------------
 # support direct use of build tree
 set (INSTALL_PREFIX_REL2CONFIG_DIR .)
-export (
-  TARGETS ${TARGETS}
-  NAMESPACE ${PACKAGE_NAME}::
-  FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake"
-)
-export (
-  TARGETS ${TARGETS}
-  FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-nonamespace-targets.cmake"
-)
+if (EXPORT_NAMESPACE_SET)
+  export (
+    TARGETS ${TARGETS}
+    NAMESPACE ${PACKAGE_NAME}::
+    FILE "${PROJECT_BINARY_DIR}/${EXPORT_NAME}.cmake"
+  )
+endif ()
+if (EXPORT_NONAMESPACE_SET)
+  export (
+    TARGETS ${TARGETS}
+    FILE "${PROJECT_BINARY_DIR}/${PACKAGE_NAME}-nonamespace-targets.cmake"
+  )
+endif ()
 if (REGISTER_BUILD_DIR)
   export (PACKAGE ${PACKAGE_NAME})
 endif ()
