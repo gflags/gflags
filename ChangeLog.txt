@@ -31,7 +31,7 @@ Merged 221: Add convenience 'uninstall' target
 - Merged 207: Mark single argument constructors in mutex.h as explicit
 - Merged 209: Use inttypes.h on VC++ 2013 and later
 - Merged 212: Fix statically linked gflags library with MSVC
-- Meregd 213: Modify installation paths on Windows for vcpkg
+- Merged 213: Modify installation paths on Windows for vcpkg
 - Merged 215: Fix static initialization order fiasco caused by global registry lock
 - Merged 216: Fix use of ARGC in CMake macros
 - Merged 222: Static code analyzer error regarding strncmp with empty kRootDir
@@ -247,7 +247,7 @@ Merged 221: Add convenience 'uninstall' target
 - google-gflags: version 0.5
 - Include all m4 macros in the distribution (csilvers)
 - Python: Fix broken data_files field in setup.py (sidlon)
-- Python: better string serliaizing and unparsing (abo, csimmons)
+- Python: better string serializing and unparsing (abo, csimmons)
 - Fix checks for NaN and inf to work with Mac OS X (csilvers)
 
 * Thu Apr 19 2007 - Google Inc. <opensource@google.com>
