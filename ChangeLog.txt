@@ -2,7 +2,7 @@
 
 - gflags: version 2.2.2
 Fixed 267: Support build with GCC option "-fvisibility=hidden".
-Fixed 262: Declare FALGS_no##name variables as static to avoid "previous extern" warning.
+Fixed 262: Declare FLAGS_no##name variables as static to avoid "previous extern" warning.
 Fixed 261: Declare FlagRegisterer c’tor explicit template instanations as extern in header
 Fixed 257: Build with _UNICODE support on Windows.
 Fixed 233/234/235: Move CMake defines that are unused by Bazel to separate header; makes config.h private again
