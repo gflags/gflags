@@ -435,14 +435,7 @@ else ()
   endif ()
   gflags_define (PATH LIBRARY_INSTALL_DIR "Directory of installed libraries, e.g., \"lib64\"" "lib${LIB_SUFFIX}")
   gflags_property (LIBRARY_INSTALL_DIR ADVANCED TRUE)
-  
-  # Cross-compiling for QNX does not install in the normal include path
-  if (QNX)
-    set (INCLUDE_INSTALL_DIR ${QNX_INCLUDE_INSTALL_DIR})
-  else()
-    set (INCLUDE_INSTALL_DIR include)
-  endif ()
-
+  set (INCLUDE_INSTALL_DIR include)
   set (CONFIG_INSTALL_DIR  ${LIBRARY_INSTALL_DIR}/cmake/${PACKAGE_NAME})
   set (PKGCONFIG_INSTALL_DIR ${LIBRARY_INSTALL_DIR}/pkgconfig)
 endif ()

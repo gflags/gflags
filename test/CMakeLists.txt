@@ -169,20 +169,22 @@ add_test(NAME gflags_declare COMMAND gflags_declare_test --message "Hello gflags
 set_tests_properties(gflags_declare PROPERTIES PASS_REGULAR_EXPRESSION "Hello gflags!")
 
 # ----------------------------------------------------------------------------
-# QNX Specific Installation (ctest not compatible)
-if(QNX)
-install(DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
-  DESTINATION ${RUNTIME_INSTALL_DIR}/gflags_tests)
-
-install(DIRECTORY ${PROJECT_SOURCE_DIR}/test/
-  DESTINATION ${RUNTIME_INSTALL_DIR}/gflags_tests
-  FILES_MATCHING
-  PATTERN "flagfile.*"
-  PATTERN "gflags_unittest_flagfile"
-  PATTERN "config" EXCLUDE
-  PATTERN "nc" EXCLUDE
-)
-endif()
+# qnx specific test installation (ctest not compatible)
+if (QNX)
+  install (
+    DIRECTORY ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}
+    DESTINATION ${RUNTIME_INSTALL_DIR}/gflags_tests
+  )
+  install (
+    DIRECTORY ${PROJECT_SOURCE_DIR}/test/
+    DESTINATION ${RUNTIME_INSTALL_DIR}/gflags_tests
+    FILES_MATCHING
+    PATTERN "flagfile.*"
+    PATTERN "gflags_unittest_flagfile"
+    PATTERN "config" EXCLUDE
+    PATTERN "nc" EXCLUDE
+  )
+endif ()
 
 # ----------------------------------------------------------------------------
 # configure Python script which configures and builds a test project
