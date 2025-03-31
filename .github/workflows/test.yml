@@ -1,0 +1,42 @@
+name: Build and Run Tests
+
+on:
+  pull_request:
+    branches:
+      - master
+
+concurrency:
+  group: check-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Test on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+      fail-fast: false
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+      - name: Setup Ninja
+        uses: seanmiddleditch/gha-setup-ninja@3b1f8f94a2f8254bd26914c4ab9474d4f0015f67  # v6
+      - name: Build CMake Project
+        uses: threeal/cmake-action@725d1314ccf9ea922805d7e3f9d9bcbca892b406  # v2.1.0
+        with:
+          generator: Ninja
+          cxx-compiler: clang++
+          build-dir: ${{github.workspace}}/build
+          options: |
+            CMAKE_BUILD_TYPE=Release
+            GFLAGS_BUILD_SHARED_LIBS=ON
+            GFLAGS_BUILD_STATIC_LIBS=ON
+            GFLAGS_BUILD_TESTING=ON
+      - name: Run Tests
+        uses: threeal/ctest-action@8f90c568a3060a3cffb896e241be14bd3f53d526  # v1.1.0
