@@ -1,6 +1,6 @@
 ## gflags negative compilation tests
 
-cmake_minimum_required (VERSION 2.8.12 FATAL_ERROR)
+cmake_minimum_required (VERSION 3.5 FATAL_ERROR)
 
 if (NOT TEST_NAME)
   message (FATAL_ERROR "Missing TEST_NAME CMake flag")
