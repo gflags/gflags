@@ -1,12 +1,15 @@
 name: Build and Run Tests
 
 on:
+  push:
+    branches:
+      - master
   pull_request:
     branches:
       - master
 
 concurrency:
-  group: check-${{ github.event.pull_request.number }}
+  group: test-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
 jobs:
