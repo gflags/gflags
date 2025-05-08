@@ -1276,7 +1276,7 @@ string CommandLineFlagParser::ProcessOptionsFromStringLocked(
 
   const char* line_end = flagfile_contents;
   // We read this file a line at a time.
-  for (; line_end; flagfile_contents = line_end + 1) {
+  for (; line_end; flagfile_contents = line_end ? line_end + 1 : NULL) {
     while (*flagfile_contents && isspace(*flagfile_contents))
       ++flagfile_contents;
     // Windows uses "\r\n"

@@ -108,6 +108,12 @@ if (CMAKE_VERSION VERSION_LESS 3.4)
   enable_language (C)
 endif ()
 
+# TODO: remove this before merging. This is only present to trigger the UBSAN failure
+# in the unit tests. I can't figure out how to set this from the command line
+# without editing CMakeLists.txt.
+add_compile_options(-fsanitize=address,undefined -fno-omit-frame-pointer -fno-sanitize-recover=undefined)
+add_link_options(-fsanitize=address,undefined)
+
 version_numbers (
   ${PACKAGE_VERSION}
     PACKAGE_VERSION_MAJOR
