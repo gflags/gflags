@@ -1269,24 +1269,26 @@ bool CommandLineFlagParser::ReportErrors() {
 
 string CommandLineFlagParser::ProcessOptionsFromStringLocked(
     const string& contentdata, FlagSettingMode set_mode) {
-  string retval;
+  string line, retval;
   const char* flagfile_contents = contentdata.c_str();
   bool flags_are_relevant = true;   // set to false when filenames don't match
   bool in_filename_section = false;
 
-  const char* line_end = flagfile_contents;
   // We read this file a line at a time.
-  for (; line_end; flagfile_contents = line_end + 1) {
+  while (flagfile_contents) {
     while (*flagfile_contents && isspace(*flagfile_contents))
       ++flagfile_contents;
     // Windows uses "\r\n"
-    line_end = strchr(flagfile_contents, '\r');
+    const char* line_end = strchr(flagfile_contents, '\r');
     if (line_end == NULL)
         line_end = strchr(flagfile_contents, '\n');
-
-    size_t len = line_end ? line_end - flagfile_contents
-                          : strlen(flagfile_contents);
-    string line(flagfile_contents, len);
+    if (line_end == NULL) {
+      line.assign(flagfile_contents, strlen(flagfile_contents));
+    } else {
+      line.assign(flagfile_contents, line_end - flagfile_contents);
+      line_end += 1;
+    }
+    flagfile_contents = line_end;
 
     // Each line can be one of four things:
     // 1) A comment line -- we skip it
