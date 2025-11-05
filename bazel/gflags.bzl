@@ -1,3 +1,4 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
 load("//bazel/expanded_template:expanded_template.bzl", "expanded_template")
 
 # ------------------------------------------------------------------------------
@@ -97,7 +98,7 @@ def gflags_library(hdrs = [], srcs = [], threads = 1):
     else:
         name += "_nothreads"
         copts += ["-DNO_THREADS"]
-    native.cc_library(
+    cc_library(
         name = name,
         hdrs = hdrs,
         srcs = srcs,
