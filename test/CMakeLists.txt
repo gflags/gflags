@@ -1,6 +1,10 @@
 ## gflags tests
 
 # ----------------------------------------------------------------------------
+# CMake utilities tests
+add_subdirectory(cmake)
+
+# ----------------------------------------------------------------------------
 # output directories
 set (CMAKE_RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/bin")
 set (CMAKE_LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}/lib")
