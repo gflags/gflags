@@ -7,7 +7,7 @@ def gflags_sources(namespace = ["google", "gflags"]):
     expanded_template(
         name = "gflags_declare_h",
         template = "src/gflags_declare.h.in",
-        out = "gflags_declare.h",
+        out = "gen/gflags/gflags_declare.h",
         substitutions = {
             "@GFLAGS_NAMESPACE@": namespace[0],
             "@(HAVE_STDINT_H|HAVE_SYS_TYPES_H|HAVE_INTTYPES_H|GFLAGS_INTTYPES_FORMAT_C99)@": "1",
@@ -20,7 +20,7 @@ def gflags_sources(namespace = ["google", "gflags"]):
         expanded_template(
             name = gflags_ns_h_file.replace(".", "_"),
             template = "src/gflags_ns.h.in",
-            out = gflags_ns_h_file,
+            out = "gen/gflags/" + gflags_ns_h_file,
             substitutions = {
                 "@ns@": ns,
                 "@NS@": ns.upper(),
@@ -30,7 +30,7 @@ def gflags_sources(namespace = ["google", "gflags"]):
     expanded_template(
         name = "gflags_h",
         template = "src/gflags.h.in",
-        out = "gflags.h",
+        out = "gen/gflags/gflags.h",
         substitutions = {
             "@GFLAGS_ATTRIBUTE_UNUSED@": "",
             "@INCLUDE_GFLAGS_NS_H@": "\n".join(["#include \"gflags/{}\"".format(hdr) for hdr in gflags_ns_h_files]),
@@ -39,7 +39,7 @@ def gflags_sources(namespace = ["google", "gflags"]):
     expanded_template(
         name = "gflags_completions_h",
         template = "src/gflags_completions.h.in",
-        out = "gflags_completions.h",
+        out = "gen/gflags/gflags_completions.h",
         substitutions = {
             "@GFLAGS_NAMESPACE@": namespace[0],
         },
@@ -105,5 +105,5 @@ def gflags_library(hdrs = [], srcs = [], threads = 1):
         copts = copts,
         linkopts = linkopts,
         visibility = ["//visibility:public"],
-        include_prefix = "gflags",
+        includes = ["gen"],
     )
