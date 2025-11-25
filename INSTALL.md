@@ -15,18 +15,21 @@ On macOS, [Homebrew](https://brew.sh/) includes a formula for gflags:
 
 # Compiling the source code with Bazel
 
-To use gflags in a [Bazel](http://bazel.io) project, map it in as an external
-dependency by editing your WORKSPACE file:
+To use gflags in a [Bazel](http://bazel.io) project using [Bzlmod](https://docs.bazel.build/versions/main/bzlmod.html),
+declare it as a dependency in your `MODULE.bazel` file:
 
-    git_repository(
-        name = "com_github_gflags_gflags",
-        commit = "<INSERT COMMIT SHA HERE>",
+    bazel_dep(name = "gflags")
+
+To override the version of gflags used by your project, add the following after the `bazel_dep` call:
+
+    git_override(
+        module_name = "gflags",
+        commit = "bd97282b33b9397abab2db47776b0d4fc9762d22",
         remote = "https://github.com/gflags/gflags.git",
     )
 
-You can then add `@com_github_gflags_gflags//:gflags` to the `deps` section of a
-`cc_binary` or `cc_library` rule, and `#include <gflags/gflags.h>` to include it
-in your source code.
+You can then add `@gflags//:gflags` to the `deps` section of a `cc_binary` or `cc_library` rule,
+and `#include <gflags/gflags.h>` to include it in your source code.
 
 
 # Compiling the source code with vcpkg
