@@ -2,6 +2,18 @@
 
 The documentation of the gflags library is available online at https://gflags.github.io/gflags/.
 
+Please note that this is an open-source community project that was developed and originally released by Google, but is no longer maintained by Google. Since the initial open-source release of gflags, an internal fork of the library was re-released as part of Abseil. If you are using Abseil, we recommend using Abseil's [flags](https://abseil.io/docs/cpp/guides/flags) library instead. This open-source project will mainly receive minor maintenance releases. The addition of features is not currently planned, and depends on the open-source community to submit pull requests.
+
+
+06 December 2025
+----------------
+
+I've just released gflags 2.3.0.
+
+This maintenance release includes a number of build system improvements for both Bazel and CMake. It adds support for Bzlmod to prepares for Bazel 9. For CMake users, it adds support for CMake 4.0 and BlackBerry QNX. A few bugs in the library itself have also been fixed, including undefined behavior in option processing. The CI infrastructure has also been migrated to GitHub Actions.
+
+Please report any further issues with this release using the GitHub issue tracker.
+
 
 11 November 2018
 ----------------
