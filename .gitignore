@@ -2,6 +2,7 @@
 /build/
 /builds/
 /build-*/
+/build_*/
 /_build/
 .DS_Store
 CMakeCache.txt

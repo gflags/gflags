@@ -132,6 +132,8 @@ endif ()
 # tree of a project that uses it, no variables should be added to the CMake cache;
 # users may set the non-cached variable GFLAGS_IS_SUBPROJECT before add_subdirectory(gflags)
 if (NOT DEFINED GFLAGS_IS_SUBPROJECT)
+  get_filename_component(CMAKE_SOURCE_DIR "${CMAKE_SOURCE_DIR}" ABSOLUTE)
+  get_filename_component(PROJECT_SOURCE_DIR "${PROJECT_SOURCE_DIR}" ABSOLUTE)
   if ("^${CMAKE_SOURCE_DIR}$" STREQUAL "^${PROJECT_SOURCE_DIR}$")
     set (GFLAGS_IS_SUBPROJECT FALSE)
   else ()
