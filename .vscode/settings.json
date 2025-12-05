@@ -1,0 +1,12 @@
+{
+    "cmake.buildDirectory": "${workspaceFolder}/_build",
+    "cmake.configureArgs": [
+        "-DBUILD_PACKAGING=ON",
+        "-DBUILD_SHARED_LIBS=OFF",
+        "-DBUILD_TESTING=ON",
+        "-DCMAKE_BUILD_TYPE=Release",
+        "-DCMAKE_INSTALL_PREFIX=${workspaceFolder}/_install",
+        "-DREGISTER_BUILD_DIR=OFF",
+        "-DREGISTER_INSTALL_PREFIX=OFF",
+    ]
+}
