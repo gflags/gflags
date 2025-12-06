@@ -417,7 +417,9 @@ if (NOT GFLAGS_IS_SUBPROJECT)
 endif ()
 # Set postfixes for generated libraries based on buildtype.
 set(CMAKE_RELEASE_POSTFIX "")
-set(CMAKE_DEBUG_POSTFIX "_debug")
+if(NOT DEFINED CMAKE_DEBUG_POSTFIX)
+  set(CMAKE_DEBUG_POSTFIX "_debug")
+endif()
 
 # ----------------------------------------------------------------------------
 # installation directories
