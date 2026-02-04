@@ -1,3 +1,5 @@
+load("@rules_cc//cc:cc_library.bzl", "cc_library")
+
 # ------------------------------------------------------------------------------
 # Add native rules to configure source files
 def gflags_sources(namespace=["google", "gflags"]):
@@ -92,7 +94,7 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
     else:
         name += "_nothreads"
         copts += ["-DNO_THREADS"]
-    native.cc_library(
+    cc_library(
         name       = name,
         hdrs       = hdrs,
         srcs       = srcs,
