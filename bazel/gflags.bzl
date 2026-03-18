@@ -89,6 +89,8 @@ def gflags_library(hdrs=[], srcs=[], threads=1):
     if threads:
         linkopts += select({
             "//:x64_windows": [],
+            # pthreads is part of libc on QNX — no separate -lpthread needed
+            "@platforms//os:qnx": [],
             "//conditions:default": ["-lpthread"],
         })
     else:
