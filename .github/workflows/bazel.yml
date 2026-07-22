@@ -1,0 +1,32 @@
+name: Bazel Build
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: bazel-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+      fail-fast: false
+    steps:
+      - name: Checkout Project
+        uses: actions/checkout@v4
+      - name: Setup Bazelisk
+        uses: bazelbuild/setup-bazelisk@v3
+      - name: Build with Bazel
+        run: bazel build --lockfile_mode=error //...
