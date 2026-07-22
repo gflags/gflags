@@ -3,10 +3,10 @@ name: Build and Run Tests
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches:
-      - master
+      - main
 
 concurrency:
   group: test-${{ github.event.pull_request.number || github.ref }}
