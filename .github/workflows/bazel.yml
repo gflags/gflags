@@ -29,4 +29,5 @@ jobs:
       - name: Setup Bazelisk
         uses: bazelbuild/setup-bazelisk@v3
       - name: Build with Bazel
+        shell: bash
         run: bazel build --lockfile_mode=error //...
