@@ -2,7 +2,7 @@ def _impl(ctx):
     args = ctx.actions.args()
     args.add("--template", ctx.file.template)
     args.add("--output", ctx.outputs.out)
-    args.add_all([k + ';' + v for k, v in ctx.attr.substitutions.items()])
+    args.add_all([k + ";" + v for k, v in ctx.attr.substitutions.items()])
     ctx.actions.run(
         executable = ctx.executable._bin,
         arguments = [args],
