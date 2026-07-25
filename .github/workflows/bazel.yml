@@ -31,3 +31,7 @@ jobs:
       - name: Build with Bazel
         shell: bash
         run: bazel build --lockfile_mode=error //...
+      - name: Build test module with Bazel
+        shell: bash
+        working-directory: ./test
+        run: bazel build //...
