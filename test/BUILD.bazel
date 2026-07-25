@@ -1,0 +1,10 @@
+load("@rules_cc//cc:cc_binary.bzl", "cc_binary")
+
+cc_binary(
+    name = "gflags_declare_test",
+    srcs = [
+        "gflags_declare_flags.cc",
+        "gflags_declare_test.cc",
+    ],
+    deps = ["@gflags"],
+)

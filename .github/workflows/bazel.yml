@@ -25,9 +25,16 @@ jobs:
       fail-fast: false
     steps:
       - name: Checkout Project
-        uses: actions/checkout@v4
-      - name: Setup Bazelisk
-        uses: bazelbuild/setup-bazelisk@v3
+        uses: actions/checkout@v7
+      - uses: bazel-contrib/setup-bazel@0.19.0
+        with:
+          bazelisk-cache: true
+          disk-cache: ${{ github.workflow }}
+          repository-cache: true
       - name: Build with Bazel
         shell: bash
         run: bazel build --lockfile_mode=error //...
+      - name: Build test module with Bazel
+        shell: bash
+        working-directory: ./test
+        run: bazel build //...

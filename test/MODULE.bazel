@@ -1,0 +1,9 @@
+module(name = "gflags_test")
+
+bazel_dep(name = "gflags")
+local_path_override(
+    module_name = "gflags",
+    path = "..",
+)
+
+bazel_dep(name = "rules_cc", version = "0.1.1")
