@@ -29,7 +29,7 @@ expanded_template = rule(
             default = "//bazel/expanded_template:expand_template",
             executable = True,
             allow_single_file = True,
-            cfg = "host",
+            cfg = "exec",
         ),
     },
 )
