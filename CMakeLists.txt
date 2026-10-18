@@ -180,7 +180,7 @@ gflags_define (BOOL INSTALL_HEADERS            "Request installation of headers 
 gflags_define (BOOL INSTALL_SHARED_LIBS        "Request installation of shared libraries."                                ON  ON)
 gflags_define (BOOL INSTALL_STATIC_LIBS        "Request installation of static libraries."                                ON  OFF)
 gflags_define (BOOL REGISTER_BUILD_DIR         "Request entry of build directory in CMake's package registry."            OFF OFF)
-gflags_define (BOOL REGISTER_INSTALL_PREFIX    "Request entry of installed package in CMake's package registry."          ON  OFF)
+gflags_define (BOOL REGISTER_INSTALL_PREFIX    "Request entry of installed package in CMake's package registry."          OFF OFF)
 gflags_define (BOOL EXPORT_NAMESPACE_SET       "Request export namespace targets set."                                    ON  ON)
 gflags_define (BOOL EXPORT_NONAMESPACE_SET     "Request export nonamespace targets set."                                  ON  OFF)
 
